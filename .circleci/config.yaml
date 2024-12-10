@@ -1,0 +1,60 @@
+version: 2.1
+
+executors:
+  python-executor:
+    docker:
+      - image: circleci/python:3.9
+    working_directory: ~/project
+
+jobs:
+  install-dependencies:
+    executor: python-executor
+    steps:
+      - checkout
+      - run:
+          name: Install Python dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+      - save_cache:
+          paths:
+            - ~/.cache/pip
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+
+  run-tests:
+    executor: python-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Run API Tests
+          command: python -m pytest tests/api --junitxml=results/api-tests.xml
+      - run:
+          name: Setup Selenium WebDriver
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget unzip xvfb
+            wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
+            unzip chromedriver_linux64.zip -d /usr/local/bin
+            rm chromedriver_linux64.zip
+      - run:
+          name: Run UI Tests
+          command: |
+            Xvfb :99 -ac &
+            export DISPLAY=:99
+            python -m pytest tests/ui --junitxml=results/ui-tests.xml
+      - store_test_results:
+          path: results
+      - store_artifacts:
+          path: results
+
+workflows:
+  version: 2
+  test-and-build:
+    jobs:
+      - install-dependencies
+      - run-tests:
+          requires:
+            - install-dependencies
