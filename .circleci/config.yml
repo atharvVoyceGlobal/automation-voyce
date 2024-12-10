@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: circleci/python:3.12
+      - image: python:3.12-slim
     working_directory: ~/project
 
 jobs:
