@@ -1,0 +1,49 @@
+version: 2.1
+
+jobs:
+  build_and_test:
+    docker:
+      - image: cimg/python:3.8  
+    steps:
+      - checkout
+
+
+      - run:
+          name: Install dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install selenium pytest requests allure-pytest
+
+
+      - run:
+          name: Setup WebDriver
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget unzip
+            wget https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip
+            unzip chromedriver_linux64.zip
+            sudo mv chromedriver /usr/local/bin/chromedriver
+            sudo chmod +x /usr/local/bin/chromedriver
+            wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt install ./google-chrome-stable_current_amd64.deb
+
+
+      - run:
+          name: Run tests
+          command: |
+            pytest API_test.py --alluredir=/tmp/allure-results
+
+
+      - run:
+          name: Generate Allure report
+          command: |
+            sudo apt-get install allure
+            allure generate /tmp/allure-results --clean -o allure-report
+      - store_artifacts:
+          path: allure-report
+
+workflows:
+  version: 2
+  build_and_test_workflow:
+    jobs:
+      - build_and_test

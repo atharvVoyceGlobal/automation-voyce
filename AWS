@@ -1,0 +1,1 @@
+aws s3 sync /Users/nikitabarshchuk/PycharmProjects/pythonProject3/tests/pip install awscli --upgrade allure-report/ s3://your-s3-bucket-name/
