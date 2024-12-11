@@ -3,30 +3,26 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: cimg/python:3.11.0  # Обновленный образ Python
+      - image: cimg/python:3.11.0
     working_directory: ~/project
 
 jobs:
-  install-dependencies:
+  setup:
     executor: python-executor
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v1-venv-{{ checksum "requirements.txt" }}
       - run:
-          name: Create and activate virtual environment
+          name: Setup Environment
           command: |
             python -m venv venv
             echo "source venv/bin/activate" >> $BASH_ENV
       - run:
-          name: Install Python dependencies
+          name: Install Dependencies
           command: |
-            source venv/bin/activate
             pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
-      - save_cache:
-          key: v1-venv-{{ checksum "requirements.txt" }}
+      - persist_to_workspace:
+          root: .
           paths:
             - venv
 
@@ -34,19 +30,13 @@ jobs:
     executor: python-executor
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - v1-venv-{{ checksum "requirements.txt" }}
+      - attach_workspace:
+          at: .
       - run:
-          name: Activate virtual environment and clean previous results
+          name: Activate Environment and Run Tests
           command: |
             source venv/bin/activate
-            rm -rf test_results || true
             mkdir -p test_results
-      - run:
-          name: Run tests
-          command: |
-            source venv/bin/activate
             python -m pytest --alluredir=test_results/
       - store_test_results:
           path: test_results
@@ -55,9 +45,9 @@ jobs:
 
 workflows:
   version: 2
-  test-and-build:
+  build-and-test:
     jobs:
-      - install-dependencies
+      - setup
       - run-tests:
           requires:
-            - install-dependencies
+            - setup
