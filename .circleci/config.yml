@@ -12,14 +12,14 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install system dependencies
+          name: Install Node.js and npm
           command: |
-            apt-get update
-            apt-get install -y wget unzip nodejs npm
+            curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+            apt-get install -y nodejs
       - run:
-          name: Install Puppeteer
+          name: Install Puppeteer locally
           command: |
-            npm install -g @puppeteer/browsers
+            npm install @puppeteer/browsers
       - run:
           name: Create virtual environment if not exists
           command: |
@@ -45,17 +45,16 @@ jobs:
           keys:
             - v1-venv-{{ checksum "requirements.txt" }}
       - run:
+          name: Use Puppeteer to install Chrome and ChromeDriver
+          command: |
+            npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
+      - run:
           name: Clean previous results
           command: |
             rm -rf test_results || true
             mkdir -p test_results
       - run:
-          name: Activate virtual environment and run API Tests
-          command: |
-            . venv/bin/activate
-            python -m pytest --alluredir=test_results/
-      - run:
-          name: Activate virtual environment and run UI Tests
+          name: Activate virtual environment and run tests
           command: |
             . venv/bin/activate
             python -m pytest --alluredir=test_results/
