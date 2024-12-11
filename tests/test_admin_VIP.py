@@ -35,24 +35,29 @@ def install_browser_and_driver():
     chromedriver_path = chromedriver_autoinstaller.get_chromedriver_path()
     print(f"ChromeDriver успешно установлен по пути: {chromedriver_path}")
 
-    # Проверяем наличие Google Chrome
-    chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable")
+    # Проверяем наличие Chrome или Chromium
+    chrome_path = (
+        shutil.which("google-chrome")
+        or shutil.which("google-chrome-stable")
+        or shutil.which("chromium-browser")
+    )
     if not chrome_path:
         print("Доступные пути в системе:")
         print(os.environ["PATH"])
-        raise FileNotFoundError("Google Chrome не найден. Убедитесь, что он установлен и добавлен в PATH.")
+        raise FileNotFoundError("Google Chrome или Chromium не найдены. Убедитесь, что они установлены и добавлены в PATH.")
 
-    print(f"Google Chrome найден по пути: {chrome_path}")
+    print(f"Браузер найден по пути: {chrome_path}")
 
-    # Проверяем версию Google Chrome
+    # Проверяем версию браузера
     try:
-        chrome_version = os.popen(f"{chrome_path} --version").read().strip()
-        print(f"Версия Google Chrome: {chrome_version}")
+        browser_version = os.popen(f"{chrome_path} --version").read().strip()
+        print(f"Версия браузера: {browser_version}")
     except Exception as e:
-        print("Ошибка при получении версии Google Chrome:", e)
+        print("Ошибка при получении версии браузера:", e)
         raise
 
     return chrome_path, chromedriver_path
+
 
 @pytest.fixture
 def driver():
