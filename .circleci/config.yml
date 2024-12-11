@@ -12,8 +12,14 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Create and activate virtual environment
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+      - run:
           name: Install Python dependencies
           command: |
+            . venv/bin/activate
             python -m pip install --upgrade pip
             pip install pytest
             pip install -r requirements.txt
@@ -33,8 +39,14 @@ jobs:
           name: Create Results Directory
           command: mkdir -p results
       - run:
+          name: Activate virtual environment
+          command: |
+            . venv/bin/activate
+      - run:
           name: Run API Tests
-          command: python -m pytest --alluredir=test_results/
+          command: |
+            . venv/bin/activate
+            python -m pytest --alluredir=test_results/
       - run:
           name: Setup Selenium WebDriver
           command: |
@@ -48,6 +60,7 @@ jobs:
           command: |
             Xvfb :99 -ac &
             export DISPLAY=:99
+            . venv/bin/activate
             python -m pytest --alluredir=test_results/
       - store_test_results:
           path: results
