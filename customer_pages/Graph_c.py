@@ -2,7 +2,6 @@ import time
 from datetime import datetime, timedelta
 from utilities.logger import Logger
 import allure
-import pyodbc
 import logging
 import requests
 import os
