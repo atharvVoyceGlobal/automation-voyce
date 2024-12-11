@@ -12,27 +12,15 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install Chromium Browser and System Dependencies
+          name: Install Chromium and System Dependencies
           command: |
-            apt-get update && apt-get install -y wget curl unzip gnupg chromium-driver chromium-browser
+            apt-get update && apt-get install -y wget curl unzip chromium-driver chromium
       - run:
-          name: Verify Chromium Installation and PATH
+          name: Verify Chromium Installation
           command: |
             echo "Проверяем установку Chromium..."
-            chromium-browser --version || echo "Chromium не установлен"
-            which chromium-browser || echo "Chromium не найден в PATH"
+            chromium --version || echo "Chromium не установлен"
             echo $PATH
-      - run:
-          name: Debug PATH
-          command: |
-            echo "Текущий PATH:"
-            echo $PATH
-            ls /usr/bin/chromium-browser || echo "Chromium не найден"
-      - run:
-          name: Add Chromium to PATH
-          command: |
-            export PATH=$PATH:/usr/bin
-            echo 'export PATH=$PATH:/usr/bin' >> $BASH_ENV
       - run:
           name: Create Virtual Environment
           command: python -m venv venv
