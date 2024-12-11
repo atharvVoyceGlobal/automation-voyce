@@ -14,7 +14,15 @@ jobs:
       - run:
           name: Install System Dependencies
           command: |
-            apt-get update && apt-get install -y wget curl unzip
+            apt-get update && apt-get install -y wget curl unzip gnupg
+            curl -sS https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
+            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+            apt-get update && apt-get install -y google-chrome-stable
+      - run:
+          name: Verify Google Chrome Installation
+          command: |
+            google-chrome --version
+            which google-chrome || echo "Google Chrome не найден"
       - run:
           name: Create Virtual Environment
           command: python -m venv venv
