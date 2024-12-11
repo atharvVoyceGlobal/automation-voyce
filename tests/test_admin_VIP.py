@@ -55,7 +55,7 @@ def driver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
-    # chrome_options.add_argument("--headless")  # Используйте headless-режим, если нужно
+    chrome_options.add_argument("--headless")  # Использовать headless-режим в CI
 
     driver_service = ChromeService(executable_path=chromedriver_path)
     driver = webdriver.Chrome(service=driver_service, options=chrome_options)
