@@ -32,15 +32,17 @@ from ev import EV
 def install_browser_and_driver():
     print("Устанавливаем ChromeDriver...")
     chromedriver_autoinstaller.install()  # Автоматическая установка ChromeDriver
-    print("ChromeDriver успешно установлен!")
+    chromedriver_path = chromedriver_autoinstaller.get_chromedriver_path()
+    print(f"ChromeDriver успешно установлен по пути: {chromedriver_path}")
 
     # Убедимся, что Chrome установлен
     chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable")
     if not chrome_path:
         raise FileNotFoundError("Google Chrome не найден. Убедитесь, что он установлен.")
-
+    
     print(f"Google Chrome найден по пути: {chrome_path}")
-    return chrome_path, chromedriver_autoinstaller.get_chromedriver_path()
+    return chrome_path, chromedriver_path
+
 
 @pytest.fixture
 def driver():
