@@ -3,7 +3,6 @@ import time
 import re
 from collections import Counter
 import pytz
-import self as self
 from jira import JIRA
 import os
 import traceback
