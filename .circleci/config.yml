@@ -12,12 +12,20 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup Environment
+          name: Install System Dependencies
+          command: |
+            apt-get update
+            apt-get install -y wget curl unzip
+            curl -sS https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+            apt-get update && apt-get install -y google-chrome-stable
+      - run:
+          name: Setup Python Virtual Environment
           command: |
             python -m venv venv
             echo "source venv/bin/activate" >> $BASH_ENV
       - run:
-          name: Install Dependencies
+          name: Install Python Dependencies
           command: |
             pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
@@ -33,7 +41,13 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: Activate Environment and Run Tests
+          name: Activate Environment and Install ChromeDriver
+          command: |
+            source venv/bin/activate
+            python -m pip install chromedriver-autoinstaller
+            python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
+      - run:
+          name: Run Tests
           command: |
             source venv/bin/activate
             mkdir -p test_results
