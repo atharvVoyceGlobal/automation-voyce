@@ -17,6 +17,10 @@ jobs:
             curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
             apt-get install -y nodejs
       - run:
+          name: Add npm to PATH
+          command: |
+            export PATH=$PATH:$(npm config get prefix)/bin
+      - run:
           name: Install Puppeteer locally
           command: |
             npm install @puppeteer/browsers
@@ -45,7 +49,7 @@ jobs:
           keys:
             - v1-venv-{{ checksum "requirements.txt" }}
       - run:
-          name: Use Puppeteer to install Chrome and ChromeDriver
+          name: Install Chrome and ChromeDriver
           command: |
             npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
       - run:
