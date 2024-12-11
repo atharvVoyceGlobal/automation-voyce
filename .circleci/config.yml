@@ -21,11 +21,6 @@ jobs:
           command: |
             npm install -g @puppeteer/browsers
       - run:
-          name: Install Chrome and ChromeDriver
-          command: |
-            npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
-            cp /root/project/chrome_installation/chromedriver /usr/local/bin/
-      - run:
           name: Create virtual environment if not exists
           command: |
             if [ ! -d "venv" ]; then
