@@ -37,18 +37,22 @@ jobs:
           name: Create Results Directory
           command: mkdir -p results
       - run:
+          name: Setup Virtual Display
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y xvfb
+            Xvfb :99 -ac &
+            export DISPLAY=:99
+            sleep 3 # Allow Xvfb to initialize
+      - run:
           name: Activate virtual environment and run API Tests
           command: |
             . venv/bin/activate
-            Xvfb :99 -ac &
-            export DISPLAY=:99
-            sleep 10 # Allow Xvfb to initialize
             python -m pytest --alluredir=test_results/
       - run:
           name: Setup Selenium WebDriver
           command: |
-            sudo apt-get update
-            sudo apt-get install -y wget unzip xvfb
+            sudo apt-get install -y wget unzip
             wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
             unzip chromedriver_linux64.zip -d /usr/local/bin
             rm chromedriver_linux64.zip
@@ -56,9 +60,7 @@ jobs:
           name: Activate virtual environment and run UI Tests
           command: |
             . venv/bin/activate
-            Xvfb :99 -ac &
             export DISPLAY=:99
-            sleep 10 # Allow Xvfb to initialize
             python -m pytest --alluredir=test_results/
       - store_test_results:
           path: results
