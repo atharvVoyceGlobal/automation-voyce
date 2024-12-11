@@ -24,6 +24,9 @@ jobs:
             google-chrome --version
             which google-chrome || echo "Google Chrome не найден"
       - run:
+          name: Add Chrome to PATH
+          command: echo 'export PATH=$PATH:/usr/bin' >> $BASH_ENV
+      - run:
           name: Create Virtual Environment
           command: python -m venv venv
       - run:
