@@ -11,7 +11,6 @@ from selenium.webdriver.chrome.options import Options
 import random
 import pytest
 import allure
-from playwright.sync_api import sync_playwright
 from ev import EV
 import string
 import pytest
