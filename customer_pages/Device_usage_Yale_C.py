@@ -25,15 +25,9 @@ from database.Database import Database
 import requests
 from customer_pages.Graph_c import Graphs
 from operator import itemgetter
-<<<<<<< HEAD
-from ev import EV
-
-class Device_usage_Yale(Graphs, Database, EV):
-=======
 
 
 class Device_usage_Yale(Graphs, Database):
->>>>>>> 51a303e (Initial commit)
     def __init__(self, driver, elements=None):  # elements теперь необязательный параметр
         super().__init__(driver)
         Database.__init__(self)
@@ -347,11 +341,7 @@ class Device_usage_Yale(Graphs, Database):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-<<<<<<< HEAD
-        print("List of languages ​​from the web page:", languages)
-=======
         print("Список языков с веб-страницы:", languages)
->>>>>>> 51a303e (Initial commit)
 
         return languages
 
@@ -360,21 +350,13 @@ class Device_usage_Yale(Graphs, Database):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-<<<<<<< HEAD
-            error_message = "Filter is not working. \ Nras: \ n"
-=======
             error_message = "Filter is not working.\nРазличия:\n"
->>>>>>> 51a303e (Initial commit)
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-<<<<<<< HEAD
-                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
-=======
                     error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
->>>>>>> 51a303e (Initial commit)
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -536,11 +518,6 @@ class Device_usage_Yale(Graphs, Database):
 
         # print("WEBSITE DATA:", all_data)
         return all_data
-<<<<<<< HEAD
-#
-=======
-
->>>>>>> 51a303e (Initial commit)
     def execute_period_comparison(self):
         with allure.step("Compare data with DB by Periods"):
             time_periods = ['yesterday', 'This_week', 'last_week', 'this_month',
@@ -552,20 +529,6 @@ class Device_usage_Yale(Graphs, Database):
                 website_data = self.fetch_website_data_for_devices1()
 
                 if time_period == 'Last_month':
-<<<<<<< HEAD
-                    db_data = self.query_get_devices_Yale_for_last_month()
-
-                elif time_period in ['Last_30_days', 'This_year', 'Last_year']:
-                    if time_period == 'Last_30_days':
-                        db_data = self.query_get_devices_Yale_for_last_30_days()
-                    elif time_period == 'This_year':
-                        db_data = self.query_get_devices_Yale_this_year()
-                    elif time_period == 'Last_year':
-                        db_data = self.query_get_devices_Yale_last_year()
-
-                else:
-                    db_data = self.query_get_devices_Yale_for_periods(time_period)
-=======
                     db_data = self.query_get_devices_NM_for_last_month()
 
                 elif time_period in ['Last_30_days', 'This_year', 'Last_year']:
@@ -578,7 +541,6 @@ class Device_usage_Yale(Graphs, Database):
 
                 else:
                     db_data = self.query_get_devices_NM_for_periods(time_period)
->>>>>>> 51a303e (Initial commit)
 
                 if not db_data:
                     print(f"No data retrieved from SQL query for {time_period}.")
@@ -613,39 +575,20 @@ class Device_usage_Yale(Graphs, Database):
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-<<<<<<< HEAD
-                print(f"The download folder does not exist: {download_folder}")
-=======
                 print(f"Папка скачивания не существует: {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-<<<<<<< HEAD
-                print(f"Files with a template {File_pattern} were not found in the folder {download_folder}")
-=======
                 print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-<<<<<<< HEAD
-            print(f"The file {Latest_file} was moved to {target_file}")
-            return target_file
-        except Exception as e:
-            print(f"Error when moving the file: {e}")
-            return None
-
-    def device_usage_page(self):
-        with allure.step("Device_usage_Yale"):
-            Logger.add_start_step(method='Device_usage_Yale')
-=======
             print(f"Файл {latest_file} был перемещен в {target_file}")
             return target_file
         except Exception as e:
@@ -655,7 +598,6 @@ class Device_usage_Yale(Graphs, Database):
     def device_usage_page(self):
         with allure.step("Device_usage_NM"):
             Logger.add_start_step(method='Device_usage_NM')
->>>>>>> 51a303e (Initial commit)
             self.driver.maximize_window()
             self.click_drop_down()
             time.sleep(3)

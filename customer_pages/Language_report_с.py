@@ -23,15 +23,9 @@ from database.Database import Database
 import requests
 from customer_pages.Graph_c import Graphs
 from operator import itemgetter
-<<<<<<< HEAD
-from ev import EV
-
-class LR(Graphs, Database, EV):
-=======
 
 
 class LR(Graphs, Database):
->>>>>>> 51a303e (Initial commit)
     def __init__(self, driver, elements=None):  # elements теперь необязательный параметр
         super().__init__(driver)
         Database.__init__(self)
@@ -333,11 +327,7 @@ class LR(Graphs, Database):
 
     def scroll_to_bottom(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-<<<<<<< HEAD
-        print("Scrolling to the bottom of the page is performed")
-=======
         print("Прокрутка до нижней части страницы выполнена")
->>>>>>> 51a303e (Initial commit)
 
     def click_lang_s(self):
         self.get_lang_s().click()
@@ -396,11 +386,7 @@ class LR(Graphs, Database):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-<<<<<<< HEAD
-        print("List of languages ​​from the web page:", languages)
-=======
         print("Список языков с веб-страницы:", languages)
->>>>>>> 51a303e (Initial commit)
 
         return languages
 
@@ -409,21 +395,13 @@ class LR(Graphs, Database):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-<<<<<<< HEAD
-            error_message = "Filter is not working. \ Nras: \ n"
-=======
             error_message = "Filter is not working.\nРазличия:\n"
->>>>>>> 51a303e (Initial commit)
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-<<<<<<< HEAD
-                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
-=======
                     error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
->>>>>>> 51a303e (Initial commit)
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -525,11 +503,7 @@ class LR(Graphs, Database):
                 website_data = self.fetch_website_data()
                 self.compare_data12(website_data, csv_data)
 
-<<<<<<< HEAD
-            self.compare_data_for_periods()
-=======
             # self.compare_data_for_periods()
->>>>>>> 51a303e (Initial commit)
             time.sleep(10)
             self.click_lang_s()
             self.input_lang_sf(' spanish ')
@@ -807,13 +781,8 @@ class LR(Graphs, Database):
             web_languages = {data['LanguageName'].strip().lower(): data for data in web_data_list if
                              data['LanguageName'].strip()}
 
-<<<<<<< HEAD
-            print("Languages ​​in CSV:", list(csv_languages.keys()))
-            print("Languages ​​on the site:", list(web_languages.keys()))
-=======
             print("Языки в CSV:", list(csv_languages.keys()))
             print("Языки на сайте:", list(web_languages.keys()))
->>>>>>> 51a303e (Initial commit)
 
             data_is_correct = True  # Флаг, отслеживающий корректность данных
 
@@ -870,13 +839,8 @@ class LR(Graphs, Database):
             web_languages = {self.format_string(data['LanguageName']): data for data in web_data_list if
                              data['LanguageName'].strip()}
 
-<<<<<<< HEAD
-            print("Languages ​​in CSV:", list(csv_languages.keys()))
-            print("Languages ​​on the site:", list(web_languages.keys()))
-=======
             print("Языки в CSV:", list(csv_languages.keys()))
             print("Языки на сайте:", list(web_languages.keys()))
->>>>>>> 51a303e (Initial commit)
 
             data_is_correct = True  # Флаг, отслеживающий корректность данных
 
@@ -914,39 +878,24 @@ class LR(Graphs, Database):
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-<<<<<<< HEAD
-                print(f"The download folder does not exist: {download_folder}")
-=======
                 print(f"Папка скачивания не существует: {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-<<<<<<< HEAD
-                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
-=======
                 print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-<<<<<<< HEAD
-            print(f"The file {latest_file} was moved to {target_file}")
-            return target_file
-        except Exception as e:
-            print(f"Error when moving the file: {e}")
-=======
             print(f"Файл {latest_file} был перемещен в {target_file}")
             return target_file
         except Exception as e:
             print(f"Ошибка при перемещении файла: {e}")
->>>>>>> 51a303e (Initial commit)
             return None
 
     def fetch_column_data_total_calls(self, column_index):
@@ -1016,7 +965,3 @@ class LR(Graphs, Database):
 
         # Проверяем, отсортированы ли значения по убыванию
         return filtered_data == sorted(filtered_data, reverse=True)
-<<<<<<< HEAD
-#
-=======
->>>>>>> 51a303e (Initial commit)

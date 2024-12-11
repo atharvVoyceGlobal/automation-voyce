@@ -27,11 +27,6 @@ import logging
 from datetime import datetime, timedelta
 from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
-<<<<<<< HEAD
-from ev import EV
-=======
-
->>>>>>> 51a303e (Initial commit)
 
 def is_equivalent_service_minutes(db_value, web_value):
     if (db_value in [None, '-', 0] and web_value in ['', '-', '0']) or str(db_value) == web_value:
@@ -39,11 +34,7 @@ def is_equivalent_service_minutes(db_value, web_value):
     return False
 
 
-<<<<<<< HEAD
-class Transaction_page_A(Graphs, EV):
-=======
 class Transaction_page_A(Graphs):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)  # Это должно инициализировать метод __init__ класса Base
@@ -1016,11 +1007,7 @@ class Transaction_page_A(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-<<<<<<< HEAD
-        print(f"The center of the element is on the coordinates x: {x_center}, y: {y_center}")
-=======
         print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
->>>>>>> 51a303e (Initial commit)
         return x_center, y_center
 
     def click_calls_f(self):
@@ -1249,11 +1236,7 @@ class Transaction_page_A(Graphs):
         # Выполнение действия перетаскивания
         actions.click_and_hold(scrollbar).move_by_offset(700, 0).release().perform()
 
-<<<<<<< HEAD
-        print("The slider is scrolled")
-=======
         print("Ползунок прокручен")
->>>>>>> 51a303e (Initial commit)
 
     def input_start_time(self, language):
         self.get_start_time().send_keys(language)
@@ -1320,11 +1303,7 @@ class Transaction_page_A(Graphs):
 
     def scroll_to_bottom(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-<<<<<<< HEAD
-        print("Scrolling to the bottom of the page is performed")
-=======
         print("Прокрутка до нижней части страницы выполнена")
->>>>>>> 51a303e (Initial commit)
 
     def click_lang_f_Spanish(self):
         first_company = self.get_lang_f_Spanish()
@@ -1534,11 +1513,7 @@ class Transaction_page_A(Graphs):
             except (StaleElementReferenceException, NoSuchElementException, IndexError) as e:
                 attempts += 1  # Увеличиваем счетчик попыток
                 if attempts == max_attempts:
-<<<<<<< HEAD
-                    print(f"It was not possible to get data after {max_attempts} attempts.Error: {e}")
-=======
                     print(f"Не удалось получить данные после {max_attempts} попыток. Ошибка: {e}")
->>>>>>> 51a303e (Initial commit)
                     break  # Выходим из цикла, если превышено число попыток
 
     def fetch_website_data_am1(self):
@@ -1566,21 +1541,12 @@ class Transaction_page_A(Graphs):
                         "WaitingSeconds": cells[9].text.strip(),
                         "ServiceMinutes": cells[10].text.strip() if len(cells) > 10 else None,
                     }
-<<<<<<< HEAD
-                    print(f"Line {index + 1}: {data}")
-                    website_data.append(data)
-                else:
-                    print(f"Line {index + 1} missed: not enough data")
-            except StaleElementReferenceException:
-                print(f"Line {index + 1}: a obsolete element is found, we skip the line ...")
-=======
                     print(f"Строка {index + 1}: {data}")  # Выводим извлеченные данные
                     website_data.append(data)
                 else:
                     print(f"Строка {index + 1} пропущена: недостаточно данных")
             except StaleElementReferenceException:
                 print(f"Строка {index + 1}: Обнаружен устаревший элемент, пропускаем строку...")
->>>>>>> 51a303e (Initial commit)
                 continue  # Или используйте другую логику для повторения попытки
 
         return website_data
@@ -1608,11 +1574,7 @@ class Transaction_page_A(Graphs):
         discrepancies = []
 
         if db_data is None:
-<<<<<<< HEAD
-            print("Warning: DB_DATA is equal to None, the comparison of the data is missed.")
-=======
             print("Предупреждение: db_data равно None, сравнение данных пропущено.")
->>>>>>> 51a303e (Initial commit)
             return
 
         for web_row in web_data:
@@ -2091,17 +2053,10 @@ class Transaction_page_A(Graphs):
 
         # Переход на страницу Gmail
         self.driver.get(self.url1)
-<<<<<<< HEAD
-        self.input_login(self.my_accaunt)
-        self.click_next()
-        time.sleep(3)
-        self.input_password(self.my_password)
-=======
         self.input_login("nikita.barshchuk@voyceglobal.com")
         self.click_next()
         time.sleep(3)
         self.input_password("Gomynkyl165432_#")
->>>>>>> 51a303e (Initial commit)
         time.sleep(3)
         self.click_next2()
         time.sleep(20)
@@ -2140,15 +2095,9 @@ class Transaction_page_A(Graphs):
         time.sleep(10)
 
         # Дополнительные действия, если необходимы пароли
-<<<<<<< HEAD
-        self.input_password1(self.deafult_password)
-        time.sleep(3)
-        self.input_password2(self.deafult_password)
-=======
         self.input_password1('Admin@123')
         time.sleep(3)
         self.input_password2('Admin@123')
->>>>>>> 51a303e (Initial commit)
         self.click_download_b()
 
         # Проверка уведомления после скачивания
@@ -2308,11 +2257,7 @@ class Transaction_page_A(Graphs):
         # Обновляем unique_transaction_id_count перед сравнением
         db_data = self.query_transactions_today_admin()
         if db_data is None:
-<<<<<<< HEAD
-            print("It was not possible to get data from Databricks.")
-=======
             print("Не удалось получить данные из Databricks.")
->>>>>>> 51a303e (Initial commit)
             return
 
         if self.unique_transaction_id_count1 == total_pages:
@@ -2772,11 +2717,7 @@ class Transaction_page_A(Graphs):
                         break
             return column_data
         except Exception as e:
-<<<<<<< HEAD
-            print(f"An error occurred when extracting data from the column: {e}")
-=======
             print(f"Произошла ошибка при извлечении данных из колонки: {e}")
->>>>>>> 51a303e (Initial commit)
             return []
 
     # @staticmethod
@@ -2827,39 +2768,24 @@ class Transaction_page_A(Graphs):
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-<<<<<<< HEAD
-                print(f"The download folder does not exist: {download_folder}")
-=======
                 print(f"Папка скачивания не существует: {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-<<<<<<< HEAD
-                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
-=======
                 print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-<<<<<<< HEAD
-            print(f"The file {latest_file} was moved to {target_file}")
-            return target_file
-        except Exception as e:
-            print(f"Error when moving the file: {e}")
-=======
             print(f"Файл {latest_file} был перемещен в {target_file}")
             return target_file
         except Exception as e:
             print(f"Ошибка при перемещении файла: {e}")
->>>>>>> 51a303e (Initial commit)
             return None
 
     def is_sorted_ascending(self, column_data):
@@ -3492,23 +3418,12 @@ class Transaction_page_A(Graphs):
 
             #     print("Тест успешно завершен на попытке:", attempt)
             # except Exception as e:
-<<<<<<< HEAD
-            #print(f"There was an error on an attempt {attempt}: {e}")
-            #     # Проверяем, не превышено ли максимальное количество попыток
-            #     if attempt < 99:  # Допустим, максимальное количество попыток равно 3
-            #print("We reboot the page and repeat the attempt ...")
-=======
             #     print(f"Произошла ошибка на попытке {attempt}: {e}")
             #     # Проверяем, не превышено ли максимальное количество попыток
             #     if attempt < 99:  # Допустим, максимальное количество попыток равно 3
             #         print("Перезагружаем страницу и повторяем попытку...")
->>>>>>> 51a303e (Initial commit)
             #         self.driver.refresh()
             #         time.sleep(5)  # Подождите некоторое время, чтобы страница полностью перезагрузилась
             #         self.transaction_page_test(attempt + 1)
             #     else:
-<<<<<<< HEAD
-            #print("The maximum number of attempts has been exceeded.The test is not passed.")
-=======
             #         print("Превышено максимальное количество попыток. Тест не пройден.")
->>>>>>> 51a303e (Initial commit)

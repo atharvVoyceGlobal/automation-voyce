@@ -10,15 +10,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from base.base_class import Base
 from database.Databricks import Databricks
 from selenium.webdriver.chrome.options import Options
-<<<<<<< HEAD
-from ev import EV
-
-class Login_Kanji(Base, Databricks, EV):
-=======
 
 
 class Login_Kanji(Base, Databricks):
->>>>>>> 51a303e (Initial commit)
     url = 'https://voyce.kandji.io/signin'
 
     def __init__(self, driver):
@@ -244,19 +238,11 @@ class Login_Kanji(Base, Databricks):
         self.driver.get(self.url)
         self.click_login()
         self.click_google()
-<<<<<<< HEAD
-        self.input_login(self.my_accaunt)
-        self.click_next()
-        self.input_password(self.my_password)
-        self.click_next2()
-        time.sleep(20)
-=======
         self.input_login("nikita.barshchuk@voyceglobal.com")
         self.click_next()
         self.input_password("Gomynkyl165432_#")
         self.click_next2()
         time.sleep(10)
->>>>>>> 51a303e (Initial commit)
         self.click_filter()
         self.click_filter2()
         self.click_filter3()
@@ -266,11 +252,7 @@ class Login_Kanji(Base, Databricks):
         self.click_galka()
         time.sleep(2)
         element = self.driver.find_element(By.XPATH,
-<<<<<<< HEAD
-                                           "//*[@id='radix-:r5:-content-devices']/section/section[2]/div[2]/div[2]/div/section/section/section/button[4]")
-=======
                                            "//*[@id='radix-:r3:-content-devices']/section/section[2]/div[2]/div[2]/div/section/section/section/button[4]")
->>>>>>> 51a303e (Initial commit)
         self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
         element.click()
         time.sleep(10)
@@ -324,9 +306,4 @@ class Login_Kanji(Base, Databricks):
                         file.write(line)
 
                     except Exception as e:
-<<<<<<< HEAD
-                        print(f"It was not possible to extract data for the line: {row.text}.Error: {e}")
-#
-=======
                         print(f"Не удалось извлечь данные для строки: {row.text}. Ошибка: {e}")
->>>>>>> 51a303e (Initial commit)

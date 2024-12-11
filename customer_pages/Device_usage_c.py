@@ -25,15 +25,9 @@ from database.Database import Database
 import requests
 from customer_pages.Graph_c import Graphs
 from operator import itemgetter
-<<<<<<< HEAD
-from ev import EV
-
-class Device_usage(Graphs, Database, EV):
-=======
 
 
 class Device_usage(Graphs, Database):
->>>>>>> 51a303e (Initial commit)
     def __init__(self, driver, elements=None):  # elements теперь необязательный параметр
         super().__init__(driver)
         Database.__init__(self)
@@ -477,50 +471,31 @@ class Device_usage(Graphs, Database):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-<<<<<<< HEAD
-        print("List of languages ​​from the web page:", languages)
-=======
         print("Список языков с веб-страницы:", languages)
->>>>>>> 51a303e (Initial commit)
 
         return languages
 
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-<<<<<<< HEAD
-                print(f"The download folder does not exist: {download_folder}")
-=======
                 print(f"Папка скачивания не существует: {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-<<<<<<< HEAD
-                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
-=======
                 print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-<<<<<<< HEAD
-            print(f"The file {latest_file} was moved to {target_file}")
-            return target_file
-        except Exception as e:
-            print(f"Error when moving the file: {e}")
-=======
             print(f"Файл {latest_file} был перемещен в {target_file}")
             return target_file
         except Exception as e:
             print(f"Ошибка при перемещении файла: {e}")
->>>>>>> 51a303e (Initial commit)
             return None
 
     def compare_language_lists(self, list_from_db, list_from_web):
@@ -528,21 +503,13 @@ class Device_usage(Graphs, Database):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-<<<<<<< HEAD
-            error_message = "Filter is not working. \ Nras: \ n"
-=======
             error_message = "Filter is not working.\nРазличия:\n"
->>>>>>> 51a303e (Initial commit)
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-<<<<<<< HEAD
-                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
-=======
                     error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
->>>>>>> 51a303e (Initial commit)
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -567,11 +534,7 @@ class Device_usage(Graphs, Database):
 
     def scroll_to_bottom(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-<<<<<<< HEAD
-        print("Scrolling to the bottom of the page is performed")
-=======
         print("Прокрутка до нижней части страницы выполнена")
->>>>>>> 51a303e (Initial commit)
 
     def select_time_period_and_wait_for_update(self, time_period, open_list=True):
         if open_list:
@@ -698,11 +661,6 @@ class Device_usage(Graphs, Database):
             for time_period in time_periods:
                 print(f"Processing period: {time_period}")
                 self.select_time_period_and_wait_for_update(time_period)
-<<<<<<< HEAD
-#
-=======
-
->>>>>>> 51a303e (Initial commit)
                 # Инициализация переменной для хранения данных
                 db_data = []
 
@@ -888,25 +846,12 @@ class Device_usage(Graphs, Database):
                     continue
 
                 # Convert strings containing numbers for comparison
-<<<<<<< HEAD
-                try:
-                    web_numeric_value = float(web_value.replace(',', ''))
-                    csv_numeric_value = float(csv_value.replace(',', ''))
-
-                    if web_numeric_value != csv_numeric_value:
-                        print(f"Mismatch for {key} with serial number: {serial_number}")
-                        print(f"CSV value: '{csv_value}' vs Web value: '{web_value}'")
-                        data_is_correct = False
-                except ValueError:
-                    # If conversion to float fails, fall back to string comparison
-=======
                 if web_value.replace(',', '').isdigit() and csv_value.replace(',', '').isdigit():
                     if int(web_value.replace(',', '')) != int(csv_value.replace(',', '')):
                         print(f"Mismatch for {key} with serial number: {serial_number}")
                         print(f"CSV value: '{csv_value}' vs Web value: '{web_value}'")
                         data_is_correct = False
                 else:
->>>>>>> 51a303e (Initial commit)
                     if web_value != csv_value:
                         print(f"Mismatch for {key} with serial number: {serial_number}")
                         print(f"CSV value: '{csv_value}' vs Web value: '{web_value}'")

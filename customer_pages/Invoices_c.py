@@ -18,15 +18,9 @@ import random
 from database.Database import Database
 from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
-<<<<<<< HEAD
-from ev import EV
-
-class invoices(Graphs, EV):
-=======
 
 
 class invoices(Graphs):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)  # Это должно инициализировать метод __init__ класса Base
@@ -201,11 +195,7 @@ class invoices(Graphs):
                 self.assert_word2(total_overdue, self.get_overdue())
             except AssertionError:
                 # Обработка случая, когда значения просроченных платежей не совпадают
-<<<<<<< HEAD
-                print("Inconsistency of the amounts of overdue payments.Summification of values ​​from the next page.")
-=======
                 print("Несоответствие сумм просроченных платежей. Суммирование значений со следующей страницы.")
->>>>>>> 51a303e (Initial commit)
                 self.click_next_page()
                 time.sleep(10)
                 additional_website_data = self.get_website_invoice_data()
@@ -269,11 +259,7 @@ class invoices(Graphs):
                 self.assert_word2(total_overdue, self.get_overdue())
             except AssertionError:
                 # Обработка случая, когда значения просроченных платежей не совпадают
-<<<<<<< HEAD
-                print("Inconsistency of the amounts of overdue payments.Summification of values ​​from the next page.")
-=======
                 print("Несоответствие сумм просроченных платежей. Суммирование значений со следующей страницы.")
->>>>>>> 51a303e (Initial commit)
                 # self.click_next_page() #TODO Следущая страница
                 # additional_website_data = self.get_website_invoice_data()
                 #
@@ -480,7 +466,3 @@ class invoices(Graphs):
 
             with allure.step("Invoices_graph"):
                 Logger.add_end_step(url=self.driver.current_url, method='Invoices_graph')
-<<<<<<< HEAD
-#
-=======
->>>>>>> 51a303e (Initial commit)

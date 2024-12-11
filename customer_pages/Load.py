@@ -9,11 +9,6 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 import threading
 from selenium.common.exceptions import TimeoutException
-<<<<<<< HEAD
-from ev import EV
-
-
-=======
 
 users = [
     {'Email': 'adam1.worman@voyceglobal.com'},
@@ -86,7 +81,6 @@ users = [
     {'Email': 'maria1.jalil@voyceglobal.com'},
     {'Email': 'marianne1.bustamante@voyceglobal.com'}
 ]
->>>>>>> 51a303e (Initial commit)
 
 response_times = []
 
@@ -197,12 +191,7 @@ def test_parallel_authorizations():
     """Запуск многопоточной авторизации."""
     url = 'https://staging.admin.vip.voyceglobal.com/auth/login'
     password = 'Admin@2'
-<<<<<<< HEAD
-    driver_path = '/chromedriver'
-    users = EV.users
-=======
     driver_path = '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chromedriver'
->>>>>>> 51a303e (Initial commit)
 
     threads = []
     for i, user in enumerate(users):

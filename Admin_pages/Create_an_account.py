@@ -9,62 +9,31 @@ from base.base_class import Base
 import string
 import random
 from database.Database import Database
-<<<<<<< HEAD
-from ev import EV
-
-class Create_Account(Base, Database, EV):
-=======
 
 
 class Create_Account(Base, Database):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)
         Database.__init__(self)
         self.driver = driver
 
-<<<<<<< HEAD
-    open_create_account_button = "//*[@id='root']/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/div[1]/div/button/span[2]"
-=======
     open_create_account_button = "//*[@id='root']/section/section/main/div/div/div/div/div/div[1]/div/div/button/span[2]"
->>>>>>> 51a303e (Initial commit)
     first_name = "//*[@id='firstname']"
     last_name = "//*[@id='lastname']"
     email_field = "//*[@id='email']"
     password_field = "//*[@id='password']"
-<<<<<<< HEAD
-    confirm_password = "//*[@id='confirmPassword']"
-    role_dropdown = '//*[@id="rc-tabs-1-panel-accountInfo"]/form/div[6]/div/div/div/div/div/div/span[1]'
-    qa_specialist_option = "//div[text()='Qa Specialist']"
-
-    next_button = "//span[text()='Next']"
-    add_button = "//span[text()='Save']"
-    user_management = "//*[@id='root']/div/aside/div[1]/ul/li[5]"
-    select_all = '//button[span[text()="Select All Companies"]]'
-=======
     confirm_password = "//*[@id='confirm']"
     role_dropdown = '//*[@id="rc-tabs-0-panel-accountInfo"]/form/div[6]/div[1]/div/div[1]/div/div/div/span[1]'
     qa_specialist_option = "//div[contains(@class, 'ant-select-item-option-content') and text() = 'QA Specialist']"
     next_button = "//span[text()='Next']"
     add_button = "//span[text()='Add']"
->>>>>>> 51a303e (Initial commit)
 
     # Getters
     def get_open_create_account_button(self):
         return WebDriverWait(self.driver, 30).until(
             EC.element_to_be_clickable((By.XPATH, self.open_create_account_button)))
 
-<<<<<<< HEAD
-
-    def get_select_all(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.select_all)))
-
-    def get_user_management(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.user_management)))
-
-=======
->>>>>>> 51a303e (Initial commit)
     def get_first_name(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.first_name)))
 
@@ -132,18 +101,6 @@ class Create_Account(Base, Database):
         pyautogui.click()
         print("CLICK role dropdown")
 
-<<<<<<< HEAD
-
-    def click_user_management(self):
-        self.get_user_management().click()
-        print("CLICK user management")
-
-    def click_select_all(self):
-        self.get_select_all().click()
-        print("CLICK select all")
-
-=======
->>>>>>> 51a303e (Initial commit)
     def click_qa_specialist_option(self):
         self.get_qa_specialist_option().click()
         print("CLICK QA Specialist option")
@@ -163,10 +120,6 @@ class Create_Account(Base, Database):
         return ''.join(random.choice(letters) for _ in range(length))
 
     def ACC(self):
-<<<<<<< HEAD
-        self.click_user_management()
-        for email in self.email_list_for_acc_creation:
-=======
         email_list = [
             'adam1.worman@voyceglobal.com', 'adriana1.quintero@voyceglobal.com', 'aldo1.lorenzo@voyceglobal.com',
             'ana1.maria.mejia@voyceglobal.com', 'aurelio1.adames@voyceglobal.com', 'autumn1.adams@voyceglobal.com',
@@ -197,7 +150,6 @@ class Create_Account(Base, Database):
         ]
 
         for email in email_list:
->>>>>>> 51a303e (Initial commit)
             try:
                 with allure.step("ACC"):
                     Logger.add_start_step(method='ACC')
@@ -207,123 +159,20 @@ class Create_Account(Base, Database):
                     self.input_last_name("TEST")
                     email_prefix = email.split('@')[0]
                     self.input_email(email_prefix)
-<<<<<<< HEAD
-                    self.input_password_field(self.deafult_password)
-                    self.input_confirm_password(self.deafult_password)
-=======
                     self.input_password_field("Admin@2")
                     self.input_confirm_password("Admin@2")
->>>>>>> 51a303e (Initial commit)
                     self.click_next_button()
                     time.sleep(3)
                     self.click_role_dropdown()
                     time.sleep(3)
                     self.click_qa_specialist_option()
                     self.click_next_button()
-<<<<<<< HEAD
-                    self.click_select_all()
-                    time.sleep(3)
                     self.click_add_button()
-                    time.sleep(3)
-
-=======
-                    self.click_add_button()
->>>>>>> 51a303e (Initial commit)
                     Logger.add_end_step(url=self.driver.current_url, method='Account_created')
 
                     self.driver.refresh()
             except Exception as e:
                 print(f"Error occurred for email {email}: {e}")
-<<<<<<< HEAD
-                time.sleep(3)
-                self.driver.refresh()
-                time.sleep(3)
-                continue
-    #Locators
-
-    create_account_button = "//*[@id='root']/div/div[3]/div/div/div/div/div/div[2]/div[1]/div/button"
-    activation_mail = "//div[contains(@class, 'ant-message-custom-content') and contains(@class, 'ant-message-success')]//span[contains(text(), 'We sent you an activation mail to')]"
-    create_account_button2 = "//*[@id='root']/div/div[3]/div/div/div/div/div/form/div/div/div[7]/div/div/div/div/div/button"
-    password_dont_math = "//*[@id='confirm_help']/div"
-    password_dont_meet_criteria = "//*[@id='password_help']/div"
-
-    # Getters
-    def get_create_account_button(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.create_account_button)))
-
-    def get_create_account_button2(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.create_account_button2)))
-
-    def get_activation_mail(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.activation_mail)))
-
-    def get_password_dont_math(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.password_dont_math)))
-
-    def get_password_dont_meet_criteria(self):
-        return WebDriverWait(self.driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH, self.password_dont_meet_criteria)))
-
-        # Actions
-
-    def click_create_account(self):
-        self.get_create_account_button().click()
-        print("CLICK Create an Account button")
-
-    def click_create_account_button2(self):
-        self.get_create_account_button2().click()
-        print("CLICK Create an Account button 2")
-
-    # METHODS
-
-    def ACC1(self):
-        with allure.step("ACC"):
-            Logger.add_start_step(method='ACC')
-            self.get_current_url()
-            self.click_create_account()
-            # self.assert_url("")
-            # self.input_first_name("Nick")
-            # self.input_last_name("Skubi")
-            # self.input_email('korobka')
-            # self.input_password_field(self.deafult_password)
-            # self.input_confirm_password("fefcwewdweQS%")
-            # self.click_create_account_button2()
-            # self.assert_word(self.get_password_dont_meet_criteria(), "Password entry does not meet criteria")
-            # self.assert_word(self.get_password_dont_math(), "The two passwords that you entered do not match!")
-            with allure.step("Account_NOT_created"):
-                Logger.add_end_step(url=self.driver.current_url, method='Account_NOT_created')
-                self.driver.refresh()
-                self.input_first_name("Nick")
-                self.input_last_name("Skubi")
-                random_string = self.generate_random_string(5)
-                generated_email = f'korobka{random_string}.do'
-                self.input_email(generated_email)
-                self.input_password_field(self.deafult_password)
-                self.input_confirm_password(self.deafult_password)
-                self.click_create_account_button2()
-                self.assert_word(self.get_activation_mail(),
-                                 f"We sent you an activation mail to {generated_email}@voyceglobal.com.")
-                # self.assert_url("")
-                Logger.add_end_step(url=self.driver.current_url, method='Account_created')
-
-                db = self.client1['auth']
-                collection1 = db['User']
-
-                query = {"email": f"{generated_email}@voyceglobal.com"}
-
-                cursor = collection1.find(query)
-                email_from_db = None
-                try:
-                    for doc in cursor:
-                        email_from_db = doc.get("email")
-                        print(doc)
-                finally:
-                    self.client.close()
-
-                assert email_from_db == f"{generated_email}@voyceglobal.com"
-                print("data is correct")
-                self.driver.refresh()
-=======
                 self.driver.refresh()
                 continue
     # Locators
@@ -454,4 +303,3 @@ class Create_Account(Base, Database):
     #             assert email_from_db == f"{generated_email}@voyceglobal.com"
     #             print("data is correct")
     #             self.driver.refresh()
->>>>>>> 51a303e (Initial commit)

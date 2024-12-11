@@ -12,15 +12,9 @@ import random
 from database.Database import Database
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
-<<<<<<< HEAD
-from ev import EV
-
-class Add_user(Base, Database, EV):
-=======
 
 
 class Add_user(Base, Database):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -307,11 +301,7 @@ class Add_user(Base, Database):
             self.input_first_name("Nick")
             self.input_last_name("Skubi")
             self.input_email('korobka')
-<<<<<<< HEAD
-            self.input_password_field(self.deafult_password)
-=======
             self.input_password_field("Admin123")
->>>>>>> 51a303e (Initial commit)
             self.input_confirm_password("fefcwewdweQS%")
             self.click_next()
             time.sleep(4)
@@ -360,11 +350,7 @@ class Add_user(Base, Database):
             self.input_first_name("Nick")
             self.input_last_name("Skubi")
             self.input_email('korobka')
-<<<<<<< HEAD
-            self.input_password_field(self.deafult_password)
-=======
             self.input_password_field("Admin123")
->>>>>>> 51a303e (Initial commit)
             self.input_confirm_password("fefcwewdweQS%")
             self.click_select_role_button()
             self.click_user()
@@ -379,13 +365,8 @@ class Add_user(Base, Database):
                 random_string = self.generate_random_string(5)
                 generated_email = f'korobka{random_string}.do@voyceglobal.com'
                 self.input_email(generated_email)
-<<<<<<< HEAD
-                self.input_password_field(self.deafult_password)
-                self.input_confirm_password(self.deafult_password)
-=======
                 self.input_password_field("Admin@123")
                 self.input_confirm_password("Admin@123")
->>>>>>> 51a303e (Initial commit)
                 self.click_select_role_button()
                 self.click_user()
                 self.click_next()
@@ -488,7 +469,3 @@ class Add_user(Base, Database):
         #     self.assert_word(self.get_check_name(), 'zzzzzzzzzzzoeyee zzzzzzzzzzz')
 
 # TODO BUG Добвляя комании к клиентам, клиент может все равно просматривать все компани & неограниченное кол-во символов/запрещенные символы
-<<<<<<< HEAD
-#
-=======
->>>>>>> 51a303e (Initial commit)

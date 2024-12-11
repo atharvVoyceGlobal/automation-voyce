@@ -8,15 +8,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support import expected_conditions as EC
 from base.base_class import Base
 from database.Database import Database, assert_equal
-<<<<<<< HEAD
-from ev import EV
-
-class Forgot_password(Base, Database, EV):
-=======
 
 
 class Forgot_password(Base, Database):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -80,17 +74,10 @@ class Forgot_password(Base, Database):
             self.assert_url("https://staging.vip.voyceglobal.com/auth/forgot-password")
             with allure.step("Forgot password with valid data"):
                 Logger.add_start_step(method='Forgot password with no valid data')
-<<<<<<< HEAD
-            self.input_email(self.my_accaunt)
-            self.click_submit_button()
-            self.assert_word(self.get_successful_send(),
-                             f"Email has been successfully sent to {self.my_accaunt}")
-=======
             self.input_email("nikita.barshchuk@voyceglobal.com")
             self.click_submit_button()
             self.assert_word(self.get_successful_send(),
                              "Email has been successfully sent to nikita.barshchuk@voyceglobal.com")
->>>>>>> 51a303e (Initial commit)
 
             database = self.client["auth-customer"]
             collection = database["Email"]
@@ -110,13 +97,6 @@ class Forgot_password(Base, Database):
             finally:
                 self.client.close()
 
-<<<<<<< HEAD
-            assert_equal(latest_email, self.my_accaunt, "The latest email in the database does not "
-                                                                           "match the expected email")
-            print("data is correct")
-#
-=======
             assert_equal(latest_email, "nikita.barshchuk@voyceglobal.com", "The latest email in the database does not "
                                                                            "match the expected email")
             print("data is correct")
->>>>>>> 51a303e (Initial commit)

@@ -14,17 +14,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
-<<<<<<< HEAD
-from ev import EV
-
-
-class Login_Kanji(Base, Databricks, EV):
-=======
 
 
 class Login_Kanji(Base, Databricks):
     url = 'https://voyce.kandji.io/signin'
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -252,16 +245,6 @@ class Login_Kanji(Base, Databricks):
 
     # METHODS
     def scroll_to_bottom(self, delay=1.0):
-<<<<<<< HEAD
-        last_height = self.driver.execute_script("return document.body.scrollHeight")
-
-        while True:
-            # SCROLL DOWN
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-            time.sleep(delay)
-
-=======
         """
         Прокручивает страницу до самого низа.
 
@@ -277,7 +260,6 @@ class Login_Kanji(Base, Databricks):
             time.sleep(delay)
 
             # Вычисление новой высоты прокрутки и сравнение со старой
->>>>>>> 51a303e (Initial commit)
             new_height = self.driver.execute_script("return document.body.scrollHeight")
             if new_height == last_height:
                 break
@@ -285,19 +267,6 @@ class Login_Kanji(Base, Databricks):
 
     def extract_base_name(self, name):
         """
-<<<<<<< HEAD
-        Extracts the base name, considering the condition of four characters and spaces. If the word has fewer than 4 characters, it uses the first word.
-        """
-        cleaned_name = name.replace(" ", "")
-        if len(cleaned_name) < 4:
-            return name.split(' ')[0]
-        else:
-            return cleaned_name[:4]
-
-    def collect_blueprints_info(self):
-        """
-        Gathers information about projects (blueprints) and groups them by the first four characters of the name, ignoring spaces. Excludes entries with 0 devices. Then writes the collected information to a file.
-=======
         Извлекает базовое имя, учитывая условие с четырьмя символами и пробелами.
         Если в слове меньше 4 символов, использует первое слово.
         """
@@ -312,7 +281,6 @@ class Login_Kanji(Base, Databricks):
         Собирает информацию о проектах (blueprints) и группирует их по первым четырем символам имени без учета пробелов.
         Исключает записи с 0 устройствами.
         Затем записывает собранную информацию в файл.
->>>>>>> 51a303e (Initial commit)
         """
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".bl-blueprint-list__item"))
@@ -332,20 +300,13 @@ class Login_Kanji(Base, Databricks):
             base_name = self.extract_base_name(name)
             if base_name in blueprints_info:
                 blueprints_info[base_name]['device_count'] += device_count
-<<<<<<< HEAD
-
-=======
                 # Обновляем название, если новое название длиннее предыдущего
->>>>>>> 51a303e (Initial commit)
                 if len(name.replace(" ", "")) > len(blueprints_info[base_name]['name'].replace(" ", "")):
                     blueprints_info[base_name]['name'] = name
             else:
                 blueprints_info[base_name] = {'name': name, 'device_count': device_count}
 
-<<<<<<< HEAD
-=======
         # Сохраняем информацию в файл
->>>>>>> 51a303e (Initial commit)
         file_path = '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Admin_pages/Kanji_devices_Admin'
         with open(file_path, 'w') as file:
             for info in blueprints_info.values():
@@ -358,21 +319,12 @@ class Login_Kanji(Base, Databricks):
     def Kanji(self):
         with allure.step("Log In Kanji"):
             Logger.add_start_step(method='VALID_authorization')
-<<<<<<< HEAD
-        self.driver.get(self.url_Kanji)
-        self.click_login()
-        self.click_google()
-        self.input_login(self.my_accaunt)
-        self.click_next()
-        self.input_password(self.my_password)
-=======
         self.driver.get(self.url)
         self.click_login()
         self.click_google()
         self.input_login("nikita.barshchuk@voyceglobal.com")
         self.click_next()
         self.input_password("Gomynkyl165432_#")
->>>>>>> 51a303e (Initial commit)
         self.click_next2()
         time.sleep(10)
         self.click_blueprint()
@@ -388,17 +340,11 @@ class Login_Kanji(Base, Databricks):
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".react-bs-container-body .table tbody tr"))
             )
 
-<<<<<<< HEAD
-            file_path = os.path.join(
-                '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/customer_pages/Kanji_devices')
-
-=======
             # Путь к файлу
             file_path = os.path.join(
                 '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/customer_pages/Kanji_devices')
 
             # Открываем файл для записи
->>>>>>> 51a303e (Initial commit)
             with open(file_path, 'w') as file:
                 for row in rows:
                     try:
@@ -410,14 +356,6 @@ class Login_Kanji(Base, Databricks):
                             EC.presence_of_element_located((By.CSS_SELECTOR, "td:nth-child(7) span"))
                         ).get_attribute('title').strip()
 
-<<<<<<< HEAD
-                        line = f"Device Name: {device_name}, Serial Number: {serial_number}\n"
-
-                        file.write(line)
-
-                    except Exception as e:
-                        print(f"It was not possible to extract data for the line: {row.text}.Error: {e}")
-=======
                         # Формируем строку с данными
                         line = f"Device Name: {device_name}, Serial Number: {serial_number}\n"
 
@@ -426,4 +364,3 @@ class Login_Kanji(Base, Databricks):
 
                     except Exception as e:
                         print(f"Не удалось извлечь данные для строки: {row.text}. Ошибка: {e}")
->>>>>>> 51a303e (Initial commit)

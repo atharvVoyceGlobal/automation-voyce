@@ -13,15 +13,9 @@ from base.base_class import Base
 from database.Database import Database, assert_equal
 from database.Databricks import Databricks
 from customer_pages.Graph_c import Graphs
-<<<<<<< HEAD
-from ev import EV
-
-class Widjets(Graphs, EV):
-=======
 
 
 class Widjets(Graphs):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -717,11 +711,7 @@ class Widjets(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-<<<<<<< HEAD
-        print(f"The center of the element is on the coordinates x: {x_center}, y: {y_center}")
-=======
         print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
->>>>>>> 51a303e (Initial commit)
         return x_center, y_center
 
     def click_calls_f(self):
@@ -1293,7 +1283,3 @@ class Widjets(Graphs):
                 self.assert_word111(self.get_min_used().text, minutes_used)
                 self.assert_word111(self.get_avg_call_lenght_mins().text, avg_call_length_mins)
                 self.compare_data_for_periods()
-<<<<<<< HEAD
-#
-=======
->>>>>>> 51a303e (Initial commit)

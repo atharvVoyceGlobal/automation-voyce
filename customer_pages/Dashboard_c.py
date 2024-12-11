@@ -18,15 +18,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime, timedelta
 from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
-<<<<<<< HEAD
-from ev import EV
-
-class Dashboard(Graphs, EV):
-=======
 
 
 class Dashboard(Graphs):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -736,11 +730,7 @@ class Dashboard(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-<<<<<<< HEAD
-        print(f"The center of the element is on the coordinates x: {x_center}, y: {y_center}")
-=======
         print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
->>>>>>> 51a303e (Initial commit)
         return x_center, y_center
 
     def click_calls_f(self):
@@ -965,11 +955,7 @@ class Dashboard(Graphs):
         # Выполнение действия перетаскивания
         actions.click_and_hold(scrollbar).move_by_offset(600, 0).release().perform()
 
-<<<<<<< HEAD
-        print("The slider is scrolled")
-=======
         print("Ползунок прокручен")
->>>>>>> 51a303e (Initial commit)
 
     def input_start_time(self, language):
         self.get_start_time().send_keys(language)
@@ -1036,11 +1022,7 @@ class Dashboard(Graphs):
 
     def scroll_to_bottom(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-<<<<<<< HEAD
-        print("Scrolling to the bottom of the page is performed")
-=======
         print("Прокрутка до нижней части страницы выполнена")
->>>>>>> 51a303e (Initial commit)
 
     def click_lang_f_Spanish(self):
         first_company = self.get_lang_f_Spanish()
@@ -1254,11 +1236,7 @@ class Dashboard(Graphs):
             end_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
         if start_date is None or end_date is None:
-<<<<<<< HEAD
-            raise ValueError(f"Unknown time period: {time_period}")
-=======
             raise ValueError(f"Неизвестный временной период: {time_period}")
->>>>>>> 51a303e (Initial commit)
 
         return start_date.strftime('%Y-%m-%dT%H:%M:%S.000Z'), end_date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
@@ -1298,11 +1276,7 @@ class Dashboard(Graphs):
         token = self.get_token_from_session_storage()
 
         if not token:
-<<<<<<< HEAD
-            raise Exception("Failed to get a token from SessionStorage")
-=======
             raise Exception("Не удалось получить токен из sessionStorage")
->>>>>>> 51a303e (Initial commit)
 
         url = 'https://api.staging.vip.voyceglobal.com/agg-by-client/hour/language'
         headers = {
@@ -1332,11 +1306,7 @@ class Dashboard(Graphs):
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code != 200:
-<<<<<<< HEAD
-            raise Exception(f"Data obtaining error.Status Code: {Response.status_code}.")
-=======
             raise Exception(f"Ошибка получения данных. Код статуса: {response.status_code}.")
->>>>>>> 51a303e (Initial commit)
         return response.json()
 
     def languages_by_hour_periods(self, time_period):
@@ -1344,11 +1314,7 @@ class Dashboard(Graphs):
         token = self.get_token_from_session_storage()
 
         if not token:
-<<<<<<< HEAD
-            raise Exception("Failed to get a token from SessionStorage")
-=======
             raise Exception("Не удалось получить токен из sessionStorage")
->>>>>>> 51a303e (Initial commit)
 
         url = 'https://api.staging.vip.voyceglobal.com/agg-by-client/language/hour'
         headers = {
@@ -1377,20 +1343,11 @@ class Dashboard(Graphs):
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code != 200:
-<<<<<<< HEAD
-            raise Exception(f"Data obtaining error.Status Code: {Response.status_code}.")
-=======
             raise Exception(f"Ошибка получения данных. Код статуса: {response.status_code}.")
->>>>>>> 51a303e (Initial commit)
         print(start_date)
         print(end_date)
         return response.json()
 
-<<<<<<< HEAD
-#
-=======
-
->>>>>>> 51a303e (Initial commit)
     def dashboard_check(self):
         with allure.step("Cheking Top 5 languages"):
             Logger.add_start_step(method='Top 5 languages TEST')

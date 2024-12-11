@@ -2,23 +2,10 @@ import os
 import time
 import allure
 import json
-<<<<<<< HEAD
-import os
-import pytest
-import allure
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options
-=======
->>>>>>> 51a303e (Initial commit)
 import random
 import string
 import pytest
 from selenium import webdriver
-<<<<<<< HEAD
-from selenium.webdriver import DesiredCapabilities
-=======
->>>>>>> 51a303e (Initial commit)
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import WebDriverException
@@ -29,11 +16,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from Admin_pages.Create_an_account import Create_Account
 from customer_pages.login_c_page import Login_c_page
-<<<<<<< HEAD
-from selenium.webdriver.chrome.options import Options
-from selenium import webdriver
-=======
->>>>>>> 51a303e (Initial commit)
 from customer_pages.forgot_c_password import Forgot_password
 from customer_pages.Role_c import Client_page
 from customer_pages.Edit_c_user import Edit_AAD_DELETE_user
@@ -46,10 +28,6 @@ from customer_pages.Device_usage_NM_C import Device_usage_NM
 from customer_pages.Kanji import Login_Kanji
 from customer_pages.Activity_monitor import Activity_monitor
 from customer_pages.Interpreter_Dashboard_c import Interpreter_Dashboard
-<<<<<<< HEAD
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-=======
->>>>>>> 51a303e (Initial commit)
 from customer_pages.Transaction_page_c import Transaction_page
 from customer_pages.Dashboard_c import Dashboard
 from customer_pages.Widjets_test import Widjets
@@ -59,78 +37,12 @@ from customer_pages.Device_usage_Yale_C import Device_usage_Yale
 import allure
 import pytest
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
-import shutil
-import chromedriver_autoinstaller
-from ev import EV
-=======
-
->>>>>>> 51a303e (Initial commit)
 
 def generate_random_id(length=7):
     # Генерация случайной строки из букв и цифр
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-<<<<<<< HEAD
-@pytest.fixture(scope="session")
-def driver():
-    # Удалить папку с драйверами перед установкой
-    chromedriver_dir = os.path.expanduser("~/.wdm")
-    if os.path.exists(chromedriver_dir):
-        shutil.rmtree(chromedriver_dir)
-
-    # Автоматическая установка ChromeDriver
-    chromedriver_autoinstaller.install()
-
-    chrome_options = Options()
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-background-timer-throttling")
-    chrome_options.add_argument("--disable-backgrounding-occluded-windows")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-software-rasterizer")
-    # chrome_options.add_argument("--headless=new")  # Включение headless режима
-
-    driver = webdriver.Chrome(options=chrome_options)
-    pid = driver.service.process.pid  # Получение PID процесса драйвера
-
-    os.system(f'echo {EV.my_password1} | sudo -S renice -n -10 -p {pid}')
-
-    yield driver
-    driver.quit()
-
-
-# @pytest.fixture
-# def driver():
-#     chrome_options = Options()
-#     chrome_options.add_argument("--disable-gpu")
-#     chrome_options.add_argument("--no-sandbox")
-#     chrome_options.add_argument("--disable-extensions")
-
-#     driver_service = ChromeService(executable_path='/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chromedriver')
-#     chrome_options.binary_location = '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chrome/mac_arm-130.0.6723.58/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
-#     driver = webdriver.Chrome(service=driver_service, options=chrome_options)
-#     pid = driver.service.process.pid  # Получение PID процесса драйвера
-
-#     # Выполнение команды с вводом пароля
-#     os.system(f'echo {EV.my_password1} | sudo -S renice -n -10 -p {pid}')
-
-#     yield driver
-#     driver.quit()
-
-
-# Добавь фикстуру в класс
-@pytest.mark.usefixtures("driver")
-@allure.feature("Testing the administrative interface for VIP customers")
-@allure.story("VIP Admin Test")
-class TestVIPCustomer:
-
-    @allure.description("VIP Customer TEST")
-    @pytest.mark.run(order=1)
-    def test_customer_VIP(self, driver):
-=======
 class TestVIPCustomer:
     @allure.description("VIP Costumer TEST")
     @pytest.mark.run(order=1)
@@ -145,7 +57,6 @@ class TestVIPCustomer:
             executable_path='/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chromedriver')  # Укажи путь к chromedriver
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
 
->>>>>>> 51a303e (Initial commit)
         steps = [
             self.perform_activity_monitor,
             self.perform_nvp_authorization,
@@ -155,19 +66,6 @@ class TestVIPCustomer:
             # self.perform_edit_user,
             # self.perform_add_user,
             # self.perform_check_company_authorization,
-<<<<<<< HEAD
-            # self.perform_invoice_page_check,
-            # self.perform_language_report,
-            # self.perform_audio_vs_video_report,
-            # self.perform_kanji_login,
-            # self.perform_device_usage_page,
-            # self.perform_device_usage_nm_page,
-            # self.perform_device_usage_Yale_page,
-            # self.perform_interpreter_dashboard,
-            # self.perform_transaction_page_test,
-            # self.perform_dashboard_check,
-            # self.perform_widgets_check
-=======
             self.perform_invoice_page_check,
             self.perform_language_report,
             self.perform_audio_vs_video_report,
@@ -179,7 +77,6 @@ class TestVIPCustomer:
             self.perform_transaction_page_test,
             self.perform_dashboard_check,
             self.perform_widgets_check
->>>>>>> 51a303e (Initial commit)
         ]
 
         for step in steps:
@@ -219,19 +116,10 @@ class TestVIPCustomer:
         rp2 = Replace_password2(driver)
         rp2.Forgot_PD2()
         login.authorizationCOOK2()
-<<<<<<< HEAD
-
-
-    @allure.step("Checking Client Page")
-    def perform_client_page(self, driver):
-        login = Login_c_page(driver)
-        login.authorization()
-=======
         login.authorization()
 
     @allure.step("Checking Client Page")
     def perform_client_page(self, driver):
->>>>>>> 51a303e (Initial commit)
         role = Client_page(driver)
         role.client_page()
 

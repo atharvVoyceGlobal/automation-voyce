@@ -695,11 +695,7 @@ class Activity_monitor(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-<<<<<<< HEAD
-        print(f"The center of the element is on the coordinates x: {x_center}, y: {y_center}")
-=======
         print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
->>>>>>> 51a303e (Initial commit)
         return x_center, y_center
 
     def click_calls_f(self):
@@ -990,11 +986,7 @@ class Activity_monitor(Graphs):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-<<<<<<< HEAD
-        print("List of languages ​​from the web page:", languages)
-=======
         print("Список языков с веб-страницы:", languages)
->>>>>>> 51a303e (Initial commit)
 
         return languages
 
@@ -1003,21 +995,13 @@ class Activity_monitor(Graphs):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-<<<<<<< HEAD
-            error_message = "Filter is not working. \ Nras: \ n"
-=======
             error_message = "Filter is not working.\nРазличия:\n"
->>>>>>> 51a303e (Initial commit)
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-<<<<<<< HEAD
-                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
-=======
                     error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
->>>>>>> 51a303e (Initial commit)
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -1082,11 +1066,6 @@ class Activity_monitor(Graphs):
                         # Проверяем, есть ли данные в 13-й ячейке
                     })
                 print(f"{target_language}")
-<<<<<<< HEAD
-                print("WEB_SITE_DATA:", website_data)
-
-=======
->>>>>>> 51a303e (Initial commit)
             else:
                 print("None Language")
 
@@ -1111,106 +1090,24 @@ class Activity_monitor(Graphs):
                 print(f"Not enough cells in the row to extract data: {row.text}")
         return column_data
 
-<<<<<<< HEAD
-    def is_equivalent_service_minutes(self, db_minutes, web_minutes):
-        # Ваша логика для проверки эквивалентности service_minutes
-        return db_minutes == web_minutes
-
-    def compare_data_am_t(self, web_data, db_data):
-        if db_data is None:
-            raise ValueError("db_data cannot be none")
-
-        discrepancies = []
-        found_matches = False  # Флаг для отслеживания наличия совпадений
-
-        for web_row in web_data:
-            # Пропускаем строки с пустым TransactionID
-            if not web_row["TransactionID"]:
-                continue
-
-            # Печать каждой строки web_data для отладки
-            print(f"Web Data Row: {web_row}")
-
-=======
     def compare_data_am_t(self, web_data, db_data):
         if db_data is None:
             raise ValueError("db_data не может быть None")
 
         discrepancies = []
         for web_row in web_data:
->>>>>>> 51a303e (Initial commit)
             db_row = next((item for item in db_data if str(item.ReferenceTransactionId) == web_row["TransactionID"]),
                           None)
 
             if db_row:
-<<<<<<< HEAD
-                found_matches = True  # Установить флаг, если найдено совпадение
-                # Печать строки db_data для соответствующей строки web_data
-                print(f"DB Data Row: {db_row}")
-
-                print(f"Comparing for TransactionID: {web_row['TransactionID']}")
-                print(f"ProductName: DB({db_row.RequestProductName}) vs Web({web_row['ProductName']})")
                 if db_row.RequestProductName != web_row["ProductName"]:
                     discrepancies.append(
                         f"Discrepancy for {web_row['TransactionID']}: ProductName DB({db_row.RequestProductName}) != Web({web_row['ProductName']})")
-
-                print(f"RequestDate: DB({db_row.Date.strftime('%Y-%m-%d')}) vs Web({web_row['RequestDate']})")
-=======
-                if db_row.RequestProductName != web_row["ProductName"]:
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: ProductName DB({db_row.RequestProductName}) != Web({web_row['ProductName']})")
->>>>>>> 51a303e (Initial commit)
                 if db_row.Date.strftime('%Y-%m-%d') != web_row["RequestDate"]:
                     discrepancies.append(
                         f"Discrepancy for {web_row['TransactionID']}: RequestDate DB({db_row.Date.strftime('%Y-%m-%d')}) != Web({web_row['RequestDate']})")
 
                 db_time = datetime.strptime(db_row.ExtractedTime, '%H:%M:%S')
-<<<<<<< HEAD
-                db_time_adjusted = db_time - timedelta(hours=4)  # Вычитаем 4 часа
-                web_time = datetime.strptime(web_row["RequestTime"], '%H:%M:%S')
-
-                print(f"RequestTime: DB({db_time_adjusted.strftime('%H:%M:%S')}) vs Web({web_row['RequestTime']})")
-                if db_time_adjusted.time() != web_time.time():
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: RequestTime DB({db_time_adjusted.strftime('%H:%M:%S')}) != Web({web_row['RequestTime']})")
-
-                print(f"ClientName: DB({db_row.ClientName}) vs Web({web_row['ClientName']})")
-                if db_row.ClientName != web_row["ClientName"]:
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: ClientName DB({db_row.ClientName}) != Web({web_row['ClientName']})")
-
-                print(f"TargetLanguage: DB({db_row.TargetLanguage}) vs Web({web_row['TargetLanguage']})")
-                if db_row.TargetLanguage != web_row["TargetLanguage"]:
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: TargetLanguage DB({db_row.TargetLanguage}) != Web({web_row['TargetLanguage']})")
-
-                print(f"AudioVideo: DB({db_row.VideoOption.lower()}) vs Web({web_row['AudioVideo'].lower()})")
-                if db_row.VideoOption.lower() != web_row["AudioVideo"].lower():
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: AudioVideo DB({db_row.VideoOption}) != Web({web_row['AudioVideo']})")
-
-                print(f"Status: DB({db_row.Status}) vs Web({web_row['Status']})")
-                if db_row.Status != web_row["Status"]:
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: Status DB({db_row.Status}) != Web({web_row['Status']})")
-
-                print(f"WaitingSeconds: DB({db_row.WaitingSeconds}) vs Web({web_row['WaitingSeconds']})")
-                if str(db_row.WaitingSeconds) != web_row["WaitingSeconds"]:
-                    discrepancies.append(
-                        f"Discrepancy for {web_row['TransactionID']}: WaitingSeconds DB({db_row.WaitingSeconds}) != Web({web_row['WaitingSeconds']})")
-
-                print(f"ServiceMinutes: DB({db_row.ServiceMinutes}) vs Web({web_row['ServiceMinutes']})")
-                # Игнорируем расхождения, если db_row.ServiceMinutes == None или 0 и web_row["ServiceMinutes"] == "-"
-                if (db_row.ServiceMinutes is None or db_row.ServiceMinutes == 0) and web_row["ServiceMinutes"] == "-":
-                    pass
-                else:
-                    if str(db_row.ServiceMinutes) != web_row["ServiceMinutes"]:
-                        discrepancies.append(
-                            f"Discrepancy for {web_row['TransactionID']}: ServiceMinutes DB({db_row.ServiceMinutes if db_row.ServiceMinutes is not None else '-'}) != Web({web_row['ServiceMinutes']})")
-            else:
-                print(f"No matching record found in DB for TransactionID: {web_row['TransactionID']}")
-                discrepancies.append(f"No matching record found in DB for TransactionID: {web_row['TransactionID']}")
-=======
                 db_time_adjusted = db_time - timedelta(hours=4)  # Вычитаем 5 часов
                 web_time = datetime.strptime(web_row["RequestTime"], '%H:%M:%S')
 
@@ -1235,23 +1132,13 @@ class Activity_monitor(Graphs):
                 if not is_equivalent_service_minutes(db_row.ServiceMinutes, web_row["ServiceMinutes"]):
                     discrepancies.append(
                         f"Discrepancy for {web_row['TransactionID']}: ServiceMinutes DB({db_row.ServiceMinutes if db_row.ServiceMinutes is not None else '-'}) != Web({web_row['ServiceMinutes']})")
->>>>>>> 51a303e (Initial commit)
 
         if discrepancies:
             for discrepancy in discrepancies:
                 print(discrepancy)
             raise AssertionError("Discrepancies were found during the data comparison.")
         else:
-<<<<<<< HEAD
-            if not found_matches:
-                print("No matching records found at all.")
-            else:
-                print("No discrepancies found.")
-
-
-=======
             print("No discrepancies found.")
->>>>>>> 51a303e (Initial commit)
 
     def fetch_api_data(self):
         token = self.get_token_from_session_storage()
@@ -1321,10 +1208,6 @@ class Activity_monitor(Graphs):
                 })
             else:
                 print(f"Not enough cells in the row to extract data: {row.text}")
-<<<<<<< HEAD
-        print("WebSITE", website_data)
-=======
->>>>>>> 51a303e (Initial commit)
         return website_data
 
     def compare_data_dashboard_DB(self, website_data, db_data):
@@ -1740,11 +1623,7 @@ class Activity_monitor(Graphs):
         # Выполнение клика с помощью JavaScript
         self.driver.execute_script("arguments[0].click();", element_to_click)
 
-<<<<<<< HEAD
-        print("Click on the element using JavaScript")
-=======
         print("Выполнен клик на элемент с помощью JavaScript")
->>>>>>> 51a303e (Initial commit)
 
     def extract_column_names(self, xpath):
         elements = WebDriverWait(self.driver, 10).until(
@@ -1885,11 +1764,7 @@ class Activity_monitor(Graphs):
         # Выполнение действия перетаскивания
         actions.click_and_hold(scrollbar).move_by_offset(600, 0).release().perform()
 
-<<<<<<< HEAD
-        print("The slider is scrolled")
-=======
         print("Ползунок прокручен")
->>>>>>> 51a303e (Initial commit)
 
     def move_to_element_and_click(self):
         # Ожидание появления элемента и получение его
@@ -1904,11 +1779,7 @@ class Activity_monitor(Graphs):
         # Перемещение к элементу и клик
         actions.move_to_element(element_to_click).click().perform()
 
-<<<<<<< HEAD
-        print("The mouse cursor was moved to the element, and a click was made")
-=======
         print("Курсор мыши был перемещен на элемент, и был выполнен клик")
->>>>>>> 51a303e (Initial commit)
 
     def compare_records_cvs(self, csv_record, web_record):
         keys_to_compare = {
@@ -1930,12 +1801,6 @@ class Activity_monitor(Graphs):
             "SerialNumber": "IOSSerialNumber",
             "ClientUserName": "UserName"
         }
-<<<<<<< HEAD
-        39617924
-        1106763
-=======
-
->>>>>>> 51a303e (Initial commit)
         def format_value(value):
             if isinstance(value, str):
                 value = value.strip()
@@ -1961,11 +1826,7 @@ class Activity_monitor(Graphs):
         second_element_xpath = "//*[@id='root']/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr"
 
         first_column_names = self.extract_column_names(first_element_xpath)
-<<<<<<< HEAD
-        print("The first set of speakers:", first_column_names)
-=======
         print("Первый набор имен колонок:", first_column_names)
->>>>>>> 51a303e (Initial commit)
 
         self.click_ok()  # Предполагая, что метод click_ok() уже определен в классе
         self.driver.execute_script("document.body.style.zoom='50%'")
@@ -1974,11 +1835,7 @@ class Activity_monitor(Graphs):
         time.sleep(10)  # Пример задержки, настраивается по необходимости
 
         second_column_names = self.extract_column_names(second_element_xpath)
-<<<<<<< HEAD
-        print("The second set of speakers:", second_column_names)
-=======
         print("Второй набор имен колонок:", second_column_names)
->>>>>>> 51a303e (Initial commit)
 
         # Обработка специального случая, когда отсутствует перенос строки
         first_column_names = self.adjust_column_names(first_column_names)
@@ -1999,11 +1856,6 @@ class Activity_monitor(Graphs):
             else:
                 adjusted_names.append(name)
         return adjusted_names
-<<<<<<< HEAD
-#
-=======
-
->>>>>>> 51a303e (Initial commit)
     def Activity_monitor(self):
         with allure.step("Activity Monitor"):
             Logger.add_start_step(method='Activity Monitor')
@@ -2362,11 +2214,7 @@ class Activity_monitor(Graphs):
             time.sleep(3)
             self.driver.refresh()
             time.sleep(15)
-<<<<<<< HEAD
-            web_data = self.fetch_website_data_am()
-=======
             web_data = self.fetch_website_data_am1()
->>>>>>> 51a303e (Initial commit)
             db_data = self.query_activity_m()
             self.compare_data_am_t(web_data, db_data)
             self.driver.refresh()
@@ -2376,11 +2224,7 @@ class Activity_monitor(Graphs):
             website_data = self.fetch_website_data_am1()
             time.sleep(5)
             result_s, language_s = self.check_language_sorted_S(website_data)
-<<<<<<< HEAD
-            assert result_s, "Error: Data does not correspond to Spanish"
-=======
             assert result_s, "Ошибка: данные не соответствуют языку Spanish"
->>>>>>> 51a303e (Initial commit)
 
             # Клик по фильтру ASL и проверка данных
             self.click_lang_f_ASL()
@@ -2388,11 +2232,7 @@ class Activity_monitor(Graphs):
             website_data = self.fetch_website_data_am1()
             time.sleep(5)
             result_asl, language_asl = self.check_language_sorted_ASL(website_data)
-<<<<<<< HEAD
-            assert result_asl, "Error: Data does not match the ASL language"
-=======
             assert result_asl, "Ошибка: данные не соответствуют языку ASL"
->>>>>>> 51a303e (Initial commit)
 
             # Клик по фильтру LOTS (языки, отличные от Spanish и ASL) и проверка данных
             self.click_lang_f_LOTS()
@@ -2400,11 +2240,7 @@ class Activity_monitor(Graphs):
             website_data = self.fetch_website_data_am1()
             time.sleep(5)
             result_lots, excluded_languages_lots = self.check_language_sorted_LOTS(website_data)
-<<<<<<< HEAD
-            assert result_lots, "Error: Data corresponds to Spanish or ASL languages"
-=======
             assert result_lots, "Ошибка: данные соответствуют языкам Spanish или ASL"
->>>>>>> 51a303e (Initial commit)
             self.driver.refresh()
             time.sleep(20)
             self.click_download_b()
@@ -2529,39 +2365,24 @@ class Activity_monitor(Graphs):
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-<<<<<<< HEAD
-                print(f"The download folder does not exist: {download_folder}")
-=======
                 print(f"Папка скачивания не существует: {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-<<<<<<< HEAD
-                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
-=======
                 print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
->>>>>>> 51a303e (Initial commit)
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-<<<<<<< HEAD
-            print(f"The file {latest_file} was moved to {target_file}")
-            return target_file
-        except Exception as e:
-            print(f"Error when moving the file: {e}")
-=======
             print(f"Файл {latest_file} был перемещен в {target_file}")
             return target_file
         except Exception as e:
             print(f"Ошибка при перемещении файла: {e}")
->>>>>>> 51a303e (Initial commit)
             return None
 
     def fetch_column_data(self, column_index):

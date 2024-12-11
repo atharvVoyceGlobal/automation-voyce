@@ -63,15 +63,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
 from database.Database import Database
 from utilities.logger import Logger
-<<<<<<< HEAD
-from ev import EV
-
-class Qa_hud(Graphs, EV):
-=======
 
 
 class Qa_hud(Graphs):
->>>>>>> 51a303e (Initial commit)
 
     def __init__(self, driver, time_zone='America/New_York'):
         Graphs.__init__(self, driver)
@@ -1576,8 +1570,6 @@ class Qa_hud(Graphs):
             self.match_data_F_DB(pdata, tdata)
 
 
-<<<<<<< HEAD
-=======
 # def run_authorization(driver, url, login, password):
 #     try:
 #         driver.get(url)
@@ -1665,4 +1657,3 @@ if __name__ == "__main__":
 
 # Основная функция для запуска тестов
 #
->>>>>>> 51a303e (Initial commit)
