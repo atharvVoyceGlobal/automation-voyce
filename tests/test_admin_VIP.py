@@ -14,7 +14,6 @@ from Admin_pages.Client_page import Client_page
 from Admin_pages.finish_screenshot import Finish_screen
 from Admin_pages.edit_user import Edit_AAD_DELETE_user
 from Admin_pages.Devices_check import Devices_Check
-from playwright.sync_api import sync_playwright
 from Admin_pages.Transaction_page_Admin import Transaction_page_A
 import allure
 import pytest
