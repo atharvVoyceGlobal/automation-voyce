@@ -9,78 +9,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options
 import threading
 from selenium.common.exceptions import TimeoutException
+from ev import EV
 
-users = [
-    {'Email': 'adam1.worman@voyceglobal.com'},
-    {'Email': 'adriana1.quintero@voyceglobal.com'},
-    {'Email': 'aldo1.lorenzo@voyceglobal.com'},
-    {'Email': 'ana1.maria.mejia@voyceglobal.com'},
-    {'Email': 'aurelio1.adames@voyceglobal.com'},
-    {'Email': 'autumn1.adams@voyceglobal.com'},
-    {'Email': 'axelle1.augustin@voyceglobal.com'},
-    {'Email': 'byron1.miller@voyceglobal.com'},
-    {'Email': 'carlos1.alvarado@voyceglobal.com'},
-    {'Email': 'carrie1.chen@voyceglobal.com'},
-    {'Email': 'cecilia1.baqueiro@voyceglobal.com'},
-    {'Email': 'christian1.cantabrana@voyceglobal.com'},
-    {'Email': 'juan.carrillo@voyceglobal.com'},
-    {'Email': 'claudia1.altamirano@voyceglobal.com'},
-    {'Email': 'dania1.juarez@voyceglobal.com'},
-    {'Email': 'daniel1.pirestani@voyceglobal.com'},
-    {'Email': 'daniela1.rodriguez@voyceglobal.com'},
-    {'Email': 'debela1.chali@voyceglobal.com'},
-    {'Email': 'ehno1.paw@voyceglobal.com'},
-    {'Email': 'elizabeth1.rosas@voyceglobal.com'},
-    {'Email': 'elzebir1.delcid@voyceglobal.com'},
-    {'Email': 'ghada1.mohsen@voyceglobal.com'},
-    {'Email': 'gloria1.alvarez@voyceglobal.com'},
-    {'Email': 'jean1.sarlat@voyceglobal.com'},
-    {'Email': 'jeremy1.waiser@voyceglobal.com'},
-    {'Email': 'jessica1.pollock@voyceglobal.com'},
-    {'Email': 'jonathan1.scott@voyceglobal.com'},
-    {'Email': 'juan1.carrillo@voyceglobal.com'},
-    {'Email': 'adam.worman@voyceglobal.com'},
-    {'Email': 'adriana.quintero@voyceglobal.com'},
-    {'Email': 'aldo.lorenzo@voyceglobal.com'},
-    {'Email': 'ana.maria.mejia@voyceglobal.com'},
-    {'Email': 'aurelio.adames@voyceglobal.com'},
-    {'Email': 'autumn.adams@voyceglobal.com'},
-    {'Email': 'axelle.augustin@voyceglobal.com'},
-    {'Email': 'byron.miller@voyceglobal.com'},
-    {'Email': 'carlos.alvarado@voyceglobal.com'},
-    {'Email': 'carrie.chen@voyceglobal.com'},
-    {'Email': 'cecilia.baqueiro@voyceglobal.com'},
-    {'Email': 'christian.cantabrana@voyceglobal.com'},
-    {'Email': 'maria1.rivera@voyceglobal.com'},
-    {'Email': 'claudia.altamirano@voyceglobal.com'},
-    {'Email': 'dania.juarez@voyceglobal.com'},
-    {'Email': 'daniel.pirestani@voyceglobal.com'},
-    {'Email': 'daniela.rodriguez@voyceglobal.com'},
-    {'Email': 'debela.chali@voyceglobal.com'},
-    {'Email': 'ehno.paw@voyceglobal.com'},
-    {'Email': 'kevin.sillas@voyceglobal.com'},
-    {'Email': 'martin1.cedeno@voyceglobal.com'},
-    {'Email': 'matthew1.dong@voyceglobal.com'},
-    {'Email': 'mauricio1.iragorri@voyceglobal.com'},
-    {'Email': 'mayra1.morante@voyceglobal.com'},
-    {'Email': 'mesac1.cleus@voyceglobal.com'},
-    {'Email': 'monitordisplay1.@weyimobile.com'},
-    {'Email': 'naing1.ayar@voyceglobal.com'},
-    {'Email': 'natalia1.schell@voyceglobal.com'},
-    {'Email': 'ning1.hu@voyceglobal.com'},
-    {'Email': 'okon1.gordon@voyceglobal.com'},
-    {'Email': 'olga1.bedoya@voyceglobal.com'},
-    {'Email': 'pascal1.concepcion@voyceglobal.com'},
-    {'Email': 'patrick1.faroul@voyceglobal.com'},
-    {'Email': 'paula1.cassiano@voyceglobal.com'},
-    {'Email': 'christian1.gloverwilson@voyceglobal.com'},
-    {'Email': 'kevin1.sillas@voyceglobal.com'},
-    {'Email': 'laura1.keylon@voyceglobal.com'},
-    {'Email': 'leidy1.ocampo@voyceglobal.com'},
-    {'Email': 'maria1.belen@voyceglobal.com'},
-    {'Email': 'maria1.jalil@voyceglobal.com'},
-    {'Email': 'marianne1.bustamante@voyceglobal.com'}
-]
+
 
 response_times = []
 
@@ -191,7 +122,8 @@ def test_parallel_authorizations():
     """Запуск многопоточной авторизации."""
     url = 'https://staging.admin.vip.voyceglobal.com/auth/login'
     password = 'Admin@2'
-    driver_path = '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chromedriver'
+    driver_path = '/chromedriver'
+    users = EV.users
 
     threads = []
     for i, user in enumerate(users):

@@ -19,7 +19,6 @@ import shutil
 import time
 import re
 import pytz
-import pyautogui
 import os
 import glob
 import csv
@@ -52,7 +51,7 @@ from datetime import timezone
 
 import allure
 import numpy as np
-import pyautogui
+
 from selenium.common import StaleElementReferenceException, NoSuchElementException, TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
@@ -63,9 +62,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
 from database.Database import Database
 from utilities.logger import Logger
+from ev import EV
 
-
-class Qa_hud(Graphs):
+class Qa_hud(Graphs, EV):
 
     def __init__(self, driver, time_zone='America/New_York'):
         Graphs.__init__(self, driver)
@@ -1570,90 +1569,3 @@ class Qa_hud(Graphs):
             self.match_data_F_DB(pdata, tdata)
 
 
-# def run_authorization(driver, url, login, password):
-#     try:
-#         driver.get(url)
-#         WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "email"))).send_keys(login)
-#         WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "password"))).send_keys(password)
-#         WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//button[text()="Sign In"]'))).click()
-#         time.sleep(10)
-#         WebDriverWait(driver, 999).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="root"]/section/aside/div/ul/li[9]/div'))).click()
-#         time.sleep(10)
-#         WebDriverWait(driver, 999).until(
-#             EC.element_to_be_clickable((By.XPATH, "//li[contains(@class, 'ant-menu-item') and .//a[text()='Quality Assurance HUD']]"))).click()
-#         time.sleep(10)
-#     finally:
-#         driver.quit()
-#
-#
-# def test_parallel_authorizations():
-#     url = 'https://staging.admin.vip.voyceglobal.com/auth/login'
-#     login = 'nikita.barshchuk'
-#     password = 'Admin@123'
-#     driver_path = '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chromedriver'
-#
-#     chrome_options = Options()
-#     service = ChromeService(executable_path=driver_path)
-#
-#     # Создание потоков для параллельного выполнения
-#     threads = []
-#     for _ in range(2):
-#         driver = webdriver.Chrome(service=service, options=chrome_options)
-#         thread = threading.Thread(target=run_authorization, args=(driver, url, login, password))
-#         threads.append(thread)
-#         thread.start()
-#
-#     for thread in threads:
-#         thread.join()
-
-
-def run_authorization(driver_path, url, login, password, xpath):
-    """Функция для выполнения авторизации и проверки результатов."""
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_experimental_option("prefs", {
-        "profile.managed_default_content_settings.images": 2,
-        "profile.default_content_setting_values.notifications": 2
-    })
-
-    service = ChromeService(executable_path=driver_path)
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    try:
-        driver.get(url)
-        WebDriverWait(driver, 999).until(EC.element_to_be_clickable((By.ID, "email"))).send_keys(login)
-        WebDriverWait(driver, 999).until(EC.element_to_be_clickable((By.ID, "password"))).send_keys(password)
-        WebDriverWait(driver, 999).until(
-            EC.element_to_be_clickable((By.XPATH, '//button[span[text()="Sign In"]]'))
-        ).click()
-
-        if not is_number_greater_than_zero(driver, xpath):
-            raise Exception("Number in the element is not greater than zero or not present")
-    finally:
-        driver.quit()
-
-
-def test_parallel_authorizations():
-    url = 'https://staging.admin.vip.voyceglobal.com/auth/login'
-    login = 'nikita.barshchuk'
-    password = 'Admin@123'
-    driver_path = '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/chromedriver'
-    xpath = '//*[@id="root"]/section/section/main/div/div[2]/div[2]/div/div[1]/div/div[2]/div/div[2]'
-
-    threads = []
-    for _ in range(20):
-        thread = threading.Thread(target=run_authorization, args=(driver_path, url, login, password, xpath))
-        threads.append(thread)
-        thread.start()
-
-    for thread in threads:
-        thread.join()
-
-
-if __name__ == "__main__":
-    test_parallel_authorizations()
-
-# Основная функция для запуска тестов
-#

@@ -11,9 +11,9 @@ from selenium.webdriver.common.keys import Keys
 import string
 import random
 from database.Database import Database, assert_equal
+from ev import EV
 
-
-class Client_page(Base, Database):
+class Client_page(Base, Database, EV):
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -234,7 +234,7 @@ class Client_page(Base, Database):
             self.click_search_e()
             self.input_email('bbb')
             self.click_search_button()
-            self.assert_word(self.get_check_email(), 'bbb@voyceglobal.com')
+            self.assert_word(self.get_check_email(), self.role_check_desc)
             self.driver.refresh()
             # self.click_search_e()
             # self.click_reset_button()
@@ -295,3 +295,4 @@ class Client_page(Base, Database):
             self.driver.refresh()
             self.click_name_filter()
 
+#

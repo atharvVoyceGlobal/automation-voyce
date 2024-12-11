@@ -23,9 +23,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 from database.Database import Database
 from database.Databricks import Databricks
 from base.base_class import Base
+from ev import EV
 
-
-class Graphs(Base, Database, Databricks):
+class Graphs(Base, Database, Databricks, EV):
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -232,9 +232,9 @@ class Graphs(Base, Database, Databricks):
                     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
                 }
                 current_utc_date = datetime.utcnow()
-                start_date = (current_utc_date - timedelta(hours=5)).strftime('%Y-%m-%dT05:00:00.000Z')
-                end_date = (current_utc_date - timedelta(hours=5) + timedelta(days=1)).strftime(
-                    '%Y-%m-%dT04:59:59.999Z')
+                start_date = (current_utc_date - timedelta(hours=4)).strftime('%Y-%m-%dT04:00:00.000Z')
+                end_date = (current_utc_date - timedelta(hours=4) + timedelta(days=1)).strftime(
+                    '%Y-%m-%dT03:59:59.999Z')
 
                 data = {
                     'filterType': 'company',
@@ -246,7 +246,7 @@ class Graphs(Base, Database, Databricks):
                 }
 
                 response = requests.post(url, headers=headers, json=data, params=params)
-                print(f"Raw API Response: {response.text}")
+                # print(f"Raw API Response: {response.text}")
                 if response.status_code != 200:
                     print(
                         f"Failed to get data from API. Status code: {response.status_code}. Response: {response.text}")
@@ -279,6 +279,8 @@ class Graphs(Base, Database, Databricks):
                         service_minutes_web = cells[2].text
                         total_calls_web = cells[3].text
 
+
+
                         if site_name == site_name_web:
                             found_site = True
                             if str(site_service_minutes) != service_minutes_web:
@@ -307,6 +309,7 @@ class Graphs(Base, Database, Databricks):
                                 serial_number_web = cells[2].text
                                 service_minutes_web = cells[3].text
                                 num_transactions_web = cells[5].text
+
 
                                 if serial_number_api == serial_number_web:
                                     found_device = True
@@ -464,7 +467,7 @@ class Graphs(Base, Database, Databricks):
         token = self.get_token_from_session_storage()
 
         if not token:
-            raise Exception("Не удалось получить токен из sessionStorage")
+            raise Exception("Failed to get a token from SessionStorage")
         url = 'https://vdmsapi.voyceglobal.com/device-informations'
         headers = {
             'accept': 'application/json, text/plain, */*',
@@ -489,7 +492,7 @@ class Graphs(Base, Database, Databricks):
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code != 200:
-            raise Exception(f"Ошибка получения данных. Код статуса: {response.status_code}.")
+            raise Exception(f"Data obtaining error.Status Code: {Response.status_code}.")
 
         blueprint_names = set()
         for device_info in response.json():
@@ -501,7 +504,7 @@ class Graphs(Base, Database, Databricks):
         token = self.get_token_from_session_storage()
 
         if not token:
-            raise Exception("Не удалось получить токен из sessionStorage")
+            raise Exception("Failed to get a token from SessionStorage")
 
         url = 'https://api.staging.vip.voyceglobal.com/agg-by-client/language/hour'
         headers = {
@@ -531,7 +534,7 @@ class Graphs(Base, Database, Databricks):
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code != 200:
-            raise Exception(f"Ошибка получения данных. Код статуса: {response.status_code}.")
+            raise Exception(f"Data obtaining error.Status Code: {Response.status_code}.")
         return response.json()
 
     def get_blueprint_name(self, blueprint_name, company_id):
@@ -568,7 +571,7 @@ class Graphs(Base, Database, Databricks):
         token = self.get_token_from_session_storage()
 
         if not token:
-            raise Exception("Не удалось получить токен из sessionStorage")
+            raise Exception("Failed to get a token from SessionStorage")
 
         url = 'https://api.staging.vip.voyceglobal.com/agg-by-client/hour/language'
         headers = {
@@ -599,7 +602,7 @@ class Graphs(Base, Database, Databricks):
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code != 200:
-            raise Exception(f"Ошибка получения данных. Код статуса: {response.status_code}.")
+            raise Exception(f"Data obtaining error.Status Code: {Response.status_code}.")
 
         return response.json()
 
@@ -612,7 +615,6 @@ class Graphs(Base, Database, Databricks):
         with allure.step("Language report compare Today's Data"):
             Logger.add_start_step(method='Language_Report_Test')
 
-            # Получение токена из sessionStorage
             session_storage = self.driver.execute_script("return JSON.stringify(sessionStorage);")
             session_storage_data = json.loads(session_storage)
             token = session_storage_data.get("token")
@@ -620,7 +622,7 @@ class Graphs(Base, Database, Databricks):
             if not token:
                 raise Exception("Failed to retrieve token from sessionStorage")
 
-            # Отправка запроса к API
+
             url = 'https://api.staging.vip.voyceglobal.com/agg-by-client/language/detail/total'
             headers = {
                 'accept': 'application/json, text/plain, */*',
@@ -783,6 +785,7 @@ class Graphs(Base, Database, Databricks):
                     f"Serviced video calls verified: API {api_row['CountSuccessVideoCalls']} == Web {web_row['ServicedVideoCalls']} - Data is correct")
 
             Logger.add_end_step(url=self.driver.current_url, method='Compare API and Web Data')
+#
     def compare_avsv_rep(self, sorted_api_data):
         with allure.step("Compare API data with Graphs data"):
             Logger.add_start_step(method='Compare API and Web Data')
@@ -860,6 +863,69 @@ class Graphs(Base, Database, Databricks):
         Logger.add_end_step(url=self.driver.current_url, method='Compare API and Web Data')
 
     def compare_devices_data_with_sql(self):
+        with allure.step("Compare Graphs data with SQL Data"):
+            print("Starting SQL data comparison...")
+
+            sql_data = self.query_get_devices_Yale()
+            if not sql_data:
+                print("No data returned from SQL query.")
+                return
+
+            print("SQL data retrieved successfully.")
+            WebDriverWait(self.driver, 30).until(
+                EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, ".ant-table-tbody > tr.ant-table-row-level-0"))
+            )
+
+            rows = self.driver.find_elements(By.CSS_SELECTOR, ".ant-table-tbody > tr.ant-table-row-level-0")
+            print(f"Number of rows retrieved from web: {len(rows)}")
+            discrepancies = []  # List to store discrepancies
+
+            for device in sql_data:
+                serial_number_sql = device.IOSSerialNumber
+                num_transactions_sql = device.TotalTransactions
+                service_minutes_sql = device.ServiceMinutes
+                found_match = False  # Set the flag to False before starting the search
+
+                for row in rows:
+                    cells = row.find_elements(By.TAG_NAME, "td")
+                    if len(cells) >= 4:
+                        serial_number_web = cells[0].text
+                        service_minutes_web = cells[1].text
+                        num_transactions_web = cells[3].text
+
+                        if serial_number_sql == serial_number_web:
+                            print(f"Comparing device: {serial_number_sql}")
+                            print(f"SQL - Transactions: {num_transactions_sql}, Minutes: {service_minutes_sql}")
+                            print(f"WEB - Transactions: {num_transactions_web}, Minutes: {service_minutes_web}")
+
+                            if str(num_transactions_sql) != num_transactions_web:
+                                discrepancies.append(
+                                    f"Number of transactions does not match for {serial_number_sql}: SQL {num_transactions_sql} != Web {num_transactions_web}")
+                            if str(service_minutes_sql) != service_minutes_web:
+                                discrepancies.append(
+                                    f"Service minutes do not match for {serial_number_sql}: SQL {service_minutes_sql} != Web {service_minutes_web}")
+                            else:
+                                print(f"Data for {serial_number_sql} is correct.")
+                                found_match = True  # Match found, set the flag to True
+                                break  # Break the current loop as the match is found
+                    else:
+                        print(f"Row does not contain enough cells: {len(cells)} found")
+
+                if not found_match:  # Check if a match was found
+                    discrepancies.append(
+                        f"Serial number {serial_number_sql} from SQL does not match any on the web page.")
+
+            # Output all found discrepancies
+            if discrepancies:
+                for discrepancy in discrepancies:
+                    print(discrepancy)
+            else:
+                print("All data matched.")
+
+
+
+    def compare_devices_data_with_sql_NM(self):
         with allure.step("Compare Graphs data with SQL Data"):
             print("Starting SQL data comparison...")
 

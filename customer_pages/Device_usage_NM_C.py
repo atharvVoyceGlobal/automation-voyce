@@ -25,9 +25,9 @@ from database.Database import Database
 import requests
 from customer_pages.Graph_c import Graphs
 from operator import itemgetter
+from ev import EV
 
-
-class Device_usage_NM(Graphs, Database):
+class Device_usage_NM(Graphs, Database, EV):
     def __init__(self, driver, elements=None):  # elements теперь необязательный параметр
         super().__init__(driver)
         Database.__init__(self)
@@ -341,7 +341,7 @@ class Device_usage_NM(Graphs, Database):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-        print("Список языков с веб-страницы:", languages)
+        print("List of languages ​​from the web page:", languages)
 
         return languages
 
@@ -350,13 +350,13 @@ class Device_usage_NM(Graphs, Database):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-            error_message = "Filter is not working.\nРазличия:\n"
+            error_message = "Filter is not working. \ Nras: \ n"
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-                    error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
+                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -572,28 +572,28 @@ class Device_usage_NM(Graphs, Database):
         # Проходимся по каждой кнопке и кликаем на нее
         for button in buttons:
             button.click()
-
+#
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-                print(f"Папка скачивания не существует: {download_folder}")
+                print(f"The download folder does not exist: {download_folder}")
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-                print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
+                print(f"Files with a template {File_pattern} were not found in the folder {download_folder}")
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-            print(f"Файл {latest_file} был перемещен в {target_file}")
+            print(f"The file {Latest_file} was moved to {target_file}")
             return target_file
         except Exception as e:
-            print(f"Ошибка при перемещении файла: {e}")
+            print(f"Error when moving the file: {e}")
             return None
 
     def device_usage_page(self):
@@ -610,26 +610,26 @@ class Device_usage_NM(Graphs, Database):
             self.click_and_check_sort()
             self.click_buttons()
             time.sleep(60)
-            # logging.info("Starting to compare data with API.")
-            # self.compare_devices_data1()
-            # logging.info("Finished comparing data with API.")
-            # logging.info("Starting to compare data with SQL.")
-            # self.compare_devices_data_with_sql()
-            # logging.info("Finished comparing data with SQL.")
-            # Logger.add_end_step(url=self.driver.current_url, method='Device_usage_NM')
-            # # # # TODO ЗДЕСЬ ОШИБКА С ФАЙЛОМ, ТАМ ТОЛЬКО ОБЩИЕ ЗНАЧЕНИЯ
-            # self.click_download_b()
-            # time.sleep(10)
-            # download_folder = "/Users/nikitabarshchuk/Downloads"
-            # target_folder = "/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads"
-            # file_pattern = "Device_Report*.xlsx"
-            # moved_file_path = self.move_latest_file(download_folder, target_folder, file_pattern)
-            #
-            # if moved_file_path:
-            #     csv_data = self.read_csv_data(moved_file_path)
-            #     website_data = self.fetch_website_data_for_devices1()
-            #     self.compare_data_cvs(website_data, csv_data)
-            # self.execute_period_comparison()  ###TODO БАГ С ДУБЛИКАТАМИ
+            logging.info("Starting to compare data with API.")
+            self.compare_devices_data1()
+            logging.info("Finished comparing data with API.")
+            logging.info("Starting to compare data with SQL.")
+            self.compare_devices_data_with_sql_NM()
+            logging.info("Finished comparing data with SQL.")
+            Logger.add_end_step(url=self.driver.current_url, method='Device_usage_NM')
+            # # # TODO ЗДЕСЬ ОШИБКА С ФАЙЛОМ, ТАМ ТОЛЬКО ОБЩИЕ ЗНАЧЕНИЯ
+            self.click_download_b()
+            time.sleep(10)
+            download_folder = "/Users/nikitabarshchuk/Downloads"
+            target_folder = "/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads"
+            file_pattern = "Device_Report*.xlsx"
+            moved_file_path = self.move_latest_file(download_folder, target_folder, file_pattern)
+
+            if moved_file_path:
+                csv_data = self.read_csv_data(moved_file_path)
+                website_data = self.fetch_website_data_for_devices1()
+                self.compare_data_cvs(website_data, csv_data)
+            self.execute_period_comparison()  ###TODO БАГ С ДУБЛИКАТАМИ
             self.click_and_check_sort1()
 
             ###TODO ДОБАВИТЬ ФИЛЬТРАЦИЮ

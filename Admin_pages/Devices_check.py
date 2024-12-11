@@ -1,7 +1,6 @@
 import time
 import re
 import allure
-import pyautogui
 from selenium.common import TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -15,9 +14,9 @@ from base.base_class import Base
 from database.Database import Database, assert_equal
 from database.Databricks import Databricks
 from customer_pages.Graph_c import Graphs
+from ev import EV
 
-
-class Devices_Check(Graphs):
+class Devices_Check(Graphs, EV):
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -28,7 +27,7 @@ class Devices_Check(Graphs):
     # Locators
 
     source_xpath = "//span[@class='ant-divider-inner-text' and text()='Total']"
-    num_of_dev = '//*[@id="root"]/section/section/main/div/div[2]/div[1]/div[1]/div/div[2]/div/div[2]/div'
+    num_of_dev = '//*[@id="root"]/section/section/main/div/div[2]/div[1]/div[1]/div[1]/div/div[2]/div/div[2]'
     dashboard_button = "//*[@id='root']/section/aside/div/ul/li[1]"
     email = "//*[@id='email']"
     submit_button = "//*[@id='root']/div/div[3]/div/div/div/div/div/form/div/div/div[2]/div/div/div/div/div/button"
@@ -713,7 +712,7 @@ class Devices_Check(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-        print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
+        print(f"Center of element X: {x_center}, Y: {y_center}")
         return x_center, y_center
 
     def click_calls_f(self):
@@ -827,10 +826,8 @@ class Devices_Check(Graphs):
         print("CLICK interpreter id")
 
     def press_return_key(self):
-        # Инициализируем экземпляр ActionChains
         actions = ActionChains(self.driver)
 
-        # Выполняем нажатие на клавишу Return
         actions.send_keys(Keys.RETURN).perform()
 
         print("Pressed the Return key")
@@ -860,10 +857,8 @@ class Devices_Check(Graphs):
         print("CLICK interpreter_name")
 
     def click_list(self):
-        # Используем CSS селектор для поиска элемента
         css_selector = "#header-container-id > div > div:nth-child(4) > div > div > span.ant-select-selection-item"
         element_to_click = self.driver.find_element(By.CSS_SELECTOR, css_selector)
-        # Выполняем клик через JavaScript
         self.driver.execute_script("arguments[0].click();", element_to_click)
         print("CLICK list")
 
@@ -874,21 +869,17 @@ class Devices_Check(Graphs):
 
     def input_company(self, company):
         try:
-            # Дожидаемся, пока элементы станут доступны для ввода
             input_elements = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".ant-select-selection-search-input"))
             )
             if len(input_elements) > 1:
-                # Обращаемся ко второму элементу списка
                 input_element = input_elements[1]
-                # Кликаем на элемент, чтобы активировать поле ввод
-                # Вводим текст
                 input_element.send_keys(company)
                 print("Input Company Name:", company)
             else:
-                print("Не найдено достаточное количество элементов для ввода.")
+                print("Not enough elements found for input.")
         except TimeoutException:
-            print("Элементы для ввода названия компании не стали доступны в течение заданного времени ожидания.")
+            print("The elements for entering the company name did not become available within the specified timeout period.")
 
     def click_last_pages(self):
         first_company = self.get_last_pages()
@@ -1117,27 +1108,23 @@ class Devices_Check(Graphs):
     # METHODS
 
     def move_cursor_and_click_with_pyautogui_11am(self, source_xpath):
-        # Получите размер окна браузера и его позицию
         window_rect = self.driver.get_window_rect()
         window_x = window_rect['x']
         window_y = window_rect['y']
 
-        # Найдите элемент, который вы хотите использовать
         source_element = WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.XPATH, source_xpath))
         )
-        # Прокрутите страницу до элемента
 
-        # Получите относительные координаты исходного элемента
         source_location = source_element.location
         source_x = window_x + source_location['x']
         source_y = window_y + source_location['y']
 
-        # Установите сдвиг по координатам (по желанию)
+
         y_offset = 170
         x_offset = 5
 
-        # Переместите мышь к элементу и нажмите
+
         pyautogui.moveTo(source_x + x_offset, source_y + y_offset, duration=1)
         pyautogui.mouseDown()
         pyautogui.mouseUp()
@@ -1183,7 +1170,6 @@ class Devices_Check(Graphs):
     def compare_data_with_api_lang_by_hour(self, db_data, api_data):
         discrepancies = []
 
-        # Преобразуем данные API в словарь для удобного доступа
         api_data_dict = {item['languageName']: item for item in api_data}
 
         for db_row in db_data:
@@ -1191,19 +1177,16 @@ class Devices_Check(Graphs):
             api_row = api_data_dict.get(language_name)
 
             if api_row:
-                # Сравниваем общее количество вызовов
                 if db_row['TotalCalls'] != api_row['TotalCalls']:
                     discrepancies.append(
                         f"TotalCalls mismatch for language {language_name}: DB({db_row['TotalCalls']}) != API({api_row['TotalCalls']})")
 
-                # Преобразуем часовые данные API в словарь для удобства
                 api_hours_dict = {hour['hour']: hour for hour in api_row['hours']}
 
                 for db_hour in db_row['hours']:
                     api_hour = api_hours_dict.get(db_hour['hour'])
 
                     if api_hour:
-                        # Сравниваем данные по каждому часу
                         if db_hour['ServiceMinutes'] != api_hour['ServiceMinutes']:
                             discrepancies.append(
                                 f"ServiceMinutes mismatch for language {language_name} at hour {db_hour['hour']}: DB({db_hour['ServiceMinutes']}) != API({api_hour['ServiceMinutes']})")
@@ -1237,27 +1220,22 @@ class Devices_Check(Graphs):
         return discrepancies
 
     def double_press_down_arrow(self):
-        # Инициализируем экземпляр ActionChains
         actions = ActionChains(self.driver)
 
-        # Выполняем двойное нажатие на стрелку вверх
-        actions.send_keys(Keys.ARROW_DOWN).perform()  # второе нажатие
+        actions.send_keys(Keys.ARROW_DOWN).perform()
 
         print("Pressed the Down arrow key")
 
     def assert_word111(self, word, result):
-        # Преобразование значения элемента в текст, если это WebElement
         if hasattr(word, 'text'):
             value_word = word.text
         else:
             value_word = word
 
-        # Удаление запятых из строк и преобразование обоих значений к строке для сравнения
         value_word_str = str(value_word).replace(',', '').strip()
         result_str = str(result).replace(',', '').strip()
 
         print(f"Actual text: '{value_word_str}', Expected text: '{result_str}'")
-        # Сравнение чисел как целых чисел после удаления запятых
         assert value_word_str == result_str, f" '{result_str}', ASSERT '{value_word_str}'"
         print("good word")
 
@@ -1270,39 +1248,32 @@ class Devices_Check(Graphs):
 
     def select_time_period_and_wait_for_update(self, time_period, open_list=True):
         if open_list:
-            self.click_list()  # Открытие списка только если это необходимо
+            self.click_list()
             self.double_press_down_arrow()
-        time.sleep(10)  # Короткая задержка, чтобы убедиться, что список открыт
+        time.sleep(10)
         getattr(self, f"click_{time_period}")()
         time.sleep(30)
 
     def get_num_of_dev(self):
         element = WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.num_of_dev)))
         text = element.text
-        num_after_slash = int(text.split('/')[1].strip())  # Получаем число после знака "/" и преобразуем его в int
-        print(num_after_slash)
-        return num_after_slash
+        print(text)
+        return text
 
     def get_company_data(self):
         company_data_list = []
         try:
-            # Подключение к MongoDB
             collection = self.client["your_database_name"]["Company"]
 
-            # Запрос для извлечения данных из коллекции "Company"
             query = {}
 
-            # Проекция для выборки только полей "CompanyName" и "CompanyCode"
             projection = {"CompanyName": 1, "CompanyCode": 1, "_id": 0}
 
-            # Выполнение запроса
             cursor = collection.find(query, projection)
 
-            # Итерация по результатам запроса и добавление данных в список
             for document in cursor:
                 company_data_list.append(document)
 
-            # Вывод данных в консоль
             for company_data in company_data_list:
                 print(company_data)
 
@@ -1312,10 +1283,8 @@ class Devices_Check(Graphs):
         return company_data_list
 
     def take_data_for_period_and_compare(self, time_period):
-        # Устанавливаем фильтр на веб-сайте и ожидаем обновления данных
         self.select_time_period_and_wait_for_update(time_period)
 
-        # Получаем данные из базы данных для выбранного периода
         (total_price_sum, spanish_audio_video_calls_count, other_languages_video_calls_count,
          pending, new, in_service, serviced, cancelled, total_calls_serviced, completed_audio_calls,
          minutes_used, average_waiting_time_per_spanish_video_call, avg_waiting_seconds_video_ol,
@@ -1337,37 +1306,31 @@ class Devices_Check(Graphs):
         self.assert_word111(self.get_avg_call_lenght_mins().text, avg_call_length_mins)
 
     def extract_base_name(self, name):
-        # Реализация метода для извлечения базового имени из полного имени
-        return name.split(' ')[0]  # Примерная логика
+        return name.split(' ')[0]
 
     def compare_device_counts(self, company_devices_count_list, matched_companies):
-        # Создаём словарь для удобства сравнения, где ключ - CompanyName, значение - DeviceCount
         matched_companies_dict = {item['CompanyName']: item['DeviceCount'] for item in matched_companies}
 
-        # Сравниваем количество устройств для каждой компании
         for company_name, expected_dev_count in company_devices_count_list:
-            # Получаем количество устройств из matched_companies, если компания найдена
             actual_dev_count = matched_companies_dict.get(company_name)
 
-            # Сравниваем количество устройств
             if actual_dev_count is not None:
                 if actual_dev_count == expected_dev_count:
-                    print(f"Совпадение для {company_name}: {expected_dev_count} устройств")
+                    print(f"Match for {company_name}: {expected_dev_count} devices")
                 else:
-                    print(f"Расхождение для {company_name}: ожидалось {expected_dev_count}, найдено {actual_dev_count}")
+                    print(f"Discrepancy for {company_name}: expected {expected_dev_count}, found {actual_dev_count}")
             else:
-                print(f"Компания {company_name} не найдена в сопоставленных данных")
+                print(f"Company {company_name} not found in the matched data")
 
     def extract_base_name1(self, name):
         """
-        Извлекает базовое имя, учитывая различные условия форматирования названий.
+        Extracts the base name, taking into account various formatting conditions of the titles.
         """
-        original_name = name.replace('-', ' ')  # Заменяем дефисы на пробелы
-        name = original_name.split()[0]  # Берем первое слово для дальнейшей обработки
+        original_name = name.replace('-', ' ')
+        name = original_name.split()[0]
 
-        # Условие для обработки названий с несколькими заглавными буквами, слитыми со строчными
         if re.match(r'^[A-Z]+[a-z]+', name) or name.isupper():
-            base_name = name  # Возвращаем полное имя
+            base_name = name
         else:
             match = re.search(r'[a-z][A-Z]', name)
             if match:
@@ -1375,7 +1338,7 @@ class Devices_Check(Graphs):
             else:
                 base_name = name
 
-        print(f"Original: {original_name}, Base: {base_name}")  # Вывод для отладки
+        print(f"Original: {original_name}, Base: {base_name}")
         return base_name.lower()
 
     def map_blueprints_and_create_list(self, company_data_list):
@@ -1388,10 +1351,8 @@ class Devices_Check(Graphs):
         with open(file_path, 'r') as file:
             blueprint_data_from_file = [line.strip().split(', ') for line in file.readlines()]
 
-        # Обрабатываем названия из файла
         processed_names = {self.extract_base_name1(line[0]): int(line[1]) for line in blueprint_data_from_file}
 
-        # Сопоставляем обработанные названия с компаниями из списка MongoDB
         for company in company_data_list:
             company_name_processed = self.extract_base_name1(company['CompanyCode'])
             if company_name_processed in processed_names:
@@ -1403,36 +1364,31 @@ class Devices_Check(Graphs):
                 matched_company_names.append(company['CompanyName'])
                 code_usage[company_name_processed] = code_usage.get(company_name_processed, 0) + 1
 
-        # Выводим несопоставленные названия из файла
         unmatched_blueprints = list(set(processed_names.keys()) - set(code_usage.keys()))
 
-        # Вывод результатов
-        print("\nСопоставленные компании:")
+        print("\nMatched companies:")
         for company in matched_companies:
             print(f"CompanyName: {company['CompanyName']}, DeviceCount: {company['DeviceCount']}")
 
-        print("\nНесопоставленные названия из файла:")
+        print("\nUnmatched names from the file:")
         for unmatched in unmatched_blueprints:
             print(unmatched)
 
-        print("\nКоды, используемые более одного раза:")
+        print("\nCodes used more than once:")
         for code, usage in code_usage.items():
             if usage > 1:
                 print(f"Code: {code}, Used: {usage} times")
 
-        print("\nСовпавшие имена компаний:")
+        print("\nMatched company names:")
         for name in matched_company_names:
             print(name)
 
         return matched_companies, matched_company_names
 
     def normalize_string(self, s):
-        # Убираем пробелы и приводим строку к нижнему регистру
         s = re.sub(r'\s+', '', s).lower()
-        # Специальные случаи, которые не нужно преобразовывать
         if "mercytn" in s or "srhc" in s or "srhca" in s:
             return s
-        # Объединяем все варианты "Cooper" и "StJohn" в одно
         if "cooper" in s:
             return "cooper"
         elif "stjohn" in s:
@@ -1441,7 +1397,6 @@ class Devices_Check(Graphs):
 
     def find_key_word(self, s):
         s_lower = s.lower()
-        # Специальные случаи, которые не нужно преобразовывать
         if "mercytn" == s_lower or "srhc" == s_lower or "srhca" == s_lower:
             return s
         key_word = s.split(' ')[0].lower()
@@ -1455,15 +1410,12 @@ class Devices_Check(Graphs):
         normalized_to_original = {}
         for info in device_info_data:
             original_name = info.get('blueprintName', '')
-            # Проверяем, является ли имя компании "Unity Health Toronto"
             if original_name == "Unity Health Toronto":
-                # Если да, то добавляем его в словарь без изменений
                 if original_name in normalized_to_original:
                     normalized_to_original[original_name].add(original_name)
                 else:
                     normalized_to_original[original_name] = {original_name}
             else:
-                # Удаляем суффикс "Tst", если он присутствует
                 processed_name = original_name.replace(" Tst", "")
                 key_word = self.find_key_word(processed_name)
                 normalized_name = self.normalize_string(key_word)
@@ -1485,7 +1437,7 @@ class Devices_Check(Graphs):
         normalized_blueprint_names = self.normalize_and_track_original_names(device_info_data)
 
         matched_companies = []
-        matched_company_names = []  # Список для хранения только CompanyName совпавших записей
+        matched_company_names = []
         unmatched_company_codes = set(normalized_company_codes.keys())
         unmatched_blueprint_names = set(normalized_blueprint_names.keys())
 
@@ -1494,17 +1446,14 @@ class Devices_Check(Graphs):
                 if normalized_blueprint.startswith(company_code) or company_code.startswith(normalized_blueprint):
                     company_name = company['CompanyName']
 
-                    # Здесь добавляем новую логику для обработки MercyTN
                     if "MercyTN" in original_names:
                         company_name = "Mercy Community Healthcare"
 
-                    # Изменение названия для Unity и обработка исключений
                     if "unity" in company_name.lower():
                         company_name = "Unity Health Toronto"
                     elif company_name.endswith(" Tst"):
-                        company_name = company_name[:-4]  # Удаляем " Tst" из названия
+                        company_name = company_name[:-4]
 
-                    # Дополнительные проверки для специфических случаев
                     if "srhc" in company_name.lower() or "srhca" in company_name.lower():
                         company_name = company['CompanyName']
 
@@ -1518,17 +1467,16 @@ class Devices_Check(Graphs):
                     unmatched_blueprint_names.discard(normalized_blueprint)
                     break
 
-        # Выводим сопоставленные компании и их blueprintName
         print("Matching CompanyName and BlueprintName:")
         for match in matched_companies:
             print(f"{match['CompanyName']} ({', '.join(match['BlueprintNames'])})")
 
-        # Выводим несовпадающие CompanyCode и CompanyName
+
         print("\nUnmatched CompanyCode and corresponding CompanyName:")
         for code in unmatched_company_codes:
             print(f"{code}: {normalized_company_codes[code]['CompanyName']}")
 
-        # Выводим несовпадающие blueprintName и их оригинальные имена
+
         print("\nUnmatched blueprintName and their originals:")
         for normalized_name in unmatched_blueprint_names:
             original_names = ', '.join(normalized_blueprint_names[normalized_name])
@@ -1539,7 +1487,7 @@ class Devices_Check(Graphs):
     def aggregate_and_combine_blueprints(self):
         collection = self.client["reporting"]["DeviceInformation"]
 
-        # Агрегация для подсчета количества каждого blueprintName
+
         pipeline = [
             {
                 "$group": {
@@ -1547,7 +1495,7 @@ class Devices_Check(Graphs):
                     "count": {"$sum": 1}
                 }
             },
-            {"$sort": {"count": -1}}  # Сортировка по убыванию количества
+            {"$sort": {"count": -1}}
         ]
 
         aggregated_data = list(collection.aggregate(pipeline))
@@ -1557,19 +1505,19 @@ class Devices_Check(Graphs):
             name = item["_id"]
             count = item["count"]
 
-            # Применяем логику нормализации и выделения ключевого слова
+
             key_word = self.normalize_string(self.find_key_word(name))
 
             if key_word in combined_names:
-                # Обновляем существующую запись, суммируя количество
+
                 combined_names[key_word]["count"] += count
                 combined_names[key_word]["original_names"].add(name)
             else:
-                # Создаем новую запись для уникального ключевого слова
+
                 combined_names[key_word] = {"count": count, "original_names": {name}}
 
-        # Вывод результатов
-        print("Объединенные blueprint names и их суммарное количество:")
+
+        print("United Blueprint Names and their total quantity:")
         for key, info in combined_names.items():
             print(f"Key: {key}, Count: {info['count']}, Original Names: {', '.join(info['original_names'])}")
 
@@ -1577,49 +1525,41 @@ class Devices_Check(Graphs):
 
     def click_on_company_name(self, company_name):
         try:
-            # Ожидаем, пока элементы с названиями компаний станут видимыми
             elements = WebDriverWait(self.driver, 160).until(
                 EC.visibility_of_all_elements_located((By.CSS_SELECTOR, ".ant-select-item.ant-select-item-option"))
             )
-            # Флаг для отслеживания наличия компании в списке
             company_found = False
             for element in elements:
                 if element.get_attribute("title").strip() == company_name.strip():
                     element.click()
                     company_found = True
-                    # После клика проверяем, нужно ли выполнить специальные действия для "Mercy Medical Center" или "Northwestern Memorial Healthcare"
                     if company_name.strip() in ["Mercy Medical Center", "Northwestern Memorial Healthcare"]:
-                        self.double_press_down_arrow()  # Дополнительное действие после клика
-                        self.press_return_key()  # Подтверждение выбора
+                        self.double_press_down_arrow()
+                        self.press_return_key()
                     break
 
             if not company_found:
-                print(f"Компания '{company_name}' не обнаружена в списке.")
+                print(f"The company '{company_name}' was not found on the list.")
                 self.press_return_key()
                 if company_name.strip() in ["Mercy Medical Center", "Northwestern Memorial Healthcare"]:
-                    self.double_press_down_arrow()  # Дополнительное действие, если компания не найдена сразу
+                    self.double_press_down_arrow()
 
         except TimeoutException:
-            # Если исключение TimeoutException было вызвано, значит, элементы не появились в течение заданного времени.
-            print(f"Элементы с названиями компаний не были найдены в течение заданного времени.")
+            print(f"Elements with the names of companies were not found for a given time.")
             self.press_return_key()
             if company_name.strip() in ["Mercy Medical Center", "Northwestern Memorial Healthcare"]:
-                self.double_press_down_arrow()  # Дополнительное действие, если произошел таймаут
+                self.double_press_down_arrow()
     def update_web_device_data(self, web_device_data, matched_companies):
-        # Построение словаря для сопоставления CompanyName с BlueprintNames
         company_to_blueprint = {}
         for company in matched_companies:
             if 'CompanyName' in company and 'BlueprintNames' in company:
                 company_to_blueprint[company['CompanyName']] = company.get('BlueprintNames', [])
 
-        # Обновление web_device_data
         for device in web_device_data:
             company_name = device.get('company_name')
-            # Добавление BlueprintNames, если есть совпадение по CompanyName
             if company_name in company_to_blueprint:
                 device['BlueprintNames'] = company_to_blueprint[company_name]
             else:
-                # Обработка отсутствия совпадения
                 device.setdefault('BlueprintNames', [])
 
         return web_device_data

@@ -1,6 +1,5 @@
 import time
 import allure
-import pyautogui
 from selenium.common import WebDriverException, NoSuchElementException
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
@@ -17,9 +16,9 @@ from selenium.webdriver.chrome.options import Options
 from database.Databricks import Databricks
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from ev import EV
 
-
-class Replace_password(Base, Databricks):
+class Replace_password(Base, Databricks, EV):
     url = 'https://mail.google.com/mail/u/0/#inbox'
 
     def __init__(self, driver):
@@ -210,10 +209,10 @@ class Replace_password(Base, Databricks):
 
     def Check_gmail(self):
         self.driver.get(self.url)
-        self.input_login("nikita.barshchuk@voyceglobal.com")
+        self.input_login(self.my_accaunt)
         self.click_next()
         time.sleep(3)
-        self.input_password("Gomynkyl165432_#")
+        self.input_password(self.my_password)
         time.sleep(3)
         self.click_next2()
         time.sleep(20)  # Замените time.sleep на явные ожидания, если возможно
@@ -264,9 +263,9 @@ class Replace_password(Base, Databricks):
             EC.element_to_be_clickable((By.XPATH, self.password_field2)))
 
         # Ввод пароля
-        password_field1.send_keys('Admin@1234')
+        password_field1.send_keys(self.new_password)
         time.sleep(3)
-        password_field2.send_keys('Admin@1234')
+        password_field2.send_keys(self.new_password)
         self.click_reset_b()
         self.assert_word(self.get_notification(), 'Password has been successfully updated')
         self.driver.refresh()
@@ -288,3 +287,4 @@ class Replace_password(Base, Databricks):
         actions.send_keys(Keys.ARROW_DOWN).perform()  # второе нажатие
 
         print("Pressed the Down arrow key")
+#

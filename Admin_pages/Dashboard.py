@@ -1,7 +1,6 @@
 from database.Database import Database, assert_equal
 from database.Databricks import Databricks
 import requests
-import pyautogui
 
 import time
 

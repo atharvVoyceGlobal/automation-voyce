@@ -2,7 +2,6 @@ import shutil
 import time
 import re
 import pytz
-import pyautogui
 import os
 import glob
 import csv
@@ -27,6 +26,7 @@ import logging
 from datetime import datetime, timedelta
 from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
+from ev import EV
 
 def is_equivalent_service_minutes(db_value, web_value):
     if (db_value in [None, '-', 0] and web_value in ['', '-', '0']) or str(db_value) == web_value:
@@ -34,7 +34,7 @@ def is_equivalent_service_minutes(db_value, web_value):
     return False
 
 
-class Transaction_page(Graphs):
+class Transaction_page(Graphs, EV):
 
     def __init__(self, driver):
         super().__init__(driver)  # Это должно инициализировать метод __init__ класса Base
@@ -211,7 +211,7 @@ class Transaction_page(Graphs):
     Search12 = '(//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/input)[10]'
     Search13 = '(//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/input)[11]'
     search_bbb = "//button[@type='button' and contains(@class, 'ant-btn') and contains(@class, 'ant-btn-primary') and contains(@class, 'ant-btn-block')]"
-    search_sf = "//button[span[contains(text(), 'Search')]]"
+    search_sf = "(//button[span[contains(text(), 'Search')]])[last()]"
 
     # Getters
     def get_search_sf(self):
@@ -855,7 +855,7 @@ class Transaction_page(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-        print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
+        print(f"The center of the element is on the coordinates x: {x_center}, y: {y_center}")
         return x_center, y_center
 
     def click_calls_f(self):
@@ -1087,7 +1087,7 @@ class Transaction_page(Graphs):
         # Выполнение действия перетаскивания
         actions.click_and_hold(scrollbar).move_by_offset(600, 0).release().perform()
 
-        print("Ползунок прокручен")
+        print("The slider is scrolled")
 
     def input_start_time(self, language):
         self.get_start_time().send_keys(language)
@@ -1154,7 +1154,7 @@ class Transaction_page(Graphs):
 
     def scroll_to_bottom(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        print("Прокрутка до нижней части страницы выполнена")
+        print("Scrolling to the bottom of the page is performed")
 
     def click_lang_f_Spanish(self):
         first_company = self.get_lang_f_Spanish()
@@ -1201,7 +1201,7 @@ class Transaction_page(Graphs):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-        print("Список языков с веб-страницы:", languages)
+        print("List of languages ​​from the web page:", languages)
 
         return languages
 
@@ -1210,13 +1210,13 @@ class Transaction_page(Graphs):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-            error_message = "Filter is not working.\nРазличия:\n"
+            error_message = "Filter is not working. \ Nras: \ n"
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-                    error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
+                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -1267,7 +1267,7 @@ class Transaction_page(Graphs):
                 attempt += 1
 
         if not website_data and attempt == max_attempts:
-            print("Не удалось извлечь данные после нескольких попыток.")
+            print("It was not possible to extract data after several attempts.")
 
         return website_data
 
@@ -1297,12 +1297,12 @@ class Transaction_page(Graphs):
                         "WaitingSeconds": cells[9].text.strip(),
                         "ServiceMinutes": cells[10].text.strip() if len(cells) > 10 else None,
                     }
-                    print(f"Строка {index + 1}: {data}")  # Выводим извлеченные данные
+                    print(f"Line {index + 1}: {data}")  # Выводим извлеченные данные
                     website_data.append(data)
                 else:
-                    print(f"Строка {index + 1} пропущена: недостаточно данных")
+                    print(f"Line {index + 1} missed: not enough data")
             except StaleElementReferenceException:
-                print(f"Строка {index + 1}: Обнаружен устаревший элемент, пропускаем строку...")
+                print(f"Line {index + 1}: a obsolete element is found, we skip the line ...")
                 continue  # Или используйте другую логику для повторения попытки
 
         return website_data
@@ -1330,7 +1330,7 @@ class Transaction_page(Graphs):
         discrepancies = []
 
         if db_data is None:
-            print("Предупреждение: db_data равно None, сравнение данных пропущено.")
+            print("Warning: DB_DATA is equal to None, the comparison of the data is missed.")
             return  # Просто возвращаем управление, не выполняя сравнение
 
         for web_row in web_data:
@@ -1338,84 +1338,40 @@ class Transaction_page(Graphs):
                           None)
 
             if db_row:
-                # Преобразование времени из БД
-                if db_row.RequestTime:
-                    db_time = db_row.RequestTime - timedelta(hours=4)
-                    formatted_db_time = db_time.strftime('%H:%M:%S')
-                else:
-                    formatted_db_time = None
-
-                # Форматирование и округление стоимости
-                if db_row.TotalPrice is not None:
-                    cost = f"${round(float(db_row.TotalPrice), 2)}"
-                else:
-                    cost = "-"
-
                 keys_to_compare = {
-                    "ProductName": db_row.RequestProductName,
-                    "RequestDate": db_row.Date.strftime('%Y-%m-%d'),
-                    "RequestTime": formatted_db_time,
+                    "RequestDate": db_row.RequestDate,  # Убрано strftime, предполагается что дата в правильном формате
+                    "RequestTime": db_row.RequestTime,  # Убрано strftime, предполагается что время в правильном формате
                     "ClientName": db_row.ClientName,
                     "TargetLanguage": db_row.TargetLanguage,
-                    "AudioVideo": db_row.VideoOption,
+                    "CallType": db_row.CallType,
                     "Status": db_row.Status,
                     "WaitingSeconds": str(db_row.WaitingSeconds),
-                    "ServiceMinutes": str(db_row.ServiceMinutes) if db_row.ServiceMinutes is not None else '-',
-                    "InterpreterName": db_row.InterpreterFirstName if db_row.InterpreterFirstName is not None else '-',
-                    "Cost": cost,
-                    "InterpreterID": str(db_row.InterpreterId) if db_row.InterpreterId is not None else '-',
-                    "CancelTime": db_row.ServiceCancelTime if db_row.ServiceCancelTime is not None else '-',
-                    "StarRating": db_row.CallQualityRatingStar if db_row.CallQualityRatingStar is not None else '-',
-                    "CallerID": db_row.CallerID,
-                    "SerialNumber": db_row.IOSSerialNumber if db_row.IOSSerialNumber is not None else '-',
-                    "ClientUserName": db_row.UserName
+                    "ServiceMinutes": str(db_row.ServiceMinutes),
+                    "InterpreterName": db_row.InterpreterName,
+                    "InterpreterID": db_row.InterpreterID,
+                    "CancelTime": db_row.ServiceCancelTime if db_row.ServiceCancelTime else '-',
+                    "CallerId": db_row.CallerID,
+                    "SerialNumber": db_row.IOSSerialNumber,
+                    "ClientUserName": db_row.UserName,
+                    "RouteToBackup": db_row.RouteToBackup,
+                    "RoutingCounts": str(
+                        db_row.RoutingHistoryLength) if db_row.RoutingHistoryLength is not None else '-',
+                    "RequestCost": f"${round(float(db_row.Cost), 2)}" if db_row.Cost is not None else "-",
+                    "StarRating": str(
+                        db_row.CallQualityRatingStar) if db_row.CallQualityRatingStar is not None else '-',
+                    "Feedback": db_row.Feedback if db_row.Feedback is not None else '-',
+                    "ClientDepartment": db_row.ClientDepartment  # Убедитесь, что это правильное поле
                 }
 
                 for key, db_value in keys_to_compare.items():
                     web_value = web_row.get(key, '').strip()
 
-                    # Обработка специальных случаев
-                    if key in ["WaitingSeconds", "ServiceMinutes", "StarRating"]:
-                        web_value = 0.0 if web_value == '-' else float(web_value)
-                        db_value = 0.0 if db_value == '-' else float(db_value)
+                    if isinstance(db_value, float):  # Если тип данных float, округляем до двух знаков после запятой
+                        db_value = round(db_value, 2)
 
-                        if not math.isclose(web_value, db_value, rel_tol=1e-6):
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{db_value}' != Web value: '{web_value}'")
-
-                    elif key == "Cost":
-                        web_value = web_value.replace('$', '').strip()
-                        web_value = float(web_value) if web_value and web_value != '-' else 0.0
-
-                        db_value = str(db_value).replace('$', '').strip()
-                        db_value = float(db_value) if db_value and db_value != '-' else 0.0
-
-                        if web_value != db_value:
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{db_value}' != Web value: '{web_value}'")
-
-                    elif key == "CancelTime":
-                        if db_value and db_value != '-':
-                            db_time = db_value - timedelta(hours=4)
-                            formatted_db_time = db_time.strftime('%Y-%m-%d %H:%M:%S')
-                            db_value = formatted_db_time
-                        else:
-                            db_value = '-'
-
-                        if web_value != db_value:
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{db_value}' != Web value: '{web_value}'")
-
-                    else:
-                        if db_value is None:
-                            db_value = '-'
-
-                        normalized_db_value = ' '.join(str(db_value).split())
-                        normalized_web_value = ' '.join(str(web_value).split())
-
-                        if normalized_web_value.lower() != normalized_db_value.lower():
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{normalized_db_value}' != Web value: '{normalized_web_value}'")
+                    if str(db_value) != web_value:
+                        discrepancies.append(
+                            f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{db_value}' != Web value: '{web_value}'")
             else:
                 print(f"No matching data found in DB for transaction ID: {web_row['TransactionID']}")
 
@@ -1941,7 +1897,7 @@ class Transaction_page(Graphs):
         # Обновляем unique_transaction_id_count перед сравнением
         db_data = self.query_transactions_today()
         if db_data is None:
-            print("Не удалось получить данные из Databricks.")
+            print("It was not possible to get data from Databricks.")
             return
 
         if self.unique_transaction_id_count == total_pages:
@@ -2295,7 +2251,7 @@ class Transaction_page(Graphs):
         second_element_xpath = "//*[@id='root']/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr"
 
         first_column_names = self.extract_column_names(first_element_xpath)
-        print("Первый набор имен колонок:", first_column_names)
+        print("The first set of speakers:", first_column_names)
 
         self.click_ok()  # Предполагая, что метод click_ok() уже определен в классе
         self.driver.execute_script("document.body.style.zoom='50%'")
@@ -2304,7 +2260,7 @@ class Transaction_page(Graphs):
         time.sleep(10)  # Пример задержки, настраивается по необходимости
 
         second_column_names = self.extract_column_names(second_element_xpath)
-        print("Второй набор имен колонок:", second_column_names)
+        print("The second set of speakers:", second_column_names)
 
         if first_column_names != second_column_names:
             raise AssertionError("Column names match.")
@@ -2431,14 +2387,14 @@ class Transaction_page(Graphs):
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-                print(f"Папка скачивания не существует: {download_folder}")
+                print(f"The download folder does not exist: {download_folder}")
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-                print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
+                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
                 return None
 
             # Выбор файла с последней датой модификации
@@ -2447,10 +2403,10 @@ class Transaction_page(Graphs):
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
             # Перемещение файла
             shutil.move(latest_file, target_file)
-            print(f"Файл {latest_file} был перемещен в {target_file}")
+            print(f"The file {latest_file} was moved to {target_file}")
             return target_file
         except Exception as e:
-            print(f"Ошибка при перемещении файла: {e}")
+            print(f"Error when moving the file: {e}")
             return None
 
     def is_sorted_ascending(self, column_data):
@@ -2972,21 +2928,21 @@ class Transaction_page(Graphs):
             time.sleep(20)  # Ожидаем обновления данных на странице
             website_data = self.fetch_website_data_am1()
             result_s, language_s = self.check_language_sorted_S(website_data)
-            assert result_s, "Ошибка: данные не соответствуют языку Spanish"
+            assert result_s, "Error: Data does not correspond to Spanish"
 
             # Клик по фильтру ASL и проверка данных
             self.click_lang_f_ASL()
             time.sleep(20)  # Ожидаем обновления данных на странице
             website_data = self.fetch_website_data_am1()
             result_asl, language_asl = self.check_language_sorted_ASL(website_data)
-            assert result_asl, "Ошибка: данные не соответствуют языку ASL"
+            assert result_asl, "Error: Data does not match the ASL language"
 
             # Клик по фильтру LOTS (языки, отличные от Spanish и ASL) и проверка данных
             self.click_lang_f_LOTS()
             time.sleep(20)  # Ожидаем обновления данных на странице
             website_data = self.fetch_website_data_am1()
             result_lots, excluded_languages_lots = self.check_language_sorted_LOTS(website_data)
-            assert result_lots, "Ошибка: данные соответствуют языкам Spanish или ASL"
+            assert result_lots, "Error: Data corresponds to Spanish or ASL languages"
             self.driver.refresh()
             time.sleep(10)
 
@@ -3024,3 +2980,4 @@ class Transaction_page(Graphs):
 
 
 
+#

@@ -14,9 +14,9 @@ import string
 import random
 from database.Database import Database
 from selenium.webdriver.support.ui import WebDriverWait
+from ev import EV
 
-
-class Edit_AAD_DELETE_user(Base, Database, Databricks):
+class Edit_AAD_DELETE_user(Base, Database, Databricks, EV):
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -388,3 +388,4 @@ class Edit_AAD_DELETE_user(Base, Database, Databricks):
             self.assert_email_message()
             self.assert_word(self.get_check_name(), f'{generated_name} zzzzzzzzzzzzzzzzzzzz')
             # TODO BUG Добвляя комании к клиентам, клиент может все равно просматривать все компани & неограниченное кол-во символов/запрещенные символ
+#

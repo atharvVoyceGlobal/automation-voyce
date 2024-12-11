@@ -8,9 +8,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support import expected_conditions as EC
 from base.base_class import Base
 from database.Database import Database, assert_equal
+from ev import EV
 
-
-class Forgot_password(Base, Database):
+class Forgot_password(Base, Database, EV):
 
     def __init__(self, driver):
         super().__init__(driver)
@@ -70,10 +70,10 @@ class Forgot_password(Base, Database):
             self.click_forgot_password_button()
             self.get_current_url()
             self.assert_url("https://staging.admin.vip.voyceglobal.com/auth/forgot-password")
-            self.input_email("nikita.barshchuk@voyceglobal.com")
+            self.input_email(self.my_accaunt)
             self.click_submit_button()
             self.assert_word(self.get_successful_send(),
-                             "Email has been successfully sent to nikita.barshchuk@voyceglobal.com")
+                             f"Email has been successfully sent to {self.my_accaunt}")
 
             database = self.client1["auth"]
             collection1 = database["Email"]
@@ -92,6 +92,6 @@ class Forgot_password(Base, Database):
             finally:
                 self.client1.close()
 
-            assert_equal(latest_email, "nikita.barshchuk@voyceglobal.com", "The latest email in the database does not "
+            assert_equal(latest_email, self.my_accaunt, "The latest email in the database does not "
                                                                     "match the expected email")
             print("data is correct")

@@ -10,9 +10,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from base.base_class import Base
 from database.Databricks import Databricks
 from selenium.webdriver.chrome.options import Options
+from ev import EV
 
-
-class Login_Kanji(Base, Databricks):
+class Login_Kanji(Base, Databricks, EV):
     url = 'https://voyce.kandji.io/signin'
 
     def __init__(self, driver):
@@ -238,11 +238,11 @@ class Login_Kanji(Base, Databricks):
         self.driver.get(self.url)
         self.click_login()
         self.click_google()
-        self.input_login("nikita.barshchuk@voyceglobal.com")
+        self.input_login(self.my_accaunt)
         self.click_next()
-        self.input_password("Gomynkyl165432_#")
+        self.input_password(self.my_password)
         self.click_next2()
-        time.sleep(10)
+        time.sleep(20)
         self.click_filter()
         self.click_filter2()
         self.click_filter3()
@@ -252,7 +252,7 @@ class Login_Kanji(Base, Databricks):
         self.click_galka()
         time.sleep(2)
         element = self.driver.find_element(By.XPATH,
-                                           "//*[@id='radix-:r3:-content-devices']/section/section[2]/div[2]/div[2]/div/section/section/section/button[4]")
+                                           "//*[@id='radix-:r5:-content-devices']/section/section[2]/div[2]/div[2]/div/section/section/section/button[4]")
         self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
         element.click()
         time.sleep(10)
@@ -306,4 +306,5 @@ class Login_Kanji(Base, Databricks):
                         file.write(line)
 
                     except Exception as e:
-                        print(f"Не удалось извлечь данные для строки: {row.text}. Ошибка: {e}")
+                        print(f"It was not possible to extract data for the line: {row.text}.Error: {e}")
+#

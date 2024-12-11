@@ -1,9 +1,12 @@
 import shutil
 import time
 import re
+from collections import Counter
 import pytz
-import pyautogui
+import self as self
+from jira import JIRA
 import os
+import traceback
 import glob
 import csv
 import math
@@ -12,8 +15,10 @@ import shutil
 import time
 import assertpy
 import allure
+import _csv
 import allure
-from selenium.common import StaleElementReferenceException, NoSuchElementException, TimeoutException
+from selenium.common import StaleElementReferenceException, NoSuchElementException, TimeoutException, \
+    ElementNotInteractableException
 from selenium.webdriver.common.keys import Keys
 from utilities.logger import Logger
 
@@ -27,6 +32,8 @@ import logging
 from datetime import datetime, timedelta
 from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
+from ev import EV
+
 
 def is_equivalent_service_minutes(db_value, web_value):
     if (db_value in [None, '-', 0] and web_value in ['', '-', '0']) or str(db_value) == web_value:
@@ -34,11 +41,17 @@ def is_equivalent_service_minutes(db_value, web_value):
     return False
 
 
-class Transaction_page_A(Graphs):
+class Transaction_page_A(Graphs, EV):
 
     def __init__(self, driver):
         super().__init__(driver)  # Это должно инициализировать метод __init__ класса Base
         self.driver = driver
+
+    JIRA_URL = "https://cloudbreak.atlassian.net"
+    JIRA_EMAIL = "nikita.barshchuk@equitihealth.com"
+
+
+    # Подключение к Jira
 
     url1 = 'https://mail.google.com/mail/u/0/#inbox'
     # Locators
@@ -48,67 +61,67 @@ class Transaction_page_A(Graphs):
     Search4 = '//*[@id="scrollableDiv"]/div/div/div/label/span[1]'
     Search5 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]'
     Search6 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
-    Search7 = '(//*[@id="scrollableDiv"]/div/div/div/label/span[1]/span)[1]'
-    Search8 = '(//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1])[2]'
-    Search9 = '(//*[@id="scrollableDiv"]/div/div/div/label/span[1])[2]'
-    Search10 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
-    Search11 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
-    Search12 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
-    Search13 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
+    Search7 = "//span[text()='Search']"
+    Search8 = "//span[text()='Search']"
+    Search9 = "//span[text()='Search']"
+    Search10 = "//span[text()='Search']"
+    Search11 = "//span[text()='Search']"
+    Search12 = "//span[text()='Search']"
+    Search13 = "//span[text()='Search']"
+    select_company_input = "(//input[@type='search' and @role='combobox'])[2]"
 
     login_field = "//*[@id='identifierId']"
-    route_to_back_search = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[15]/div/span[2]/span'
+    route_to_back_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[18]/div/span[1]'
     route_to_back_input = '//input[@placeholder="Search RouteToBackup"]'
     route_to_back_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[16]'
     route_to_back_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[16]'
 
-    routing_counts_search = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[20]/div/span[2]/span'
+    routing_counts_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[19]/div/span[1]'
     routing_counts_input = '//input[@placeholder="Search RoutingHistoryLength"]'
     routing_counts_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[5]/td[21]'
     routing_counts_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[21]'
 
-    route_to_back_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[15]/div/span[1]'
     routing_counts = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[20]/div/span[1]'
     last_pages = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/ul/li[8]'
     ten_tr_per_page = "//div[contains(@class, 'ant-select-item-option-content') and contains(text(), '10 / page')]"
     pages = "//span[@class='ant-select-selection-item' and text()='100 / page']"
-    cost_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[15]/div/span[1]'
+    cost_f = '//*[@id="root"]/div[2]/div[2]/div/div/main/div/div/div[2]/div/div[2]/div/div[11]/div/div[2]/div/div[2]/div'
     lang_f_ASL = '//*[@id="header-container-id"]/div/div[2]/div/label[4]'
     lang_f_LOTS = '//*[@id="header-container-id"]/div/div[2]/div/label[3]'
     lang_f_Spanish = '//*[@id="header-container-id"]/div/div[2]/div/label[2]'
-    check_in_id = "//*[@id='root']/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[3]/td/div/div/div/div/div/div/div[2]/div/table/tbody/tr/td[1]/div"
-    check_in_name = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[3]/td/div/div/div/div/div/div/div[2]/div/table/tbody/tr/td[2]'
+    check_in_id = "//*[@id='root']/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[3]/td/div/div/div[1]/div/div/div/div[2]/div/table/tbody/tr/td[1]"
+    check_in_name = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[3]/td/div/div/div/div/div/div/div[2]/div/table/tbody/tr/td[2]'
 
-    plus = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[1]/button'
+    plus = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[2]/td[1]/button'
     buttons = "//button[@class='ant-table-row-expand-icon ant-table-row-expand-icon-collapsed' and @type='button']"
-    activity_m_b = '//*[@id="root"]/section/aside/div/ul/li[3]'
-    select_columns = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[1]/div/div[1]/button/span'
-    service_s_t_column = '//div[@data-rbd-draggable-id="Service Start Time"]'
-    cancel_c = "//div[@data-rbd-draggable-id='Time Zone']"
+    activity_m_b = '//*[@id="root"]/div/aside/div[1]/ul/li[2]'
+    select_columns = '//*[@id="root"]/div/div[2]/div/div/main/div/div[1]/div[1]/button/span[2]'
+    service_s_t_column = '//div[@data-rbd-draggable-id="ServiceStartTime" and @class="draggable card-item"]'
+    cancel_c = "//div[text()='Time Zone']"
     target_column_xpath = '//div[text()="Transaction ID"]'
     ok = "//span[text()='OK']"
-    check_added_c = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[1]/div/span[1]'
+    check_added_c = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[2]/div/span[1]'
 
-    Service_Start_Time_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[1]/div/span[1]'
-    Transaction_ID_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[2]/div/span[1]/div/span[1]'
+    Service_Start_Time_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[2]/div/span[1]'
+    Transaction_ID_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[3]/div/span[1]'
     Transaction_ID_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[2]/div/span[2]'
     Transaction_ID_s_f = "//input[@placeholder='Search ReferenceTransactionId']"
     Product_Name_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[3]/div/span[1]/div/span[2]'
     Product_Name_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[3]/div/span[2]/span'
     Product_Name_s_f = "//input[@placeholder='Search RequestProductName']"
-    Request_Date_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[4]/div/span[1]/div/span[1]'
+    Request_Date_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[4]/div/span[1]'
     Request_Date_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[4]/div/span[2]/span'
     Request_Date_s_f = "//input[@placeholder='Search RequestDate']"
     Request_Time_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[5]/div/span[2]/span'
     start_time = "//input[@placeholder='Start Time']"
     end_time = "//input[@placeholder='End Time']"
-    Request_Time_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[5]/div/span[1]'
-    Client_name_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[6]/div/span[1]'
+    Request_Time_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[5]/div/span[1]'
+    Client_name_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[6]/div/span[1]'
     Client_name_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[6]/div/span[2]/span'
     Clirnt_name_s_f = "//input[@placeholder='Search ClientName' and @type='text']"
     Client_name_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[6]/td[7]'
     Client_name_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[7]'
-    Target_Language_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[7]/div/span[1]'
+    Target_Language_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[7]/div/span[1]'
     Target_Language_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[7]/div/span[2]/span'
     Target_Language_s_f = "//input[@placeholder='Search TargetLanguage']"
     Target_Language_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[5]/td[8]'
@@ -118,21 +131,22 @@ class Transaction_page_A(Graphs):
     Audio_video_s_f = "//input[@placeholder='Search VideoOption']"
     Audio_video_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[5]/td[9]'
     Audio_video_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[9]'
-    WaitingSeconds_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[10]/div/span[2]'
+    WaitingSeconds_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[10]/div/span[1]'
     WaitingSeconds_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[10]/div/span[2]/span'
     WaitingSeconds_s_f = "//input[@placeholder='Search WaitingSeconds']"
     WaitingSeconds_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[11]'
     WaitingSeconds_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[11]'
-    service_minutes_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[11]/div/span[2]'
+    service_minutes_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[11]/div/span[1]'
     service_minutes_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[11]/div/span[2]/span'
     service_minutes_s_f = "//input[@placeholder='Search ServiceMinutes']"
     service_minutes_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[12]'
     service_minutes_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[12]'
 
-    Interpriter_Name_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[12]/div/span[2]/span'
-    Interpriter_Name_s_f = "//input[@placeholder='Search InterpreterFirstName']"
-    Interpriter_Name_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[5]/td[13]'
-    Interpriter_Name_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[13]'
+    star_raiting_asc_desc = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[21]/div/span[1]'
+    Interpriter_Name_s = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[12]/div/span[2]/span'
+    Interpriter_Name_s_f = '//*[@id="transaction-filter-InterpreterName"]/div/div/div/input'
+    Interpriter_Name_cell = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[5]/td[12]'
+    Interpriter_Name_cell1 = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[2]/td[12]'
 
     serial_number_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[18]/div/span[2]/span'
     serial_number_s_f = "//input[@placeholder='Search IOSSerialNumber']"
@@ -149,12 +163,13 @@ class Transaction_page_A(Graphs):
     Interpriter_id_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[13]/div/span[2]/span'
     Interpriter_id_s_f = "//input[@placeholder='Search InterpreterId']"
     Interpriter_id_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[14]'
-    Interpriter_id_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[14]'
-    Cancel_time_f = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[14]/div/span[1]'
+    Interpriter_id_cell1 = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[2]/td[13]'
+    Cancel_time_f = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[14]/div/span[1]'
     Caller_id_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[17]/div/span[2]/span'
     Caller_id_s_f = "//input[@placeholder='Search CallerID']"
     Caller_id_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[18]'
     Caller_id_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[18]'
+    download_excel = "//span[contains(@class, 'ant-dropdown-menu-title-content') and text()='Download EXCEL']"
 
     avg_wt_f = '//*[@id="root"]/section/section/main/div/div/div/div[3]/div/div/div/div[1]/div/table/thead/tr/th[7]/div/span[1]'
     serviced_min_f = '//*[@id="root"]/section/section/main/div/div/div/div[3]/div/div/div/div[1]/div/table/thead/tr/th[8]/div/span[1]'
@@ -171,14 +186,14 @@ class Transaction_page_A(Graphs):
     save_b = '//*[@id="root"]/section/section/main/div/div/div/div[1]/form/div/div/div/div[3]/div/div/div/div/button/span[2]'
     search_b = '//*[@id="transaction-filter-ExtractedTime"]/div/div/div/div[2]/div[1]/button/span[2]'
 
-    download_b = "//button[span[text()='Download']]"
+    download_b = "//*[@id='root']/div[2]/div[2]/div/div/main/div/div[1]/div[2]/button/span[1]"
     all_clients = '//*[@id="header-container-id"]/div/div[6]/div/div/span[2]'
     choose_company = "//div[@class='ant-select-item-option-content' and text()='CCH Internal']"
-    Today_list = '//*[@id="header-container-id"]/div/div[3]/div/div/span[2]'
-    yesterday = "//div[contains(@class, 'ant-select-item-option-content') and contains(text(), 'Yesterday')]"
+    Today_list = '//*[@id="header-container-id"]/div/div[4]/div/div/span/span[2]'
+    yesterday = "//div[contains(@class, 'ant-select-item-option-content') and text()='Yesterday']"
     Custom = "//div[contains(@class, 'ant-select-item-option-content') and text()='Custom Date']"
-    last_week = "//div[@title='Last Week']"
-    this_week = "//div[@title='This Week']"
+    last_week = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last Week']"
+    this_week = "//div[contains(@class, 'ant-select-item-option-content') and text()='This Week']"
     start_date = '//*[@id="header-container-id"]/div/div[5]/div/div/div[1]/input'
     end_date = '//*[@id="header-container-id"]/div/div[5]/div/div/div[3]/input'
     no_data = '//*[@id="root"]/section/section/main/div/div/div[3]/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td/div/div[2]'
@@ -195,11 +210,11 @@ class Transaction_page_A(Graphs):
     drop_download = '//*[@id="root"]/section/section/main/div/div/div[3]/div/div/div/div/div/div[1]/div/div[1]/div/div/span[2]'
     pdf = "//div[@title='PDF']"
     completed_calls = '//*[@id="root"]/section/section/main/div/div/div[3]/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[9]/a'
-    this_month = '//div[@title="This Month"]'
-    Last_month = '//div[@title="Last Month"]'
-    Last_30_days = '//div[@title="Last 30 Days"]'
-    This_year = '//div[@title="This Year"]'
-    Last_year = '//div[@title="Last Year"]'
+    this_month = "//div[contains(@class, 'ant-select-item-option-content') and text()='This Month']"
+    Last_month = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last Month']"
+    Last_30_days = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last 30 Days']"
+    This_year = "//div[contains(@class, 'ant-select-item-option-content') and text()='This Year']"
+    Last_year = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last Year']"
     lang_field = '//*[@id="root"]/section/section/main/div/div/div[2]/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[1]'
     element_xpath = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[1]/div/div[1]/button'
     additional_xpath = '//*[@id="root"]/section/aside/div/ul'
@@ -220,10 +235,10 @@ class Transaction_page_A(Graphs):
     req_d_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[5]'
     r_time_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[6]'
     r_time_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[6]'
-    status_s = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr/th[9]/div/span[2]'
+    status_s = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr/th[9]/div/span[2]/span'
     status_s_f = "//input[@placeholder='Search Status']"
-    status_cell = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[4]/td[10]'
-    status_cell1 = '//*[@id="root"]/section/section/main/div/div/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[10]'
+    status_cell = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[5]/td[9]'
+    status_cell1 = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[2]/td[9]'
     password_field = "//*[@id='password']/div[1]/div/div[1]/input"
     password_field1 = "//input[@placeholder='Password']"
     password_field2 = "//*[@id='confirmPassword']"
@@ -242,12 +257,16 @@ class Transaction_page_A(Graphs):
     f_m = '//*[@id=":1i"]/td[4]'
     reset_button2 = "//button[@type='submit'][contains(@class, 'ant-btn')][contains(@class, 'ant-btn-primary')]/span[text()='Reset Password']"
     reset_button = "//a[contains(text(), 'Reset Password')]"
-    points = '//div[@data-tooltip="Show trimmed content"]'
+    points = '//*[@id=":m5"]/div/table/tbody/tr/td/table/tbody/tr[4]/td/table/tbody/tr[2]/td/a'
     notification = "//span[text()='Password has been successfully updated']"
     download_button_center = '//*[@id=":nu"]/div/table/tbody/tr/td/table/tbody/tr[4]/td/table/tbody/tr[2]/td/a'
     search_sf = "//button[span[contains(text(), 'Search')]]"
+    select_company = "//*[@id='header-container-id']/div/div[5]/div/div/span/span[1]"
 
     # Getters
+    def get_star_raiting_asc_desc(self):
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.star_raiting_asc_desc)))
+
     def get_search_sf(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.search_sf)))
 
@@ -378,7 +397,7 @@ class Transaction_page_A(Graphs):
         # Ожидание, пока кнопка станет кликабельной
         wait = WebDriverWait(self.driver, 10)
         ok_button = wait.until(EC.element_to_be_clickable((By.XPATH,
-                                                           "//button[@type='button' and contains(@class, 'ant-btn') and contains(@class, 'css-sk7ap8') and contains(@class, 'ant-btn-primary') and ./span[text()='OK']]")))
+                                                           "//button[contains(@class, 'ant-btn-primary') and .//span[text()='OK']]")))
 
         # Нажатие на кнопку
         ok_button.click()
@@ -499,7 +518,7 @@ class Transaction_page_A(Graphs):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.Clirnt_name_s_f)))
 
     def get_route_to_back_search(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.route_to_back_search)))
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.route_to_back_asc_desc)))
 
     def get_route_to_back_input(self):
         return WebDriverWait(self.driver, 30).until(
@@ -514,7 +533,8 @@ class Transaction_page_A(Graphs):
             EC.visibility_of_element_located((By.XPATH, self.route_to_back_cell1)))
 
     def get_routing_counts_search(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.routing_counts_search)))
+        return WebDriverWait(self.driver, 30).until(
+            EC.element_to_be_clickable((By.XPATH, self.routing_counts_asc_desc)))
 
     def get_routing_counts_input(self):
         return WebDriverWait(self.driver, 30).until(
@@ -666,6 +686,12 @@ class Transaction_page_A(Graphs):
     def get_select_column(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.select_column)))
 
+    def get_select_company_input(self):
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.select_company_input)))
+
+    def get_select_company(self):
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.select_company)))
+
     def get_interpreter_id(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.interpreter_id)))
 
@@ -685,7 +711,7 @@ class Transaction_page_A(Graphs):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.route_to_back_f)))
 
     def get_routing_counts(self):
-        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.routing_counts)))
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.routing_counts_f)))
 
     def get_missed(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.missed)))
@@ -812,6 +838,9 @@ class Transaction_page_A(Graphs):
 
     def get_Caller_id_s(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.Caller_id_s)))
+
+    def get_download_excel(self):
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.download_excel)))
 
     def get_Caller_id_s_f(self):
         return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.Caller_id_s_f)))
@@ -983,6 +1012,11 @@ class Transaction_page_A(Graphs):
         self.driver.execute_script("arguments[0].click();", first_company)
         print("CLICK Target_Language_f")
 
+    def click_star_raiting_f(self):
+        first_company = self.get_star_raiting_asc_desc()
+        self.driver.execute_script("arguments[0].click();", first_company)
+        print("CLICK star_raiting f")
+
     def click_Target_Language_s(self):
         first_company = self.get_Target_Language_s()
         self.driver.execute_script("arguments[0].click();", first_company)
@@ -1007,7 +1041,7 @@ class Transaction_page_A(Graphs):
         size = element.size
         x_center = location['x'] + size['width'] / 2
         y_center = location['y'] + size['height'] / 2
-        print(f"Центр элемента находится на координатах X: {x_center}, Y: {y_center}")
+        print(f"The center of the element is on the coordinates x: {x_center}, y: {y_center}")
         return x_center, y_center
 
     def click_calls_f(self):
@@ -1133,10 +1167,10 @@ class Transaction_page_A(Graphs):
         self.get_choose_company().click()
         print("CLICK choose company")
 
+
     def click_select_company(self):
         SC = self.get_select_company()
-        action = ActionChains(self.driver)
-        action.move_to_element(SC).click().perform()
+        SC.click()
         print("click select company")
 
     def click_interpreter_name(self):
@@ -1216,27 +1250,28 @@ class Transaction_page_A(Graphs):
         print("Input Text")
 
     def scroll_to_right(self):
-        # Имитация нажатия стрелки вниз на клавиатуре
+        # Два нажатия стрелки вниз
         actions = ActionChains(self.driver)
         actions.send_keys(Keys.ARROW_DOWN).perform()
         time.sleep(5)
-        actions = ActionChains(self.driver)
         actions.send_keys(Keys.ARROW_DOWN).perform()
         time.sleep(5)
 
-        # Ожидание появления ползунка скроллбара и получение его
-        scrollbar = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//*[@id='root']/section/section/main/div/div/div/div/div/div/div/div[2]/div[3]/div"))
+        # Клик на указанный элемент
+        target_element = WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH,
+                                        '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[4]/td[8]'))
         )
+        target_element.click()
 
-        # Создание объекта ActionChains
-        actions = ActionChains(self.driver)
+        # Удержание стрелки вправо в течение 10 секунд
+        start_time = time.time()
+        while time.time() - start_time < 3.5:
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.ARROW_RIGHT).perform()
+            time.sleep(0.1)  # небольшая задержка для плавности
 
-        # Выполнение действия перетаскивания
-        actions.click_and_hold(scrollbar).move_by_offset(700, 0).release().perform()
-
-        print("Ползунок прокручен")
+        print("The slider is scrolled to the right for 10 seconds")
 
     def input_start_time(self, language):
         self.get_start_time().send_keys(language)
@@ -1303,7 +1338,7 @@ class Transaction_page_A(Graphs):
 
     def scroll_to_bottom(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        print("Прокрутка до нижней части страницы выполнена")
+        print("Scrolling to the bottom of the page is performed")
 
     def click_lang_f_Spanish(self):
         first_company = self.get_lang_f_Spanish()
@@ -1321,8 +1356,9 @@ class Transaction_page_A(Graphs):
         print("CLICK lang_f_ASL")
 
     def click_download_b(self):
-        first_company = self.get_download_b()
-        self.driver.execute_script("arguments[0].click();", first_company)
+        self.get_download_b().click()
+        time.sleep(5)
+        self.get_download_excel().click()
         print("CLICK Download")
 
     def click_buttons(self):
@@ -1435,37 +1471,57 @@ class Transaction_page_A(Graphs):
                 raise Exception(error_message)
 
     def fetch_website_data_am_cvs(self):
-        rows = WebDriverWait(self.driver, 30).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "table > tbody > tr"))
-        )
-
+        attempt = 0
+        max_attempts = 3
         website_data = []
-        for row in rows:
-            cells = row.find_elements(By.TAG_NAME, "td")
-            # Убедитесь, что в строке достаточно ячеек для извлечения данных
-            if len(cells) >= 17:
-                website_data.append({
-                    "TransactionID": cells[1].text.strip(),
-                    "RequestDate": cells[2].text.strip(),
-                    "RequestTime": cells[3].text.strip(),
-                    "ClientName": cells[4].text.strip(),
-                    "TargetLanguage": cells[5].text.strip(),
-                    "CallType": cells[6].text.strip(),
-                    "Status": cells[7].text.strip(),
-                    "WaitingSeconds": cells[8].text.strip(),
-                    "ServiceMinutes": cells[9].text.strip() if cells[10].text.strip() else None,
-                    "InterpreterName": cells[10].text.strip(),
-                    "InterpreterID": cells[11].text.strip(),
-                    "CancelTime": cells[12].text.strip(),
-                    "RoutetoBackup": cells[13].text.strip(),
-                    "StarRating": cells[14].text.strip(),
-                    "CallerID": cells[15].text.strip(),
-                    "SerialNumber": cells[16].text.strip(),
-                    "ClientUserName": cells[17].text.strip() if len(cells) > 17 else None,
-                })
-            else:
-                print(f"Not enough cells in the row to extract data: {row.text}")
 
+        while attempt < max_attempts:
+            try:
+                rows = WebDriverWait(self.driver, 30).until(
+                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".ant-table-row.ant-table-row-level-0"))
+                )
+
+                for row in rows:
+                    try:
+                        cells = row.find_elements(By.CSS_SELECTOR, "td")
+                        if len(cells) >= 21:  # Проверяем, что строка содержит все необходимые столбцы
+                            website_data.append({
+                                "TransactionID": cells[1].text.strip(),
+                                "RequestDate": cells[2].text.strip(),
+                                "RequestTime": cells[3].text.strip(),
+                                "ClientName": cells[4].text.strip(),
+                                "TargetLanguage": cells[5].text.strip(),
+                                "CallType": cells[6].text.strip(),
+                                "Status": cells[7].text.strip(),
+                                "WaitingSeconds": cells[8].text.strip(),
+                                "ServiceMinutes": cells[9].text.strip(),
+                                "InterpreterName": cells[10].text.strip(),
+                                "InterpreterID": cells[11].text.strip(),
+                                "CancelTime": cells[12].text.strip(),
+                                "CallerId": cells[13].text.strip(),
+                                "SerialNumber": cells[14].text.strip(),
+                                "ClientUserName": cells[15].text.strip(),
+                                "RouteToBackup": cells[16].text.strip(),
+                                "RoutingCounts": cells[17].text.strip(),
+                                "RequestCost": cells[18].text.strip(),
+                                "StarRating": cells[19].text.strip(),
+                                "Feedback": cells[20].text.strip(),
+                                "ClientDepartment": cells[21].text.strip() if len(cells) > 21 else None
+                                # Пример поля, которое может быть добавлено
+                            })
+                    except StaleElementReferenceException:
+                        break  # Если элемент устарел, прерываем текущий цикл и пытаемся заново
+                else:
+                    # Если все строки успешно обработаны, выходим из цикла попыток
+                    break
+            except StaleElementReferenceException:
+                pass  # Если ошибка повторяется, просто пытаемся заново
+            finally:
+                attempt += 1
+
+        if not website_data and attempt == max_attempts:
+            print("Не удалось извлечь данные после нескольких попыток.")
+        # print(website_data)
         return website_data
 
     def fetch_website_data_am_cvs1(self):
@@ -1513,7 +1569,7 @@ class Transaction_page_A(Graphs):
             except (StaleElementReferenceException, NoSuchElementException, IndexError) as e:
                 attempts += 1  # Увеличиваем счетчик попыток
                 if attempts == max_attempts:
-                    print(f"Не удалось получить данные после {max_attempts} попыток. Ошибка: {e}")
+                    print(f"It was not possible to get data after {max_attempts} attempts.Error: {e}")
                     break  # Выходим из цикла, если превышено число попыток
 
     def fetch_website_data_am1(self):
@@ -1541,12 +1597,12 @@ class Transaction_page_A(Graphs):
                         "WaitingSeconds": cells[9].text.strip(),
                         "ServiceMinutes": cells[10].text.strip() if len(cells) > 10 else None,
                     }
-                    print(f"Строка {index + 1}: {data}")  # Выводим извлеченные данные
+                    print(f"Line {index + 1}: {data}")
                     website_data.append(data)
                 else:
-                    print(f"Строка {index + 1} пропущена: недостаточно данных")
+                    print(f"Line {index + 1} missed: not enough data")
             except StaleElementReferenceException:
-                print(f"Строка {index + 1}: Обнаружен устаревший элемент, пропускаем строку...")
+                print(f"Line {index + 1}: a obsolete element is found, we skip the line ...")
                 continue  # Или используйте другую логику для повторения попытки
 
         return website_data
@@ -1555,6 +1611,63 @@ class Transaction_page_A(Graphs):
         if (db_value in [None, '-', 0] and web_value in ['', '-', '0']) or str(db_value) == web_value:
             return True
         return False
+
+    def process_search_and_verify(self):
+        wait = WebDriverWait(self.driver, 10)
+        all_saved_values = []
+        errors = []
+
+        for index in range(1, 15):
+            try:
+                time.sleep(5)
+                self.click_list()
+                time.sleep(5)
+                self.click_last_week()
+                time.sleep(15)
+
+                icon_xpath = f"(//span[@role='button' and contains(@class, 'ant-dropdown-trigger ant-table-filter-trigger')])[{index}]"
+                icon = wait.until(EC.presence_of_element_located((By.XPATH, icon_xpath)))
+                icon.click()
+
+                checkbox_labels = wait.until(EC.presence_of_all_elements_located(
+                    (By.XPATH, "(//label[contains(@class, 'ant-checkbox-wrapper')])[position() > last() - 4]")))
+                time.sleep(15)
+                saved_values = []
+                for label in checkbox_labels:
+                    saved_values.append(label.text)
+                    label.click()
+
+                search_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Search']")))
+                search_button.click()
+                time.sleep(15)
+
+                table_cells = self.driver.find_elements(By.XPATH, "//tbody[@class='ant-table-tbody']//td")
+                table_texts = [cell.text for cell in table_cells]
+
+                # Проверить соответствие
+                for value in saved_values:
+                    if value in table_texts:
+                        print(f"Value found '{value}'")
+                    else:
+                        error_message = f"Value not found: '{value}' for index {index}"
+                        print(error_message)
+                        errors.append(error_message)  # Добавить ошибку в список
+
+                all_saved_values.extend(saved_values)
+
+            except Exception as e:
+                error_message = f"Error on index {index}: {str(e)}"
+                print(error_message)
+                errors.append(error_message)
+
+            finally:
+                print(f"Refreshing page after index {index}")
+                self.driver.refresh()
+                time.sleep(10)
+        if errors:
+            raise AssertionError(f"Test failed with the following errors:\n" + "\n".join(errors))
+
+        return all_saved_values
 
     def fetch_column_data_total_calls(self, column_index):
         rows = WebDriverWait(self.driver, 300).until(
@@ -1574,84 +1687,168 @@ class Transaction_page_A(Graphs):
         discrepancies = []
 
         if db_data is None:
-            print("Предупреждение: db_data равно None, сравнение данных пропущено.")
+            print("Warning: DB_DATA is None, comparison skipped.")
             return
 
+        # Функция для проверки эквивалентности значений (с учетом специальных случаев)
+        def are_values_equivalent(db_value, web_value, field_name=None):
+            # Специальная обработка для RequestCost, чтобы игнорировать символ $ и сравнивать численно
+            if field_name == "RequestCost":
+                try:
+                    db_value = round(float(str(db_value).replace('$', '').strip()), 2)
+                    web_value = round(float(str(web_value).replace('$', '').strip()), 2)
+                except ValueError:
+                    pass
+
+            # Приведение к общему эквиваленту `'-'` для полей со значениями `None`, `0`, `'-'`, `N/A`, `0.00`
+            normalized_db_value = '-' if db_value in [None, '0', '-', 'N/A', '0.00'] else str(db_value).replace('  ',
+                                                                                                                ' ').strip()
+            normalized_web_value = '-' if web_value in [None, '0', '-', 'N/A', '0.00'] else str(web_value).replace('  ',
+                                                                                                                   ' ').strip()
+
+            # Проверка для StarRating, WaitingSeconds, ServiceMinutes, и InterpreterID: `0` и `'-'` считаем эквивалентными
+            if field_name in ["StarRating", "WaitingSeconds", "ServiceMinutes", "InterpreterID"] and (
+                    normalized_db_value == '-' or normalized_db_value == '0') and (
+                    normalized_web_value == '-' or normalized_web_value == '0'):
+                return True
+
+            # Проверка для ClientDepartment, чтобы пропускать случаи с одним значением '-'
+            if field_name == "ClientDepartment" and (normalized_db_value == '-' or normalized_web_value == '-'):
+                return normalized_db_value == normalized_web_value
+
+            # Проверка на эквивалентность
+            return normalized_db_value == normalized_web_value
+
+        # Функция для форматирования даты и времени, если они присутствуют
+        def format_datetime(value, fmt):
+            return value.strftime(fmt) if isinstance(value, datetime) else value
+
+        # Функция для получения департамента из intakeQuestions
+        def get_department_from_intake(intake_questions):
+            if intake_questions is not None:
+                for item in intake_questions:
+                    if item.get('Name') == 'Department':
+                        return item.get('Value', '-')
+            return '-'
+
+        # Поля для сравнения
+        fields_to_compare = [
+            ("RequestDate", "RequestDate", "%Y-%m-%d"),
+            ("RequestTime", "RequestTime", "%H:%M:%S"),
+            ("ClientName", "ClientName"),
+            ("TargetLanguage", "TargetLanguage"),
+            ("CallType", "VideoOption"),
+            ("Status", "Status"),
+            ("WaitingSeconds", "WaitingSeconds"),
+            ("ServiceMinutes", "ServiceMinutes"),
+            ("InterpreterName", "InterpreterName"),
+            ("InterpreterID", "InterpreterId"),
+            ("CancelTime", "ServiceCancelTime", "%Y-%m-%d %H:%M:%S"),
+            ("CallerId", "CallerID"),
+            ("SerialNumber", "IOSSerialNumber"),
+            ("ClientUserName", "UserName"),
+            ("RouteToBackup", "RouteToBackup"),
+            ("RoutingCounts", "RoutingHistoryLength"),
+            ("RequestCost", "Cost", None, lambda x: f"${round(float(x), 2)}" if x else "-"),
+            ("StarRating", "CallQualityRatingStar"),
+            ("Feedback", "Feedback"),
+            ("ClientDepartment", "intakeQuestions", None, get_department_from_intake)
+        ]
+
+        # Группировка записей базы данных по TransactionID
+        db_data_by_id = {}
+        for db_row in db_data:
+            transaction_id = str(db_row.ReferenceTransactionId)
+            if transaction_id not in db_data_by_id:
+                db_data_by_id[transaction_id] = []
+            db_data_by_id[transaction_id].append(db_row)
+
+        # Находим дубликаты TransactionID в web_data
+        transaction_ids = [web_row["TransactionID"] for web_row in web_data]
+        duplicate_transaction_ids = {id for id, count in Counter(transaction_ids).items() if count > 1}
+
+        # Проверка каждой записи веб-данных
         for web_row in web_data:
-            db_row = next((item for item in db_data if str(item.ReferenceTransactionId) == web_row["TransactionID"]),
-                          None)
+            transaction_id = web_row["TransactionID"]
+            matched = False
 
-            if db_row:
-                if db_row.RequestTime:
-                    db_time = db_row.RequestTime - timedelta(hours=4)
-                    formatted_db_time = db_time.strftime('%H:%M:%S')
-                else:
-                    formatted_db_time = None
+            # Если это дубликат, проводим более тщательное сравнение
+            if transaction_id in duplicate_transaction_ids and transaction_id in db_data_by_id:
+                best_match = None
+                best_match_discrepancies = []
 
-                keys_to_compare = {
-                    "RequestDate": db_row.Date.strftime('%Y-%m-%d'),
-                    "RequestTime": formatted_db_time,
-                    "ClientName": db_row.ClientName,
-                    "TargetLanguage": db_row.TargetLanguage,
-                    "AudioVideo": db_row.VideoOption,
-                    "Status": db_row.Status,
-                    "WaitingSeconds": str(db_row.WaitingSeconds),
-                    "ServiceMinutes": str(db_row.ServiceMinutes) if db_row.ServiceMinutes is not None else '-',
-                    "InterpreterName": db_row.InterpreterFirstName if db_row.InterpreterFirstName is not None else '-',
-                    "RoutetoBackup": db_row.RouteToBackup,
-                    "InterpreterID": str(db_row.InterpreterId) if db_row.InterpreterId is not None else '-',
-                    "CancelTime": db_row.ServiceCancelTime if db_row.ServiceCancelTime is not None else '-',
-                    "StarRating": db_row.CallQualityRatingStar if db_row.CallQualityRatingStar is not None else '-',
-                    "CallerID": db_row.CallerID,
-                    "SerialNumber": db_row.IOSSerialNumber if db_row.IOSSerialNumber is not None else '-',
-                    "ClientUserName": db_row.UserName
-                }
+                # Проверяем каждую запись в группе с одинаковым TransactionID
+                for db_row in db_data_by_id[transaction_id]:
+                    current_discrepancies = []
 
-                for key, db_value in keys_to_compare.items():
-                    web_value = web_row.get(key, '').strip()
-
-                    if key in ["WaitingSeconds", "ServiceMinutes", "StarRating"]:
-                        if web_value == '-':
-                            web_value = 0.0
+                    for field in fields_to_compare:
+                        if len(field) == 3:
+                            key, attr, fmt = field
+                            db_value = format_datetime(getattr(db_row, attr, None), fmt)
+                        elif len(field) == 4:
+                            key, attr, fmt, func = field
+                            db_value = func(getattr(db_row, attr, None))
                         else:
-                            try:
-                                web_value = float(web_value)
-                            except ValueError:
-                                web_value = None
+                            key, attr = field[:2]
+                            db_value = getattr(db_row, attr, None)
 
-                        if db_value == '-':
-                            db_value = 0.0
-                        else:
-                            db_value = float(db_value) if db_value is not None else 0.0
+                        web_value = web_row.get(key, '-').strip()
 
-                        if web_value is not None and not math.isclose(web_value, db_value, rel_tol=1e-6):
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{db_value}' != Web value: '{web_value}'")
+                        # Проверка на эквивалентность после нормализации и специальных правил
+                        if not are_values_equivalent(db_value, web_value, key):
+                            current_discrepancies.append(
+                                f"Discrepancy for {key} - DB value: '{db_value}' != Web value: '{web_value}'"
+                            )
 
-                    elif key == "CancelTime":
-                        if db_value and db_value != '-':
-                            db_time = db_value - timedelta(hours=4)
-                            formatted_db_time = db_time.strftime('%Y-%m-%d %H:%M:%S')
-                            db_value = formatted_db_time
-                        else:
-                            db_value = '-'
+                    # Сравнение по количеству несоответствий для нахождения наилучшего совпадения
+                    if best_match is None or len(current_discrepancies) < len(best_match_discrepancies):
+                        best_match = db_row
+                        best_match_discrepancies = current_discrepancies
 
-                        if web_value != db_value:
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{db_value}' != Web value: '{web_value}'")
+                # Если есть расхождения, выводим их для лучшего совпадения
+                if best_match_discrepancies:
+                    discrepancies.append(f"Transaction ID {transaction_id} did not have a complete match.")
+                    discrepancies.append("Web data row:")
+                    discrepancies.append(str(web_row))  # Вывод всей строки веб-данных
+                    discrepancies.append("Best matching DB data row:")
+                    discrepancies.append(str(best_match))  # Вывод строки базы данных, которая лучше всего соответствует
+                    discrepancies.extend(
+                        best_match_discrepancies)  # Добавляем конкретные расхождения для этого совпадения
 
+            # Если это не дубликат, выполняем стандартное сравнение
+            elif transaction_id in db_data_by_id:
+                db_row = db_data_by_id[transaction_id][0]  # Берём первую запись, так как нет дубликатов
+                all_fields_match = True
+                current_discrepancies = []
+
+                for field in fields_to_compare:
+                    if len(field) == 3:
+                        key, attr, fmt = field
+                        db_value = format_datetime(getattr(db_row, attr, None), fmt)
+                    elif len(field) == 4:
+                        key, attr, fmt, func = field
+                        db_value = func(getattr(db_row, attr, None))
                     else:
-                        if db_value is None:
-                            db_value = '-'
+                        key, attr = field[:2]
+                        db_value = getattr(db_row, attr, None)
 
-                        normalized_db_value = ' '.join(str(db_value).split())
-                        normalized_web_value = ' '.join(str(web_value).split())
+                    web_value = web_row.get(key, '-').strip()
 
-                        if normalized_web_value.lower() != normalized_db_value.lower():
-                            discrepancies.append(
-                                f"Discrepancy for Transaction ID {web_row['TransactionID']}: {key} - DB value: '{normalized_db_value}' != Web value: '{normalized_web_value}'")
-            else:
-                print(f"No matching data found in DB for transaction ID: {web_row['TransactionID']}")
+                    # Проверка на эквивалентность
+                    if not are_values_equivalent(db_value, web_value, key):
+                        all_fields_match = False
+                        current_discrepancies.append(
+                            f"Discrepancy for {key} - DB value: '{db_value}' != Web value: '{web_value}'"
+                        )
+
+                # Если есть несоответствия, выводим всю строку
+                if not all_fields_match:
+                    discrepancies.append(f"Transaction ID {transaction_id} did not have a complete match.")
+                    discrepancies.append("Web data row:")
+                    discrepancies.append(str(web_row))  # Полная строка из фронтенда
+                    discrepancies.append("DB data row:")
+                    discrepancies.append(str(db_row))  # Полная строка из базы данных
+                    discrepancies.extend(current_discrepancies)
 
         if discrepancies:
             for discrepancy in discrepancies:
@@ -1861,99 +2058,183 @@ class Transaction_page_A(Graphs):
             else:
                 print(f"No matching API record found for Interpreter ID: {interpreter_id}")
 
-    def compare_data_cvs_periods(self, db_data_list, csv_data_list):
+    def compare_data_cvs_periods(self, db_data_list, csv_data_list, time_period):
         data_is_correct = True
+        discrepancies = []  # Список для хранения всех несоответствий
+        matched_data = []  # Список для хранения совпавших данных
 
-        # Проверяем, что db_data_list не None
-        if db_data_list is None:
-            print("No data received from the database.")
-            return False  # или другая логика обработки этой ситуации
+        # Группировка записей базы данных по Id
+        db_data_by_id = {}
+        for db_row in db_data_list:
+            unique_id = str(int(db_row.Id)).strip() if db_row.Id else None
+            if unique_id:
+                db_data_by_id[unique_id] = db_row
 
-        db_transactions_ids = {str(db_data.ReferenceTransactionId).strip() for db_data in db_data_list if
-                               db_data.ReferenceTransactionId}
+        # Проверка каждой записи CSV
+        for csv_row in csv_data_list:
+            unique_id = str(int(csv_row['Id'])).strip() if csv_row['Id'] else None
+            reference_id = csv_row.get('ReferenceTransactionId', 'N/A')
 
-        # Перебираем данные из базы данных
-        for db_data in db_data_list:
-            transaction_id = str(db_data.ReferenceTransactionId).strip()
-
-            # Пропускаем запись, если TransactionID пустой
-            if not transaction_id:
+            if not unique_id:
+                discrepancies.append({
+                    "Id": "N/A",
+                    "ReferenceTransactionId": reference_id,
+                    "Error": "Missing Id in CSV row",
+                    "Details": "Row skipped due to missing Id"
+                })
+                data_is_correct = False
                 continue
 
-            matching_csv_data = next(
-                (item for item in csv_data_list if item['ReferenceTransactionId'] == transaction_id), None)
-
-            if matching_csv_data:
-                if not self.compare_records_db_csv(db_data, matching_csv_data):
-                    print(f"Data mismatch for transaction ID: {transaction_id}")
+            if unique_id in db_data_by_id:
+                db_row = db_data_by_id[unique_id]
+                differences = self.compare_records_db_csv(db_row, csv_row)
+                if differences:
+                    discrepancy_details = {
+                        "Id": unique_id,
+                        "ReferenceTransactionId": getattr(db_row, 'ReferenceTransactionId', 'N/A'),
+                        "Error": "Data mismatch",
+                        "Details": differences
+                    }
+                    discrepancies.append(discrepancy_details)
                     data_is_correct = False
             else:
-                print(f"No matching data found in CSV for transaction ID: {transaction_id}")
+                discrepancies.append({
+                    "Id": unique_id,
+                    "ReferenceTransactionId": reference_id,
+                    "Error": "Not found in DB",
+                    "Details": "Exists in CSV but not in DB"
+                })
                 data_is_correct = False
 
-        # Перебираем данные из CSV и проверяем наличие в базе данных
-        for csv_data in csv_data_list:
-            transaction_id = csv_data['ReferenceTransactionId'].strip()
-
-            if transaction_id not in db_transactions_ids:
-                print(f"No matching data found in database for CSV transaction ID: {transaction_id}")
+        # Проверка, что все записи из базы также есть в CSV
+        csv_ids = {str(int(csv_row['Id'])).strip() for csv_row in csv_data_list if csv_row['Id'] is not None}
+        for unique_id, db_row in db_data_by_id.items():
+            if unique_id not in csv_ids:
+                discrepancies.append({
+                    "Id": unique_id,
+                    "ReferenceTransactionId": getattr(db_row, 'ReferenceTransactionId', 'N/A'),
+                    "Error": "Not found in CSV",
+                    "Details": "Exists in DB but not in CSV"
+                })
                 data_is_correct = False
+
+        # Вывод совпавших данных
+        if matched_data:
+            print("\nMatched Data:")
+            for match in matched_data:
+                print(
+                    f" - Id: {match['Id']}, ReferenceTransactionId: {match['ReferenceTransactionId']}, Details: {match['Details']}")
+
+        # Вывод несоответствий
+        if discrepancies:
+            print("\nDiscrepancies Found:")
+            for discrepancy in discrepancies:
+                print(
+                    f" - Id: {discrepancy['Id']}, ReferenceTransactionId: {discrepancy['ReferenceTransactionId']}, Error: {discrepancy['Error']}")
+                if "Details" in discrepancy and isinstance(discrepancy["Details"], dict):
+                    for field, values in discrepancy["Details"].items():
+                        print(f"    * Field '{field}': DB = {values['db_value']}, CSV = {values['csv_value']}")
+                elif "Details" in discrepancy:
+                    print(f"    * {discrepancy['Details']}")
+
+        # Если есть несоответствия, создаем баг-репорт в Jira
+        if discrepancies:
+            print("\nDiscrepancies found! Bug report will be created.")
+            # self.create_jira_issue(time_period, discrepancies)
 
         if data_is_correct:
-            print("All data matches correctly")
+            print("\nAll data matches correctly!")
+
+        # Удаление файлов из директории
+        self.clean_download_directory()
 
         return data_is_correct
 
-    def compare_records_db_csv(self, db_record, csv_record):
-        keys_to_compare = {
-            "RequestProductName": "RequestProductName",
-            "ExtractedTime": "ExtractedTime",
-            "ClientName": "ClientName",
-            "TargetLanguage": "TargetLanguage",
-            "VideoOption": "VideoOption",
-            "Status": "Status",
-            "WaitingSeconds": "WaitingSeconds",
-            "ServiceMinutes": "ServiceMinutes",
-            "InterpreterFirstName": "InterpreterFirstName",
-            "TotalPrice": "TotalPrice",
-            "InterpreterId": "InterpreterId",
-            "ServiceCancelTime": "ServiceCancelTime",
-            "CallQualityRatingStar": "CallQualityRatingStar",
-            "CallerID": "CallerID",
-            "IOSSerialNumber": "IOSSerialNumber",
-            "UserName": "UserName"
-        }
+    def create_jira_issue(self, time_period, discrepancies):
+        jira = JIRA(server=self.JIRA_URL, basic_auth=(self.JIRA_EMAIL, self.JIRA_API_TOKEN))
+        description = f"Discrepancies found during data comparison for time period: {time_period}\n\n"
+        description += "Details of discrepancies:\n"
 
-        is_match = True
-        for csv_key, db_key in keys_to_compare.items():
-            db_value = self.format_value_l(getattr(db_record, db_key), db_key)
-            csv_value = self.format_value_l(csv_record[csv_key], csv_key) if csv_key in csv_record else None
+        for discrepancy in discrepancies:
+            description += f"- Id: {discrepancy['Id']}, Error: {discrepancy['Error']}\n"
+            if "Details" in discrepancy and isinstance(discrepancy["Details"], dict):
+                for field, values in discrepancy["Details"].items():
+                    description += f"  * Field '{field}': DB = {values['db_value']}, CSV = {values['csv_value']}\n"
+            elif "Details" in discrepancy:
+                description += f"  * {discrepancy['Details']}\n"
 
-            # Дополнительная логика для обработки пустых значений и 'None' для InterpreterFirstName
-            if db_key == "InterpreterFirstName":
-                if (db_value in [None, ''] and csv_value in [None, '']):
-                    continue  # Пропускаем сравнение, если оба значения None или пустые строки
+        # Создание задачи в Jira
+        issue = jira.create_issue(
+            project="VIP",  # Укажи ключ проекта в Jira
+            summary=f"Data comparison discrepancies for time period: {time_period}",
+            description=description,
+            issuetype={"name": "Bug"}
+        )
+        print(f"Jira issue created: {issue.key}")
 
-            if db_key in ["RequestTime", "ExtractedTime", "ServiceCancelTime"] and db_value and csv_value:
-                if not self.is_time_difference_acceptable1(db_value, csv_value):
-                    print(f"Mismatch in {db_key} (DB) vs {csv_key} (CSV): DB - '{db_value}', CSV - '{csv_value}'")
-                    is_match = False
-            elif db_key == "TotalPrice":
-                try:
-                    db_val_float = float(db_value) if db_value is not None else None
-                    csv_val_float = float(csv_value) if csv_value is not None else None
-                    if db_val_float is not None and csv_val_float is not None and round(db_val_float, 2) != round(
-                            csv_val_float, 2):
-                        print(f"Mismatch in {db_key} (DB) vs {csv_key} (CSV): DB - '{db_value}', CSV - '{csv_value}'")
-                        is_match = False
-                except ValueError:
-                    print(f"Error in comparing {db_key} (DB) vs {csv_key} (CSV) as numbers.")
-                    is_match = False
-            elif db_value != csv_value:
-                print(f"Mismatch in {db_key} (DB) vs {csv_key} (CSV): DB - '{db_value}', CSV - '{csv_value}'")
-                is_match = False
+    def clean_download_directory(self):
+        directory = "/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads1"
+        try:
+            for file in os.listdir(directory):
+                file_path = os.path.join(directory, file)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    print(f"Deleted file: {file_path}")
+            print("All files in the directory have been deleted.")
+        except Exception as e:
+            print(f"Error while cleaning directory: {e}")
 
-        return is_match
+    def compare_records_db_csv(self, db_data, csv_row):
+        # Сравнение всех необходимых полей между db_data и csv_row
+        differences = {}
+        fields_to_compare = [
+            'ReferenceTransactionId', 'RequestDate', 'RequestTime', 'ClientName', 'TargetLanguage',
+            'VideoOption', 'Status', 'WaitingSeconds', 'ServiceMinutes', 'InterpreterName',
+            'InterpreterId', 'ServiceCancelTime', 'CallerID', 'IOSSerialNumber', 'UserName',
+            'RouteToBackup', 'RoutingHistoryLength', 'Cost', 'CallQualityRatingStar'
+        ]
+
+        for field in fields_to_compare:
+            db_value = getattr(db_data, field, None)
+            csv_value = csv_row.get(field)
+
+            # Приведение к строкам и удаление лишних пробелов
+            db_value = str(db_value).strip() if db_value is not None else ''
+            csv_value = str(csv_value).strip() if csv_value is not None else ''
+
+            # Удаление ведущих нулей для числовых значений
+            if db_value.isdigit():
+                db_value = db_value.lstrip('0')
+            if csv_value.isdigit():
+                csv_value = csv_value.lstrip('0')
+
+            # Преобразование для полей, чувствительных к регистру
+            if isinstance(db_value, str) and isinstance(csv_value, str):
+                db_value = db_value.lower()
+                csv_value = csv_value.lower()
+
+            # Специальная обработка для CallerID (удаление ведущих нулей и символа '+')
+            if field == 'CallerID':
+                db_value = db_value.lstrip('0+')
+                csv_value = csv_value.lstrip('0+')
+
+            # Обработка для числовых значений, включая округление для Cost
+            if field == 'Cost':
+                db_value = round(float(db_value), 2) if db_value else 0.0
+                csv_value = round(float(csv_value), 2) if csv_value else 0.0
+            elif field in ['WaitingSeconds', 'ServiceMinutes', 'InterpreterId', 'RoutingHistoryLength']:
+                db_value = int(float(db_value)) if db_value else 0
+                csv_value = int(float(csv_value)) if csv_value else 0
+
+            # Специальный случай для CallQualityRatingStar: 0 в БД и пустое значение в CSV считаются равными
+            if field == 'CallQualityRatingStar' and (db_value == '0' and csv_value == ''):
+                continue
+
+            # Проверка на равенство значений
+            if db_value != csv_value:
+                differences[field] = {'db_value': db_value, 'csv_value': csv_value}
+
+        return differences
 
     def is_time_difference_acceptable1(self, db_time_str, csv_time_str):
         def convert_time(time_str):
@@ -1987,141 +2268,211 @@ class Transaction_page_A(Graphs):
             return None
         return str(value)
 
-    def select_time_period_and_wait_for_update(self, time_period, open_list=True):
-        if open_list:
-            self.click_list()  # Открытие списка, если это необходимо
-            self.double_press_down_arrow()
-        time.sleep(10)  # Короткая задержка, чтобы убедиться, что список открыт
-        getattr(self, f"click_{time_period}")()
-        time.sleep(30)  # Ожидание обновления данных
-        self.click_download_b()
-        time.sleep(60)
-        self.click_ok_button_by_xpath()
+    def select_time_period_and_wait_for_update(self, time_period):
+        now = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
 
-        # Инициализация проверки Gmail для получения файла
-        self.check_gmail()
+        start = now - timedelta(days=1)
+        start_str = start.strftime('%m-%d-%Y')
+        end_str = now.strftime('%m-%d-%Y')
+        file_pattern = f"Transaction_Records_{start_str}_to_{end_str}.xlsx"
 
-        # Путь к папке скачивания и целевой папке
-        download_folder = "/Users/nikitabarshchuk/Downloads"
-        target_folder = "/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads"
-        file_pattern = "Transactions_Records*.csv"
-
-        # Перемещение файла из папки загрузок в целевую папку
-        moved_file_path = self.move_latest_file(download_folder, target_folder, file_pattern)
-
-        if moved_file_path:
-            csv_data = self.read_csv_data(moved_file_path)
-
-            # Получение данных из БД в зависимости от выбранного периода
-            if time_period == 'last_month':
-                db_data = self.query_tr_p_last_month()
-            elif time_period == 'last_year':
-                db_data = self.query_tr_p_last_year()
-            else:
-                db_data = self.query_transactions_periods(time_period)
-
-            # Сравнение данных из CSV и БД
-            self.compare_data_cvs_periods(db_data, csv_data)
-
-    def click_on_first_mail_with_specific_text(self):
-        # XPath для нахождения первого элемента tr по тексту внутри div с классом 'afn'
-        xpath = "(//tr[contains(.//div[contains(@class, 'afn')], 'VIP Admin: Your Report Download Link is Ready!')])[1]"
-
-        # Ожидание, пока элемент станет видимым и кликабельным
-        wait = WebDriverWait(self.driver, 20)
-        specific_mail = wait.until(EC.visibility_of_element_located((By.XPATH, xpath)))
-
-        # Прокрутка до элемента, если он не в области видимости
-        self.driver.execute_script("arguments[0].scrollIntoView();", specific_mail)
-
-        # Получение размеров элемента
-        element_size = specific_mail.size
-        element_width = element_size['width']
-        element_height = element_size['height']
-
-        # Инициализация ActionChains для клика по середине элемента
-        actions = ActionChains(self.driver)
-        actions.move_to_element_with_offset(specific_mail, element_width // 2, element_height // 2).click().perform()
-
-    def check_gmail(self):
-        # Открытие новой вкладки
-        self.driver.execute_script("window.open('');")
-        time.sleep(2)
-        # Переключение на новую вкладку, которая будет последней в списке окон
-        new_tab_index = self.driver.window_handles[-1]
-        self.driver.switch_to.window(new_tab_index)
-
-        # Переход на страницу Gmail
-        self.driver.get(self.url1)
-        self.input_login("nikita.barshchuk@voyceglobal.com")
-        self.click_next()
-        time.sleep(3)
-        self.input_password("Gomynkyl165432_#")
-        time.sleep(3)
-        self.click_next2()
-        time.sleep(20)
-
-        # Выбор первого письма
-        self.click_on_first_mail_with_specific_text()
-
-        try:
-            if self.get_points():
-                self.click_points()
-                time.sleep(3)
-                self.click_download_button_center()
-        except NoSuchElementException:
-            pass
-        except StaleElementReferenceException:
-            if self.get_points():
-                self.click_points()
-                time.sleep(3)
-                self.click_download_button_center()
-        except TimeoutException:
-            self.click_download_button_center()
-            time.sleep(5)
-
-        # Клик по центральной кнопке скачивания после всех проверок
-        self.click_download_button_center()
-
-        # Обработка множественных вкладок, если они открыты
-        window_handles = self.driver.window_handles
-        if len(window_handles) > 1:
-            self.driver.switch_to.window(window_handles[-1])  # Переключение на последнюю вкладку
-            self.driver.close()  # Закрытие вкладки
-
-        time.sleep(3)
-        # Возвращение к основной вкладке
-        self.driver.switch_to.window(self.driver.window_handles[-1])
+        self.click_list()
+        self.double_press_down_arrow()
         time.sleep(10)
-
-        # Дополнительные действия, если необходимы пароли
-        self.input_password1('Admin@123')
-        time.sleep(3)
-        self.input_password2('Admin@123')
+        getattr(self, f"click_{time_period}")()
+        time.sleep(30)
         self.click_download_b()
+        time.sleep(1)
+        self.click_ok_button_by_xpath()
+        original_tab = self.driver.current_window_handle
 
-        # Проверка уведомления после скачивания
-        self.assert_word(self.get_notification(), 'Password has been successfully updated')
+        self.check_gmail(original_tab)
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+
+        # Paths to the download and target folders
+        download_folder = "/tmp/test_downloads"
+        target_folder = os.path.join(current_directory, "Downloads1")
+
+        # Максимальное время ожидания (например, 5 минут) и интервал проверки (30 секунд)
+        max_wait_time = 300000
+        check_interval = 30
+        start_time = time.time()
+
+        while time.time() - start_time < max_wait_time:
+            # Find the most recent downloaded file
+            list_of_files = glob.glob(f"{download_folder}/Transaction_Records_*")
+            if list_of_files:
+                latest_file = max(list_of_files, key=os.path.getmtime)  # Find the latest file by modification time
+                print(f"File found: {latest_file}")
+
+                # Move the file to the target folder
+                moved_file_path = os.path.join(target_folder, os.path.basename(latest_file))
+                os.rename(latest_file, moved_file_path)
+                print(f"File moved to: {moved_file_path}")
+
+                # Read and compare data from Excel and the database
+                excel_data = self.read_data(moved_file_path)
+                db_data = self.query_transactions_periods_Admin(time_period)
+
+                # Compare data from CSV and DB
+                self.compare_data_cvs_periods(db_data, excel_data, time_period)
+                return  # Завершить метод, если файл найден и обработан
+
+            print(
+                "No file found with the 'Transaction_Records' pattern in the Downloads folder. Retrying in 30 seconds...")
+            time.sleep(check_interval)
+
+        # Если файл не найден в течение максимального времени ожидания
+        print("File not found within the maximum wait time.")
+        return None
+
+    def click_db_in_mail(self):
+        driver = self.driver
+        # Получение размеров элемента
+        element = driver.find_element(By.XPATH, "(//a[text()='Download Report'])[last()]")
+        element_size = element.size
+        element_width, element_height = element_size['width'], element_size['height']
+
+        # Клик по центру элемента
+        actions = ActionChains(driver)
+        actions.move_to_element_with_offset(element, element_width // 2, element_height // 2).click().perform()
+        element.click()
+        print("click_db_in_mail")
+
+    def click_element_center(self):
+        """Пытается кликнуть элемент по центру, чередуя первый и второй элементы через заданный интервал."""
+        max_retries = 99999  # Максимальное количество попыток (чередование элементов)
+        retries = 0
+        alternate = True  # Переключатель между первым и вторым элементом
+        switch_interval = 10  # Промежуток времени между сменой элементов (в секундах)
+
+        while retries < max_retries:
+            try:
+                # Определяем, какой элемент пробуем сейчас
+                xpath = "(//span[contains(text(), 'VIP Admin: Your Report Download Link is Ready!')])[1]" if alternate else \
+                    "(//span[contains(text(), 'VIP Admin: Your Report Download Link is Ready!')])[2]"
+                print(f"Trying to click element: {xpath} (Attempt {retries + 1}/{max_retries})")
+
+                # Ожидание, пока текущий элемент станет кликабельным
+                element = WebDriverWait(self.driver, timeout=10, poll_frequency=1).until(
+                    EC.element_to_be_clickable((By.XPATH, xpath))
+                )
+                element_size = element.size
+                element_width, element_height = element_size['width'], element_size['height']
+
+                # Клик по центру элемента
+                actions = ActionChains(self.driver)
+                actions.move_to_element_with_offset(element, element_width // 2, element_height // 2).click().perform()
+                print("Center clicked")
+                return  # Если клик успешен, выходим из метода
+
+            except (ElementNotInteractableException, TimeoutException) as e:
+                retries += 1
+                print(f"Attempt {retries}/{max_retries} failed: {e}. Retrying...")
+                time.sleep(switch_interval)  # Пауза перед переключением
+                alternate = not alternate  # Переключаемся на другой элемент
+
+            except Exception as e:
+                retries += 1
+                print(f"Unexpected error: {e}. Retrying...")
+                time.sleep(switch_interval)  # Пауза перед переключением
+                alternate = not alternate  # Переключаемся на другой элемент
+
+        # Если все попытки исчерпаны
+        raise Exception("Failed to interact with the element after multiple attempts.")
+
+    def click_more_and_delete(self):
+        try:
+            # Ожидание появления и кликабельности элемента "More message options"
+            more_options_button = WebDriverWait(self.driver, 30).until(
+                EC.element_to_be_clickable((By.XPATH, "//div[@aria-label='More message options']"))
+            )
+            more_options_button.click()
+            print("Clicked on 'More message options' button.")
+
+            time.sleep(3)
+            self.wait_for_transaction_file(directory_path="/Users/nikitabarshchuk/Downloads")
+            actions = ActionChains(self.driver)
+            actions.send_keys(Keys.ARROW_DOWN).perform()
+            time.sleep(1)
+            actions.send_keys(Keys.ARROW_DOWN).perform()
+            time.sleep(1)
+            actions.send_keys(Keys.ARROW_DOWN).perform()
+            time.sleep(1)
+            actions.send_keys(Keys.ARROW_DOWN).perform()
+            time.sleep(1)
+            actions.send_keys(Keys.ENTER)
+
+            # Выполняем цепочку действий
+            actions.perform()
+            time.sleep(10)
+
+            print("Pressed ARROW_DOWN 4 times and then ENTER.")
+        except Exception as e:
+            print(f"Error performing arrow down and enter: {e}")
+
+    def check_gmail(self, original_tab):
+        """
+        Проверяет Gmail, выполняя вход только если требуется.
+        """
+        try:
+            # Открытие новой вкладки
+            self.driver.execute_script("window.open('');")
+            time.sleep(2)
+
+            # Переключение на новую вкладку
+            new_tab_index = self.driver.window_handles[-1]
+            self.driver.switch_to.window(new_tab_index)
+
+            # Переход на Gmail
+            self.driver.get(self.url1)
+            time.sleep(10)
+
+            # Проверка наличия поля для ввода логина
+            login_field = self.get_login_field()
+            if login_field:
+                self.input_login(self.my_accaunt)
+                self.click_next()
+                time.sleep(3)
+                self.input_password(self.my_password)
+                time.sleep(3)
+                self.click_next2()
+            else:
+                print("Login already performed. Skipping login steps.")
+        except Exception as e:
+            print(f"...")
+
+        finally:
+            time.sleep(20)
+            self.click_element_center()
+            time.sleep(5)
+            self.click_db_in_mail()
+            time.sleep(1)
+            self.click_more_and_delete()
+            self.driver.close()
+            time.sleep(5)
+            self.driver.switch_to.window(original_tab)
+            time.sleep(10)
 
     def compare_data_for_periods(self):
         with allure.step("Compare data with DB by Periods"):
-            time_periods = ['yesterday', 'last_30_days', 'this_week', 'this_month', 'last_week', 'last_month',
+            time_periods = ['last_30_days', 'yesterday', 'this_week', 'this_month', 'last_week', 'last_month',
                             'this_year', 'last_year']
             for period in time_periods:
                 self.take_data_for_period_and_compare(period)
 
     def take_data_for_period_and_compare(self, time_period):
         self.select_time_period_and_wait_for_update(time_period)  # Устанавливаем фильтр на веб-сайт
-        time.sleep(30)
-        website_data = self.fetch_website_data_am_cvs1()  # Получение данных с сайта
-
-        # Выбор общего метода запроса в базе данных без учёта конкретных периодов 'last_month' и 'last_year'
-        db_data = self.query_transactions_periods_Admin(time_period)
-
-        if db_data and website_data:
-            self.compare_data_am_t_periods(website_data, db_data)
-        else:
-            print(f"No data found for period '{time_period}'")
+        # time.sleep(30)
+        # website_data = self.fetch_website_data_am_cvs()  # Получение данных с сайта
+        #
+        # # Выбор общего метода запроса в базе данных без учёта конкретных периодов 'last_month' и 'last_year'
+        # db_data = self.query_transactions_periods_Admin(time_period)
+        #
+        # if db_data and website_data:
+        #     self.compare_data_am_t_periods(website_data, db_data)
+        # else:
+        #     print(f"No data found for period '{time_period}'")
 
     @staticmethod
     def are_times_equal_with_offset(time1, time2, offset_hours=5):
@@ -2257,7 +2608,7 @@ class Transaction_page_A(Graphs):
         # Обновляем unique_transaction_id_count перед сравнением
         db_data = self.query_transactions_today_admin()
         if db_data is None:
-            print("Не удалось получить данные из Databricks.")
+            print("It was not possible to get data from Databricks.")
             return
 
         if self.unique_transaction_id_count1 == total_pages:
@@ -2459,23 +2810,24 @@ class Transaction_page_A(Graphs):
         target_y = window_y + target_location['y']
 
         # Переместите мышь к исходному элементу и нажмите
-        y_offset = 140
+        y_offset = 200
         x_offset = 100
         # Перемещение мыши и действия перетаскивания
         time.sleep(2)
         pyautogui.moveTo(source_x + x_offset, source_y + y_offset, duration=1)
         time.sleep(2)
         pyautogui.mouseDown()
-        time.sleep(2)
+        time.sleep(4)
         pyautogui.moveTo(target_x + x_offset, target_y + y_offset, duration=1)
-        time.sleep(2)
+        time.sleep(4)
         pyautogui.mouseUp()
 
     def extract_column_names(self, xpath):
         elements = WebDriverWait(self.driver, 10).until(
             EC.presence_of_all_elements_located((By.XPATH, xpath))
         )
-        return [element.text for element in elements]
+        # Extract text from each element and remove 'Selected Columns\n' if it's present at the start
+        return [element.text.replace('Selected Columns\n', '') for element in elements]
 
     def compare_columns_and_click_ok(self):
         first_element_xpath = "//div[@data-rbd-droppable-id='selected' and @data-rbd-droppable-context-id='0']"
@@ -2606,8 +2958,8 @@ class Transaction_page_A(Graphs):
         return is_match
 
     def compare_columns_and_click_ok1(self):
-        first_element_xpath = "//div[@data-rbd-droppable-id='selected' and @data-rbd-droppable-context-id='0']"
-        second_element_xpath = "//*[@id='root']/section/section/main/div/div/div/div/div/div/div/div[2]/div[1]/table/thead/tr"
+        first_element_xpath = '//div[@data-rbd-droppable-id="selected" and @class="selected-column"]'
+        second_element_xpath = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/thead/tr'
 
         first_column_names = self.extract_column_names(first_element_xpath)
         print("Первый набор имен колонок:", first_column_names)
@@ -2685,39 +3037,36 @@ class Transaction_page_A(Graphs):
 
     def fetch_column_data(self, column_index):
         try:
-            # Ждём, пока строки таблицы будут доступны
+            # Wait until the table rows are available
             WebDriverWait(self.driver, 10).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".ant-table-row, .ant-table-row-level-0"))
-                # Универсальный селектор для строк
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".ant-table-row.ant-table-row-level-0"))
             )
 
             column_data = []
-            # Используем более специфичный селектор для строк данных (исключая заголовки)
-            rows = self.driver.find_elements(By.CSS_SELECTOR,
-                                             ".ant-table-tbody > .ant-table-row, .ant-table-tbody > .ant-table-row-level-0")
+            # Use the updated selector to target table rows containing data (excluding headers)
+            rows = self.driver.find_elements(By.CSS_SELECTOR, ".ant-table-tbody > .ant-table-row.ant-table-row-level-0")
 
             for row in rows:
-                retry = True  # Включаем повторные попытки
-                attempts = 0  # Счетчик попыток
+                retry = True  # Enable retry mechanism
+                attempts = 0  # Attempt counter
                 while retry:
                     try:
-                        # Достаем текст ячейки по индексу колонки
-                        cell_text = row.find_elements(By.CSS_SELECTOR, f"td")[
-                            column_index].text  # Индексация ячеек начинается с 0
+                        # Extract text from the cell by the specified column index
+                        cell_text = row.find_elements(By.CSS_SELECTOR, "td")[column_index].text
                         column_data.append(cell_text)
-                        retry = False  # Успешно получили данные, выходим из цикла
+                        retry = False  # Data fetched successfully, exit loop
                     except StaleElementReferenceException:
-                        attempts += 1  # Увеличиваем счетчик попыток
-                        if attempts > 99:  # Устанавливаем лимит попыток, чтобы избежать бесконечного цикла
-                            column_data.append("Ошибка: множественные попытки не увенчались успехом")
+                        attempts += 1  # Increment attempt counter
+                        if attempts > 99:  # Limit attempts to avoid infinite loop
+                            column_data.append("Error: multiple retries unsuccessful")
                             retry = False
                     except IndexError:
-                        # Если индекс колонки выходит за пределы допустимого диапазона
-                        column_data.append("Ошибка: индекс вне диапазона")
+                        # Handle cases where the column index is out of range
+                        column_data.append("Error: index out of range")
                         break
             return column_data
         except Exception as e:
-            print(f"Произошла ошибка при извлечении данных из колонки: {e}")
+            print(f"An error occurred when extracting data from the column: {e}")
             return []
 
     # @staticmethod
@@ -2746,46 +3095,138 @@ class Transaction_page_A(Graphs):
     #
     #     return result[0]  # Возвращаем результат функции
 
-    def read_csv_data(self, file_path):
-        def format_value(value):
-            if isinstance(value, str):
-                value = value.strip()
-            if value in ['invalid date', 'None', '-', '']:
+    def read_data(self, file_path):
+
+        def format_value(value, column=None):
+            if pd.isna(value) or value in ['invalid date', 'None', '-', '']:
                 return None
-            return value.lower()
+            if column == 'RequestDate' and isinstance(value, (int, float)):
+                return datetime.fromordinal(datetime(1900, 1, 1).toordinal() + int(value) - 2).strftime('%Y-%m-%d')
+            if isinstance(value, float) and value.is_integer():
+                return str(int(value))
+            if isinstance(value, str):
+                return value.strip().lower()
+            return str(value).lower()
 
-        with open(file_path, 'r', encoding='utf-8-sig') as file:
-            csv_reader = csv.DictReader(file)
-            csv_data_list = []
-            for row in csv_reader:
-                processed_row = {key: format_value(value) for key, value in row.items()}
-                csv_data_list.append(processed_row)
-        return csv_data_list
+        # Ожидание завершения загрузки файла
+        max_wait_time = 300
+        wait_interval = 5
+        elapsed_time = 0
 
+        while elapsed_time < max_wait_time:
+            if not file_path.endswith('.crdownload') and os.path.exists(file_path):
+                break
+            print(f"Waiting for file to finish downloading: {file_path}")
+            time.sleep(wait_interval)
+            elapsed_time += wait_interval
+
+        if file_path.endswith('.crdownload'):
+            raise ValueError(f"File download did not complete within {max_wait_time} seconds: {file_path}")
+
+        file_extension = os.path.splitext(file_path)[1].lower()
+
+        try:
+            if file_extension == '.csv':
+                # Чтение CSV с обработкой ошибок
+                data_chunks = []
+                for chunk in pd.read_csv(
+                    file_path,
+                    delimiter=',',
+                    engine='python',
+                    chunksize=1000,
+                    quotechar='"',  # Указываем кавычки
+                    escapechar='\\',  # Указываем символ экранирования
+                    on_bad_lines='skip'  # Пропуск строк с ошибками
+                ):
+                    data_chunks.append(chunk)
+                df = pd.concat(data_chunks, ignore_index=True)
+            elif file_extension in ['.xls', '.xlsx']:
+                df = pd.read_excel(file_path)
+            else:
+                raise ValueError(f"Unsupported file format: {file_extension}")
+        except pd.errors.ParserError as e:
+            print(f"ParserError: {e}")
+            with open("error_log.txt", "a") as log_file:
+                log_file.write(f"ParserError: {e}\n")
+            raise
+        except _csv.Error as e:
+            print(f"CSV Error: {e}")
+            with open("error_log.txt", "a") as log_file:
+                log_file.write(f"CSV Error: {e}\n")
+            raise
+
+        formatted_data = []
+        problematic_rows = []
+
+        for index, row in df.iterrows():
+            try:
+                processed_row = {key: format_value(value, column=key) for key, value in row.items()}
+                formatted_data.append(processed_row)
+            except Exception as e:
+                print(f"Error processing row {index}: {e}")
+                with open("error_log.txt", "a") as log_file:
+                    log_file.write(f"Error processing row {index}: {e}\n")
+                    log_file.write(f"Row data: {row.to_dict()}\n")
+                problematic_rows.append(row.to_dict())
+
+        if problematic_rows:
+            problematic_file = "problematic_rows.csv"
+            pd.DataFrame(problematic_rows).to_csv(problematic_file, index=False)
+            print(f"Problematic rows saved to {problematic_file} for further investigation.")
+
+        return formatted_data
+
+    def wait_for_transaction_file(self, directory_path, csv_pattern="Transaction_Records_*.csv",
+                                  excel_pattern="Transaction_Records_*.xlsx", max_checks=30):
+
+        for attempt in range(1, max_checks + 1):
+            # Поиск CSV-файлов
+            csv_files = glob.glob(os.path.join(directory_path, csv_pattern))  # Убрано self
+            if csv_files:
+                file_path = csv_files[0]
+                print(f"CSV file found: {file_path} on attempt {attempt}")
+                return file_path
+
+            # Поиск Excel-файлов
+            excel_files = glob.glob(os.path.join(directory_path, excel_pattern))  # Убрано self
+            if excel_files:
+                file_path = excel_files[0]
+                print(f"Excel file found: {file_path} on attempt {attempt}")
+                return file_path
+
+            # Ожидание перед следующей проверкой
+            time.sleep(30)
+            print(f"Attempt {attempt}/{max_checks}: File not found.")
+
+        # Если ни один файл не найден
+        raise ValueError(
+            f"No file matching patterns '{csv_pattern}' or '{excel_pattern}' was found after {max_checks} checks.")
     def format_number(self, number_str):
         return number_str.replace(',', '').strip()
 
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-                print(f"Папка скачивания не существует: {download_folder}")
+                print(f"The download folder does not exist: {download_folder}")
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-                print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
+                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
                 return None
 
-            latest_file = max(files, key=os.path.getctime)
+            # Выбор файла с последней датой модификации
+            latest_file = max(files, key=os.path.getmtime)
+            # Определение целевого пути для файла
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
-
+            # Перемещение файла
             shutil.move(latest_file, target_file)
-            print(f"Файл {latest_file} был перемещен в {target_file}")
+            print(f"The file {latest_file} was moved to {target_file}")
             return target_file
         except Exception as e:
-            print(f"Ошибка при перемещении файла: {e}")
+            print(f"Error when moving the file: {e}")
             return None
 
     def is_sorted_ascending(self, column_data):
@@ -2835,29 +3276,44 @@ class Transaction_page_A(Graphs):
         first_letter = item[0].lower() if item else ''
         return (2, (first_letter, item.lower()))  # Текстовые строки имеют третий приоритет
 
+    def process_item1_adjusted(self, item):
+        """Process each item by treating any found number as a string, to preserve leading zeros."""
+        if re.search(r'\d', item):  # Contains digits
+            # Splitting by hyphens or spaces to separate the numerical part
+            parts = re.split(r'\s|-', item)
+            # Filtering out empty strings and selecting numeric parts as strings
+            num_part = next((p for p in parts if p.isdigit()), None)
+            return (1, (num_part, item)) if num_part is not None else (1, item)
+        else:
+            return (2, item)
+
     def is_sorted_ascending1(self, data):
         if not data:
             return True  # Пустой список считаем отсортированным
 
-        processed_data = [self.process_item(item) for item in data if item.strip()]
+            # Exclude elements starting with + or % and adjust processing for leading zeros
+        processed_data = [
+            self.process_item1_adjusted(item) for item in data
+            if item.strip() and not re.match(r'^[+%]', item)
+        ]
 
         for i in range(len(processed_data) - 1):
             curr_type, curr_val = processed_data[i]
             next_type, next_val = processed_data[i + 1]
 
             if curr_type > next_type:
-                return False  # элементы разного типа не в правильном порядке
+                return False  # Different types in the wrong order
             elif curr_type == next_type:
-                # В рамках одного типа сравниваем дополнительно строки и числа
+                # Compare within same type
                 if isinstance(curr_val, tuple) and isinstance(next_val, tuple):
-                    # Сравнение по числу, если числа равны, сравниваем строки
+                    # Compare numbers as strings to handle leading zeros correctly
                     if curr_val[0] > next_val[0] or (curr_val[0] == next_val[0] and curr_val[1] > next_val[1]):
                         return False
                 elif isinstance(curr_val, int) and isinstance(next_val, tuple):
-                    if curr_val > next_val[0]:
+                    if str(curr_val) > next_val[0]:
                         return False
                 elif isinstance(curr_val, tuple) and isinstance(next_val, int):
-                    if curr_val[0] >= next_val:
+                    if curr_val[0] >= str(next_val):
                         return False
                 elif curr_val > next_val:
                     return False
@@ -2939,6 +3395,12 @@ class Transaction_page_A(Graphs):
         # Проверяем, отсортированы ли значения по возрастанию
         return filtered_data == sorted(filtered_data)
 
+    def input_company(self, video_option):
+        input_element = self.get_select_company_input()
+        input_element.send_keys(video_option)
+        input_element.send_keys(Keys.RETURN)
+        print("Input company")
+
     def is_sorted_descendingA(self, column_data):
         # Отфильтровываем строки, которые не содержат 'Ascension Indiana'
         filtered_data = [x for x in column_data if 'Ascension Indiana' in x]
@@ -2951,71 +3413,87 @@ class Transaction_page_A(Graphs):
             Logger.add_start_step(method='transaction_page_test')
             self.driver.maximize_window()
             self.click_transaction_b()
-            # try:
-            self.get_current_url()
-            time.sleep(10)
-            self.screenshot()
-            time.sleep(3)
-            try:
-                # Попытка проверить, был ли уже добавлен нужный столбец
-                self.assert_word(self.get_check_added_c(), 'Service Start Time')
-                # Если assert_word не вызвал AssertionError, значит проверка прошла успешно
-                # и следующий код (drag_and_drop_by_coordinates) выполнять не нужно
-            except AssertionError:
-                # Если возникла ошибка AssertionError, значит столбец не был добавлен,
-                # и нужно выполнить логику добавления
-                self.click_select_columns()
-                time.sleep(2)
-                self.get_service_s_t_column().click()
-                time.sleep(5)
-                first_company = self.get_service_s_t_column()
-                self.driver.execute_script("arguments[0].click();", first_company)
-                self.drag_and_drop_by_coordinates(self.service_s_t_column, self.target_column_xpath)
-                time.sleep(3)
-                self.click_ok()
-                time.sleep(5)
-                # Повторно проверяем, что столбец успешно добавлен
-                self.assert_word(self.get_check_added_c(), 'Service Start Time')
-            time.sleep(5)
-            self.assert_word(self.get_check_added_c(), 'Service Start Time')
-
-            self.click_Service_Start_Time_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            lang_data = self.fetch_column_data(column_index=1)
-            print("Data after first sort:", lang_data)
-            assert self.is_sorted_ascending1(lang_data), "Data is not sorted ascending."
-
-            self.click_Service_Start_Time_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки еще раз
-            lang_data = self.fetch_column_data(column_index=1)
-            print("Data after second sort:", lang_data)
-            assert self.is_sorted_descending1(lang_data), "Data is not sorted descending."
-            time.sleep(3)
-
-            self.click_Transaction_ID_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            lang_data = self.fetch_column_data(column_index=2)
-            print("Data after first sort:", lang_data)
-            assert self.is_sorted_ascending1(lang_data), "Data is not sorted ascending."
-
-            self.click_Transaction_ID_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            lang_data = self.fetch_column_data(column_index=2)
-            print("Data after first sort:", lang_data)
-            assert self.is_sorted_descending1(lang_data), "Data is not sorted descending."
             time.sleep(15)
-            self.click_Transaction_ID_s()
-            time.sleep(3)
-            id = self.get_tr_id_cell().text
-            self.input_tr_id(id)
-            time.sleep(10)
-            self.get_search_sf().click()
-            time.sleep(5)
-            self.click_Search1()
-            time.sleep(20)
-            self.assert_word(self.get_tr_id_cell1(), id)
-            self.driver.refresh()
-            time.sleep(10)
+
+            # try:
+            # self.get_current_url()
+            # time.sleep(10)
+            # self.screenshot()
+            # time.sleep(3)
+            # try:
+            #     # Попытка проверить, был ли уже добавлен нужный столбец
+            #     self.assert_word(self.get_check_added_c(), 'Service Start Time')
+            #     # Если assert_word не вызвал AssertionError, значит проверка прошла успешно
+            #     # и следующий код (drag_and_drop_by_coordinates) выполнять не нужно
+            # except AssertionError:
+            #     # Если возникла ошибка AssertionError, значит столбец не был добавлен,
+            #     # и нужно выполнить логику добавления
+            #     self.click_select_columns()
+            #     time.sleep(2)
+            #     self.get_service_s_t_column().click()
+            #     time.sleep(5)
+            #     first_company = self.get_service_s_t_column()
+            #     self.driver.execute_script("arguments[0].click();", first_company)
+            #     self.drag_and_drop_by_coordinates(self.service_s_t_column, self.target_column_xpath)
+            #     time.sleep(3)
+            #     self.click_ok()
+            #     time.sleep(5)
+            #     # Повторно проверяем, что столбец успешно добавлен
+            #     self.assert_word(self.get_check_added_c(), 'Service Start Time')
+            # time.sleep(5)
+            # self.assert_word(self.get_check_added_c(), 'Service Start Time')
+
+            # self.click_Service_Start_Time_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=1)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_ascending1(lang_data), "Data is not sorted ascending."
+            #
+            # self.click_Service_Start_Time_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки еще раз
+            # lang_data = self.fetch_column_data(column_index=1)
+            # print("Data after second sort:", lang_data)
+            # assert self.is_sorted_descending1(lang_data), "Data is not sorted descending."
+            # time.sleep(3)
+            #
+            # self.click_Transaction_ID_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=2)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_ascending1(lang_data), "Data is not sorted ascending."
+            #
+            # self.click_Transaction_ID_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=2)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_descending1(lang_data), "Data is not sorted descending."
+            # # time.sleep(15)
+
+            # self.click_Transaction_ID_s()
+            # time.sleep(3)
+            # id = self.get_tr_id_cell().text
+            # self.input_tr_id(id)
+            # time.sleep(10)
+            # self.get_search_sf().click()
+            # time.sleep(5)
+            # self.click_Search1()
+            # time.sleep(20)
+            # self.assert_word(self.get_tr_id_cell1(), id)
+            # self.driver.refresh()
+            # time.sleep(10)
+            #
+            # self.click_Request_Date_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=3)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_ascending1(lang_data), "Data is not sorted ascending."
+            #
+            # self.click_Request_Date_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=3)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_descending1(lang_data), "Data is not sorted descending."
+            # time.sleep(15)
 
             # self.click_Product_Name_f()
             # time.sleep(20)  # Нажимаем на кнопку сортировки
@@ -3039,391 +3517,412 @@ class Transaction_page_A(Graphs):
             # actual_text = self.get_pr_n_cell1().text
             # expected_text = name
             # assert expected_text in actual_text, f"Expected text '{expected_text}' was not found in actual text '{actual_text}'"
-            self.driver.refresh()
-            time.sleep(20)
+            # self.driver.refresh()
+            # time.sleep(20)
 
-            self.click_Request_Date_s()
-            date = self.get_req_d_cell().text
-            self.input_date(date)
-            time.sleep(5)
-            self.get_search_sf().click()
-            time.sleep(5)
-            self.click_Search3()
-            time.sleep(15)
-            self.assert_word(self.get_req_d_cell1(), date)
-            self.driver.refresh()
-            time.sleep(20)
+            # self.click_Request_Date_s()
+            # date = self.get_req_d_cell().text
+            # self.input_date(date)
+            # time.sleep(5)
+            # self.get_search_sf().click()
+            # time.sleep(5)
+            # self.click_Search3()
+            # time.sleep(15)
+            # self.assert_word(self.get_req_d_cell1(), date)
+            # self.driver.refresh()
+            # time.sleep(20)
 
-            self.click_Request_Time_s()
-            st = self.get_r_time_cell().text
-            self.input_start_time(st)
-            self.input_end_time(st)
-            self.press_return_key()
-            self.click_search_b()
-            time.sleep(30)
-            self.assert_word(self.get_r_time_cell1(), st)
-            self.driver.refresh()
-            time.sleep(10)
+            # self.click_Request_Time_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=4)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_ascending1(lang_data), "Data is not sorted ascending."
+            #
+            # self.click_Request_Time_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # lang_data = self.fetch_column_data(column_index=4)
+            # print("Data after first sort:", lang_data)
+            # assert self.is_sorted_descending1(lang_data), "Data is not sorted descending."
+            # time.sleep(15)
+
+            # self.click_Request_Time_s()
+            # st = self.get_r_time_cell().text
+            # self.input_start_time(st)
+            # self.input_end_time(st)
+            # self.press_return_key()
+            # self.click_search_b()
+            # time.sleep(30)
+            # self.assert_word(self.get_r_time_cell1(), st)
+            # self.driver.refresh()
+            # time.sleep(10)
             # ###TODO UNKNOWN FILTERING
-            self.click_Client_name_f()
-            time.sleep(30)  # Нажимаем на кнопку сортировки
-            client_name_data = self.fetch_column_data(column_index=6)  # Измените индекс столбца при необходимости
-            print("Data after first sort:", client_name_data)
-            assert self.is_sorted_ascending1(client_name_data), "Data is not sorted ascending."
-
+            # self.click_Client_name_f()
+            # time.sleep(30)  # Нажимаем на кнопку сортировки
+            # client_name_data = self.fetch_column_data(column_index=5)  # Измените индекс столбца при необходимости
+            # print("Data after first sort:", client_name_data)
+            # assert self.is_sorted_ascending1(client_name_data), "Data is not sorted ascending."
+            #
             # self.click_Client_name_f()
             # time.sleep(20)  # Нажимаем на кнопку сортировки
-            # client_name_data = self.fetch_column_data(column_index=6)  # Измените индекс столбца при необходимости
+            # client_name_data = self.fetch_column_data(column_index=5)  # Измените индекс столбца при необходимости
             # print("Data after second sort:", client_name_data)
             # assert self.is_sorted_descending1(client_name_data), "Data is not sorted descending."
             # time.sleep(10)
-            self.click_Client_name_s()
-            time.sleep(10)
-            client_name = self.get_Client_name_cell().text
-            self.input_Client_name(client_name)
-            time.sleep(3)
-            self.get_search_sf().click()
-            time.sleep(5)
-            self.click_Search4()
-            time.sleep(10)
-            self.assert_word(self.get_Client_name_cell1(), client_name)
-            self.driver.refresh()
-            time.sleep(10)
+            # self.click_Client_name_s()
+            # time.sleep(10)
+            # client_name = self.get_Client_name_cell().text
+            # self.input_Client_name(client_name)
+            # time.sleep(3)
+            # self.get_search_sf().click()
+            # time.sleep(5)
+            # self.click_Search4()
+            # time.sleep(10)
+            # self.assert_word(self.get_Client_name_cell1(), client_name)
+            # self.driver.refresh()
+            # time.sleep(10)
 
-            self.click_Target_Language_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            target_language_data = self.fetch_column_data(
-                column_index=7)  # Измените индекс столбца при необходимости
-            print("Data after first sort:", target_language_data)
-            assert self.is_sorted_ascending1(target_language_data), "Data is not sorted ascending."
-            time.sleep(20)
+            # self.click_Target_Language_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # target_language_data = self.fetch_column_data(
+            #     column_index=6)  # Измените индекс столбца при необходимости
+            # print("Data after first sort:", target_language_data)
+            # assert self.is_sorted_ascending1(target_language_data), "Data is not sorted ascending."
+            # time.sleep(20)
+            #
+            # self.click_Target_Language_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # target_language_data = self.fetch_column_data(
+            #     column_index=6)  # Измените индекс столбца при необходимости
+            # print("Data after second sort:", target_language_data)
+            # assert self.is_sorted_descending1(target_language_data), "Data is not sorted descending."
 
-            self.click_Target_Language_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            target_language_data = self.fetch_column_data(
-                column_index=7)  # Измените индекс столбца при необходимости
-            print("Data after second sort:", target_language_data)
-            assert self.is_sorted_descending1(target_language_data), "Data is not sorted descending."
+            # self.click_Target_Language_s()
+            # target_language = self.get_Target_Language_cell().text
+            # self.input_Target_Language(target_language)
+            # time.sleep(5)
+            # self.get_search_sf().click()
+            # time.sleep(5)
+            # self.click_Search5()
+            # time.sleep(20)
+            # self.assert_word(self.get_Target_Language_cell1(), target_language)
+            # self.driver.refresh()
+            # time.sleep(10)
 
-            self.click_Target_Language_s()
-            target_language = self.get_Target_Language_cell().text
-            self.input_Target_Language(target_language)
-            time.sleep(5)
-            self.get_search_sf().click()
-            time.sleep(5)
-            self.click_Search5()
-            time.sleep(20)
-            self.assert_word(self.get_Target_Language_cell1(), target_language)
-            self.driver.refresh()
-            time.sleep(10)
+            # time.sleep(20)
+            # self.click_Audio_video_s()
+            # audio_video_option = self.get_Audio_video_cell().text
+            # self.input_Audio_video(audio_video_option)
+            # time.sleep(5)
+            # self.get_search_sf().click()
+            # time.sleep(10)
+            # self.assert_word(self.get_Audio_video_cell1(), audio_video_option)
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.click_status_s()
+            # status = self.get_status_cell().text
+            # time.sleep(15)
+            # self.input_status(status)
+            # time.sleep(5)
+            # self.get_search_sf().click()
+            # time.sleep(5)
+            # time.sleep(30)
+            # self.assert_word(self.get_status_cell1(), status)
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.click_WaitingSeconds_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # waiting_seconds_data = self.fetch_column_data(column_index=9)
+            # print("Data after first sort:", waiting_seconds_data)
+            # assert self.is_sorted_ascending1(waiting_seconds_data), "Data is not sorted ascending."
+            #
+            # self.click_WaitingSeconds_f()
+            # time.sleep(30)  # Нажимаем на кнопку сортировки
+            # waiting_seconds_data = self.fetch_column_data(column_index=9)
+            # print("Data after second sort:", waiting_seconds_data)
+            # assert self.is_sorted_descending1(waiting_seconds_data), "Data is not sorted descending."
+            # time.sleep(20)
 
-            self.click_Audio_video_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            audio_video_data = self.fetch_column_data(column_index=8)  # Измените индекс столбца при необходимости
-            print("Data after first sort:", audio_video_data)
-            assert self.is_sorted_ascending1(audio_video_data), "Data is not sorted ascending."
+            # self.click_service_minutes_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # service_minutes_data = self.fetch_column_data(column_index=10)
+            # print("Data after first sort:", service_minutes_data)
+            # assert self.is_sorted_ascending1(service_minutes_data), "Data is not sorted ascending."
+            #
+            # self.click_service_minutes_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # service_minutes_data = self.fetch_column_data(column_index=10)
+            # print("Data after second sort:", service_minutes_data)
+            # assert self.is_sorted_descending1(service_minutes_data), "Data is not sorted descending."
+            #
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.click_status_s()
+            # time.sleep(10)
+            # self.input_status("Serviced")
+            # time.sleep(1)
+            # self.click_Search7()
+            # time.sleep(15)
+            # self.scroll_to_right()
+            # time.sleep(1)
+            # self.click_Interpriter_Name_s()
+            # time.sleep(10)
+            # interpreter_name = self.get_Interpriter_Name_cell().text
+            # time.sleep(1)
+            # self.input_Interpriter_Name(interpreter_name)
+            # time.sleep(15)
+            # self.click_Search8()
+            # time.sleep(10)
+            # self.assert_word(self.get_Interpriter_Name_cell1(), interpreter_name)
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.scroll_to_right()
+            # time.sleep(1)
+            # self.click_status_s()
+            # time.sleep(10)
+            # self.input_status("Serviced")
+            # time.sleep(1)
+            # self.click_Search7()
+            # time.sleep(30)
+            # self.click_Interpriter_id_s()
+            # time.sleep(10)
+            # interpriter_id = self.get_Interpriter_id_cell().text
+            # self.input_Interpriter_id(interpriter_id)
+            # time.sleep(10)
+            # self.click_Search9()
+            # time.sleep(20)
+            # self.assert_word(self.get_Interpriter_id_cell1(), interpriter_id)
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.scroll_to_right()
+            # time.sleep(1)
+            # self.click_Cancel_time_f()
+            # time.sleep(20)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=13)
+            # print("Data after first sort:", cancel_time_data)
+            # assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
+            #
+            # self.click_Cancel_time_f()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=13)
+            # print("Data after second sort:", cancel_time_data)
+            # assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
+            # time.sleep(1)
 
-            self.click_Audio_video_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            audio_video_data = self.fetch_column_data(column_index=8)  # Измените индекс столбца при необходимости
-            print("Data after second sort:", audio_video_data)
-            assert self.is_sorted_descending1(audio_video_data), "Data is not sorted descending."
-            time.sleep(20)
-            self.click_Audio_video_s()
-            audio_video_option = self.get_Audio_video_cell().text
-            self.input_Audio_video(audio_video_option)
-            time.sleep(5)
-            self.get_search_sf().click()
-            time.sleep(10)
-            self.assert_word(self.get_Audio_video_cell1(), audio_video_option)
-            self.driver.refresh()
-            time.sleep(30)
-            self.click_status_s()
-            status = self.get_status_cell().text
-            time.sleep(15)
-            self.input_status(status)
-            time.sleep(5)
-            self.get_search_sf().click()
-            time.sleep(5)
-            time.sleep(30)
-            self.assert_word(self.get_status_cell1(), status)
-            self.driver.refresh()
-            time.sleep(30)
-            self.click_WaitingSeconds_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            waiting_seconds_data = self.fetch_column_data(column_index=10)
-            print("Data after first sort:", waiting_seconds_data)
-            assert self.is_sorted_ascending1(waiting_seconds_data), "Data is not sorted ascending."
+            # self.click_Caller_id_s()
+            # caller_id = self.get_Caller_id_cell().text
+            # self.input_Caller_id(caller_id)
+            # self.click_Search10()
+            # time.sleep(15)
+            # self.assert_word(self.get_Caller_id_cell1(), caller_id)
+            # self.driver.refresh()
+            # time.sleep(60)
+            # self.scroll_to_right()
+            # time.sleep(1)
+            # self.click_serial_number_s()
+            # time.sleep(15)
+            # self.input_serial_number('G')
+            # self.click_Search13()
+            # time.sleep(15)
+            # self.click_serial_number_s()
+            # time.sleep(15)
+            # serial_number = self.get_serial_number_cell().text
+            # self.clear_input_field(self.get_serial_number_s_f())
+            # self.input_serial_number(serial_number)
+            # self.click_Search13()
+            # time.sleep(15)
+            # self.assert_word(self.get_serial_number_cell1(), serial_number)
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.scroll_to_right()
+            # time.sleep(1)
+            # self.click_Client_User_Name_s()
+            # time.sleep(15)
+            # client_user_name = self.get_Client_User_Name_cell().text
+            # self.input_Client_User_Name(client_user_name)
+            # self.press_return_key()
+            # time.sleep(15)
+            # self.assert_word(self.get_Client_User_Name_cell1(), client_user_name)
+            # self.driver.refresh()
+            # time.sleep(30)
+            # self.scroll_to_right()
+            # time.sleep(1)
 
-            self.click_WaitingSeconds_f()
-            time.sleep(30)  # Нажимаем на кнопку сортировки
-            waiting_seconds_data = self.fetch_column_data(column_index=10)
-            print("Data after second sort:", waiting_seconds_data)
-            assert self.is_sorted_descending1(waiting_seconds_data), "Data is not sorted descending."
-            time.sleep(20)
+            # self.click_route_to_back_f()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=17)
+            # print("Data after first sort:", cancel_time_data)
+            # assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
+            #
+            # self.click_route_to_back_f()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=17)
+            # print("Data after second sort:", cancel_time_data)
+            # assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
 
-            self.click_service_minutes_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            service_minutes_data = self.fetch_column_data(column_index=11)
-            print("Data after first sort:", service_minutes_data)
-            assert self.is_sorted_ascending1(service_minutes_data), "Data is not sorted ascending."
+            # self.scroll_to_right()
+            # self.click_routing_counts()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=18)
+            # print("Data after first sort:", cancel_time_data)
+            # assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
+            #
+            # self.click_routing_counts()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=18)
+            # print("Data after second sort:", cancel_time_data)
+            # assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
+            #
+            # self.click_star_raiting_f()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=20)
+            # print("Data after second sort:", cancel_time_data)
+            # assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
+            #
+            # self.click_star_raiting_f()
+            # time.sleep(15)  # Нажимаем на кнопку сортировки
+            # cancel_time_data = self.fetch_column_data(column_index=20)
+            # print("Data after first sort:", cancel_time_data)
+            # assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
 
-            self.click_service_minutes_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            service_minutes_data = self.fetch_column_data(column_index=11)
-            print("Data after second sort:", service_minutes_data)
-            assert self.is_sorted_descending1(service_minutes_data), "Data is not sorted descending."
+            # self.click_routing_counts_search()
+            # time.sleep(10)
+            # interpreter_name = self.get_routing_counts_cell().text
+            # time.sleep(3)
+            # self.input_routing_counts(interpreter_name)
+            # self.press_return_key()
+            # time.sleep(15)
+            # self.assert_word(self.get_routing_counts_cell1(), interpreter_name)
+            #
+            # self.click_route_to_back_search()  # Клик по элементу поиска
+            # time.sleep(10)  # Ожидание для загрузки элементов или выполнения JavaScript
+            #
+            # # Получение текста из определенной ячейки после поиска
+            # interpreter_name = self.get_route_to_back_cell().text
+            # time.sleep(1)  # Краткая пауза перед вводом текста
+            #
+            # self.input_route_to_back(interpreter_name)  # Ввод текста в поле поиска
+            # self.press_return_key()  # Нажатие Enter для подтверждения ввода
+            # time.sleep(15)  # Ожидание результатов поиска
+            #
+            # # Проверка, что введенное значение соответствует ожидаемому
+            # self.assert_word(self.get_route_to_back_cell1(), interpreter_name)
 
-            self.driver.refresh()
-            time.sleep(30)
-            self.click_status_s()
-            time.sleep(10)
-            self.input_status("Serviced")
-            time.sleep(1)
-            self.click_Search7()
-            time.sleep(15)
-            self.scroll_to_right()
-            time.sleep(1)
-            self.click_Interpriter_Name_s()
-            time.sleep(10)
-            interpreter_name = self.get_Interpriter_Name_cell().text
-            time.sleep(1)
-            self.input_Interpriter_Name(interpreter_name)
-            self.click_Search8()
-            time.sleep(15)
-            self.assert_word(self.get_Interpriter_Name_cell1(), interpreter_name)
-            self.driver.refresh()
-            time.sleep(30)
-            self.scroll_to_right()
-            time.sleep(1)
-            self.click_status_s()
-            time.sleep(10)
-            self.input_status("Serviced")
-            time.sleep(1)
-            self.click_Search7()
-            time.sleep(30)
-            self.click_Interpriter_id_s()
-            time.sleep(10)
-            interpriter_id = self.get_Interpriter_id_cell().text
-            self.input_Interpriter_id(interpriter_id)
-            time.sleep(10)
-            self.click_Search9()
-            time.sleep(20)
-            self.assert_word(self.get_Interpriter_id_cell1(), interpriter_id)
-            self.driver.refresh()
-            time.sleep(30)
-            self.scroll_to_right()
-            time.sleep(1)
-            self.click_Cancel_time_f()
-            time.sleep(20)  # Нажимаем на кнопку сортировки
-            cancel_time_data = self.fetch_column_data(column_index=14)
-            print("Data after first sort:", cancel_time_data)
-            assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
-
-            self.click_Cancel_time_f()
-            time.sleep(15)  # Нажимаем на кнопку сортировки
-            cancel_time_data = self.fetch_column_data(column_index=14)
-            print("Data after second sort:", cancel_time_data)
-            assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
-            time.sleep(1)
-
-            self.click_Caller_id_s()
-            caller_id = self.get_Caller_id_cell().text
-            self.input_Caller_id(caller_id)
-            self.click_Search10()
-            time.sleep(15)
-            self.assert_word(self.get_Caller_id_cell1(), caller_id)
-            self.driver.refresh()
-            time.sleep(60)
-            self.scroll_to_right()
-            time.sleep(1)
-            self.click_serial_number_s()
-            time.sleep(15)
-            self.input_serial_number('G')
-            self.click_Search13()
-            time.sleep(15)
-            self.click_serial_number_s()
-            time.sleep(15)
-            serial_number = self.get_serial_number_cell().text
-            self.clear_input_field(self.get_serial_number_s_f())
-            self.input_serial_number(serial_number)
-            self.click_Search13()
-            time.sleep(15)
-            self.assert_word(self.get_serial_number_cell1(), serial_number)
-            self.driver.refresh()
-            time.sleep(30)
-            self.scroll_to_right()
-            time.sleep(1)
-            self.click_Client_User_Name_s()
-            time.sleep(15)
-            client_user_name = self.get_Client_User_Name_cell().text
-            self.input_Client_User_Name(client_user_name)
-            self.press_return_key()
-            time.sleep(15)
-            self.assert_word(self.get_Client_User_Name_cell1(), client_user_name)
-            self.driver.refresh()
-            time.sleep(30)
-            self.scroll_to_right()
-            time.sleep(1)
-
-            self.click_route_to_back_f()
-            time.sleep(15)  # Нажимаем на кнопку сортировки
-            cancel_time_data = self.fetch_column_data(column_index=15)
-            print("Data after first sort:", cancel_time_data)
-            assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
-
-            self.click_route_to_back_f()
-            time.sleep(15)  # Нажимаем на кнопку сортировки
-            cancel_time_data = self.fetch_column_data(column_index=15)
-            print("Data after second sort:", cancel_time_data)
-            assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
-
-            self.click_routing_counts()
-            time.sleep(15)  # Нажимаем на кнопку сортировки
-            cancel_time_data = self.fetch_column_data(column_index=20)
-            print("Data after first sort:", cancel_time_data)
-            assert self.is_sorted_ascending1(cancel_time_data), "Data is not sorted ascending."
-
-            self.click_routing_counts()
-            time.sleep(15)  # Нажимаем на кнопку сортировки
-            cancel_time_data = self.fetch_column_data(column_index=20)
-            print("Data after second sort:", cancel_time_data)
-            assert self.is_sorted_descending1(cancel_time_data), "Data is not sorted descending."
-
-            self.click_routing_counts_search()
-            time.sleep(10)
-            interpreter_name = self.get_routing_counts_cell().text
-            time.sleep(3)
-            self.input_routing_counts(interpreter_name)
-            self.press_return_key()
-            time.sleep(15)
-            self.assert_word(self.get_routing_counts_cell1(), interpreter_name)
-
-            self.click_route_to_back_search()  # Клик по элементу поиска
-            time.sleep(10)  # Ожидание для загрузки элементов или выполнения JavaScript
-
-            # Получение текста из определенной ячейки после поиска
-            interpreter_name = self.get_route_to_back_cell().text
-            time.sleep(1)  # Краткая пауза перед вводом текста
-
-            self.input_route_to_back(interpreter_name)  # Ввод текста в поле поиска
-            self.press_return_key()  # Нажатие Enter для подтверждения ввода
-            time.sleep(15)  # Ожидание результатов поиска
-
-            # Проверка, что введенное значение соответствует ожидаемому
-            self.assert_word(self.get_route_to_back_cell1(), interpreter_name)
-
-            time.sleep(30)
-            self.click_plus()
-            self.assert_word(self.get_check_in_id(), self.get_Interpriter_id_cell1().text)
-            self.assert_word(self.get_check_in_name(), self.get_Interpriter_Name_cell1().text)
-
-            self.driver.refresh()
-            time.sleep(20)
-
-            self.click_select_columns()
-            time.sleep(10)
-            self.get_service_s_t_column().click()
-            time.sleep(5)
-            first_company = self.get_service_s_t_column()
-            self.driver.execute_script("arguments[0].click();", first_company)
-
-            self.drag_and_drop_by_coordinates1(self.service_s_t_column, self.cancel_c)
-            time.sleep(10)
-            self.click_ok()
-            time.sleep(10)
-            self.assert_word(self.get_check_added_c(), 'Transaction ID')
-            time.sleep(10)
-            self.click_select_columns()
-            time.sleep(15)
-            self.compare_columns_and_click_ok1()
-            self.driver.refresh()
-            time.sleep(15)
-            self.driver.execute_script("document.body.style.zoom='50%'")
-            time.sleep(30)
-            web_data = self.fetch_website_data_am_cvs()
-            db_data = self.query_transactions_today_admin()
-            self.compare_data_am_t(web_data, db_data)
-            self.driver.refresh()
-            time.sleep(10)
-            self.scroll_to_bottom()
-            time.sleep(4)
-            self.click_pages()
-            time.sleep(3)
-            self.click_ten_tr_per_page()
-            time.sleep(5)
-            self.click_last_pages()
-            time.sleep(10)
-            transactions_per_page = 10
-            last_page_text = self.get_last_pages().text
-            if last_page_text.isdigit():
-                last_page_number = int(last_page_text)
-
-                # Вычитаем 1 из номера последней страницы и умножаем на количество транзакций на странице
-                total_pages = math.ceil(last_page_number - 1) * transactions_per_page
-
-                # Получаем количество строк на текущей странице
-                rows = self.driver.find_elements(By.XPATH, "//div[@class='ant-table-container']//table/tbody/tr")
-                rows_count = len(rows) - 1
-
-                # Добавляем количество строк к общему числу страниц
-                total_pages += rows_count
-
-                print(f"Last page: {last_page_number}, Overal pages: {total_pages}")
-                self.compare_transaction_counts(total_pages)
-            else:
-                print("Error")
-
-            self.driver.refresh()
-            time.sleep(20)
-            self.click_lang_f_Spanish()
-            time.sleep(20)  # Ожидаем обновления данных на странице
-            website_data = self.fetch_website_data_am1()
-            result_s, language_s = self.check_language_sorted_S(website_data)
-            assert result_s, "Ошибка: данные не соответствуют языку Spanish"
-
-            # Клик по фильтру ASL и проверка данных
-            self.click_lang_f_ASL()
-            time.sleep(20)  # Ожидаем обновления данных на странице
-            website_data = self.fetch_website_data_am1()
-            result_asl, language_asl = self.check_language_sorted_ASL(website_data)
-            assert result_asl, "Ошибка: данные не соответствуют языку ASL"
-
-            # Клик по фильтру LOTS (языки, отличные от Spanish и ASL) и проверка данных
-            self.click_lang_f_LOTS()
-            time.sleep(20)  # Ожидаем обновления данных на странице
-            website_data = self.fetch_website_data_am1()
-            result_lots, excluded_languages_lots = self.check_language_sorted_LOTS(website_data)
-            assert result_lots, "Ошибка: данные соответствуют языкам Spanish или ASL"
-            self.driver.refresh()
-            time.sleep(10)
-
+            # time.sleep(30)
+            # self.click_plus()
+            # self.assert_word(self.get_check_in_id(), self.get_Interpriter_id_cell1().text)
+            # self.assert_word(self.get_check_in_name(), self.get_Interpriter_Name_cell1().text)
+            #
+            # self.driver.refresh()
+            # time.sleep(20)
+            #
+            # self.click_select_columns()
+            # time.sleep(10)
+            # self.get_service_s_t_column().click()
+            # time.sleep(5)
+            # first_company = self.get_service_s_t_column()
+            # self.driver.execute_script("arguments[0].click();", first_company)
+            #
+            # self.drag_and_drop_by_coordinates1(self.service_s_t_column, self.cancel_c)
+            # time.sleep(10)
+            # self.click_ok()
+            # time.sleep(10)
+            # self.assert_word(self.get_check_added_c(), 'Transaction ID')
+            # time.sleep(10)
+            # self.click_select_columns()
+            # time.sleep(15)
+            # self.compare_columns_and_click_ok1()
+            # self.driver.refresh()
+            # time.sleep(15)
+            # self.driver.execute_script("document.body.style.zoom='50%'")
+            # time.sleep(30)
+            # web_data = self.fetch_website_data_am_cvs()
+            # db_data = self.query_transactions_today_admin()
+            # self.compare_data_am_t(web_data, db_data)
+            # self.driver.refresh()
+            # time.sleep(10)
+            # self.scroll_to_bottom()
+            # time.sleep(4)
+            # self.click_pages()
+            # time.sleep(3)
+            # self.click_ten_tr_per_page()
+            # time.sleep(5)
+            # self.click_last_pages()
+            # time.sleep(10)
+            # transactions_per_page = 10
+            # last_page_text = self.get_last_pages().text
+            # if last_page_text.isdigit():
+            #     last_page_number = int(last_page_text)
+            #
+            #     # Вычитаем 1 из номера последней страницы и умножаем на количество транзакций на странице
+            #     total_pages = math.ceil(last_page_number - 1) * transactions_per_page
+            #
+            #     # Получаем количество строк на текущей странице
+            #     rows = self.driver.find_elements(By.XPATH, "//div[@class='ant-table-container']//table/tbody/tr")
+            #     rows_count = len(rows) - 1
+            #
+            #     # Добавляем количество строк к общему числу страниц
+            #     total_pages += rows_count
+            #
+            #     print(f"Last page: {last_page_number}, Overal pages: {total_pages}")
+            #     self.compare_transaction_counts(total_pages)
+            # else:
+            #     print("Error")
+            #
+            # self.driver.refresh()
+            # time.sleep(20)
+            # self.click_lang_f_Spanish()
+            # time.sleep(20)  # Ожидаем обновления данных на странице
+            # website_data = self.fetch_website_data_am1()
+            # result_s, language_s = self.check_language_sorted_S(website_data)
+            # assert result_s, "Ошибка: данные не соответствуют языку Spanish"
+            #
+            # # Клик по фильтру ASL и проверка данных
+            # self.click_lang_f_ASL()
+            # time.sleep(20)  # Ожидаем обновления данных на странице
+            # website_data = self.fetch_website_data_am1()
+            # result_asl, language_asl = self.check_language_sorted_ASL(website_data)
+            # assert result_asl, "Ошибка: данные не соответствуют языку ASL"
+            #
+            # # Клик по фильтру LOTS (языки, отличные от Spanish и ASL) и проверка данных
+            # self.click_lang_f_LOTS()
+            # time.sleep(20)  # Ожидаем обновления данных на странице
+            # website_data = self.fetch_website_data_am1()
+            # result_lots, excluded_languages_lots = self.check_language_sorted_LOTS(website_data)
+            # assert result_lots, "Ошибка: данные соответствуют языкам Spanish или ASL"
+            # self.driver.refresh()
+            # time.sleep(10)
+            #
             self.compare_data_for_periods()
-            self.driver.refresh()
-            time.sleep(20)
-            self.click_download_b()
-            time.sleep(10)
-            download_folder = "/Users/nikitabarshchuk/Downloads"
-            target_folder = "/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads"
-            file_pattern = "Transactions_Records*.csv"
-
-            moved_file_path = self.move_latest_file(download_folder, target_folder, file_pattern)
-
-            if moved_file_path:
-                csv_data = self.read_csv_data(moved_file_path)
-                website_data = self.fetch_website_data_am_cvs()
-                self.compare_data_cvs(website_data, csv_data)
-
-            self.check_color_change(self.element_xpath, self.additional_xpath)
+            # self.driver.refresh()
+            # time.sleep(20)
+            # self.click_download_b()
+            # time.sleep(10)
+            # download_folder = "/Users/nikitabarshchuk/Downloads"
+            # target_folder = "/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads"
+            # file_pattern = "Transactions_Records*.csv"
+            #
+            # moved_file_path = self.move_latest_file(download_folder, target_folder, file_pattern)
+            #
+            # if moved_file_path:
+            #     csv_data = self.read_csv_data(moved_file_path)
+            #     website_data = self.fetch_website_data_am_cvs()
+            #     self.compare_data_cvs(website_data, csv_data)
+            #
+            # self.check_color_change(self.element_xpath, self.additional_xpath)
 
             #     print("Тест успешно завершен на попытке:", attempt)
             # except Exception as e:
-            #     print(f"Произошла ошибка на попытке {attempt}: {e}")
+            # print(f"There was an error on an attempt {attempt}: {e}")
             #     # Проверяем, не превышено ли максимальное количество попыток
             #     if attempt < 99:  # Допустим, максимальное количество попыток равно 3
-            #         print("Перезагружаем страницу и повторяем попытку...")
+            # print("We reboot the page and repeat the attempt ...")
             #         self.driver.refresh()
             #         time.sleep(5)  # Подождите некоторое время, чтобы страница полностью перезагрузилась
             #         self.transaction_page_test(attempt + 1)
             #     else:
-            #         print("Превышено максимальное количество попыток. Тест не пройден.")
+            # print("The maximum number of attempts has been exceeded.The test is not passed.")
+            time.sleep(15)
+            self.click_select_company()
+            time.sleep(5)
+            self.input_company("Hennepin Healthcare")
+            self.process_search_and_verify()

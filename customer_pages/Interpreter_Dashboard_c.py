@@ -27,9 +27,9 @@ import logging
 from datetime import datetime, timedelta
 from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
+from ev import EV
 
-
-class Interpreter_Dashboard(Graphs):
+class Interpreter_Dashboard(Graphs, EV):
 
     def __init__(self, driver):
         super().__init__(driver)  # Это должно инициализировать метод __init__ класса Base
@@ -425,7 +425,7 @@ class Interpreter_Dashboard(Graphs):
         # Предположим, что первый элемент в списке - это ненужный элемент (например, заголовок),
         # поэтому начнем с индекса 1 вместо 0, чтобы пропустить его
         languages = [element.text.strip() for element in language_elements[1:]]  # начинаем со второго элемента
-        print("Список языков с веб-страницы:", languages)
+        print("List of languages ​​from the web page:", languages)
 
         return languages
 
@@ -434,13 +434,13 @@ class Interpreter_Dashboard(Graphs):
         if list_from_db == list_from_web:
             print("Languages is good.")
         else:
-            error_message = "Filter is not working.\nРазличия:\n"
+            error_message = "Filter is not working. \ Nras: \ n"
             discrepancies_found = False
 
             for db_lang, web_lang in zip(list_from_db, list_from_web):
                 if db_lang != web_lang:
                     discrepancies_found = True
-                    error_message += f"БД: {db_lang}, Веб: {web_lang}\n"
+                    error_message += f"DB: {db_lang}, web: {web_lang} \ n"
 
             if discrepancies_found:
                 raise Exception(error_message)
@@ -474,7 +474,7 @@ class Interpreter_Dashboard(Graphs):
             return None
         except TimeoutException:
             # Обработка случая, когда элементы не появляются в течение заданного времени
-            print("Превышено время ожидания элементов")
+            print("Exceeded the waiting time for elements")
             return None
 
     def fetch_api_data(self):
@@ -542,7 +542,7 @@ class Interpreter_Dashboard(Graphs):
             else:
                 print(f"Not enough cells in the row to extract data: {row.text}")
 
-        print(f"Общее количество служебных минут: {total_service_minutes}")  # Печать финальной суммы
+        print(f"The total number of service minutes: {total_service_minutes}")  # Печать финальной суммы
         return total_service_minutes
 
     def compare_data_dashboard_DB(self, website_data, db_data):
@@ -1060,11 +1060,11 @@ class Interpreter_Dashboard(Graphs):
             return data_is_correct
 
     def normalize_number(self, number_str):
-        """Удаление запятых из строки и преобразование в число."""
+        """Removing commas from a line and transformation into the number."""
         try:
             return int(number_str.replace(',', ''))
         except ValueError:
-            print(f"Ошибка преобразования: {number_str} не является числом")
+            print(f"Transforming error: {number_str} is not a number")
             return None
 
     def compare_records_cvs(self, csv_data, web_data):
@@ -1193,24 +1193,24 @@ class Interpreter_Dashboard(Graphs):
     def move_latest_file(self, download_folder, target_folder, file_pattern):
         try:
             if not os.path.exists(download_folder):
-                print(f"Папка скачивания не существует: {download_folder}")
+                print(f"The download folder does not exist: {download_folder}")
                 return None
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)  # Создаём целевую папку, если она не существует
 
             files = glob.glob(os.path.join(download_folder, file_pattern))
             if not files:
-                print(f"Файлы с шаблоном {file_pattern} не найдены в папке {download_folder}")
+                print(f"Files with a template {file_pattern} were not found in the folder {download_folder}")
                 return None
 
             latest_file = max(files, key=os.path.getctime)
             target_file = os.path.join(target_folder, os.path.basename(latest_file))
 
             shutil.move(latest_file, target_file)
-            print(f"Файл {latest_file} был перемещен в {target_file}")
+            print(f"The file {latest_file} was moved to {target_file}")
             return target_file
         except Exception as e:
-            print(f"Ошибка при перемещении файла: {e}")
+            print(f"Error when moving the file: {e}")
             return None
 
     def fetch_column_data_total_calls(self, column_index):
