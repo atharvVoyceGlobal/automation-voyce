@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: python:3.11
+      - image: circleci/python:3.11-browsers
     working_directory: ~/project
 
 jobs:
@@ -12,15 +12,10 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install Chromium and System Dependencies
-          command: |
-            apt-get update && apt-get install -y wget curl unzip chromium-driver chromium
-      - run:
           name: Verify Chromium Installation
           command: |
             echo "Проверяем установку Chromium..."
-            chromium --version || echo "Chromium не установлен"
-            echo $PATH
+            chromium-browser --version || echo "Chromium не установлен"
       - run:
           name: Create Virtual Environment
           command: python -m venv venv
@@ -70,4 +65,3 @@ workflows:
       - run-tests:
           requires:
             - install-dependencies
-
