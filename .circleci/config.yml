@@ -40,6 +40,9 @@ jobs:
           name: Activate virtual environment and run API Tests
           command: |
             . venv/bin/activate
+            Xvfb :99 -ac &
+            export DISPLAY=:99
+            sleep 10 # Allow Xvfb to initialize
             python -m pytest --alluredir=test_results/
       - run:
           name: Setup Selenium WebDriver
