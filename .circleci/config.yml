@@ -12,11 +12,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install system dependencies
-          command: |
-            apt-get update
-            apt-get install -y wget unzip xvfb libxrender1 libxtst6 libxi6
-      - run:
           name: Create virtual environment
           command: python -m venv venv
       - run:
@@ -25,7 +20,6 @@ jobs:
             . venv/bin/activate
             python -m pip install --upgrade pip
             pip install pytest
-            pip install pyautogui mouseinfo
             pip install -r requirements.txt
       - save_cache:
           key: v1-venv-{{ checksum "requirements.txt" }}
@@ -40,28 +34,17 @@ jobs:
           keys:
             - v1-venv-{{ checksum "requirements.txt" }}
       - run:
-          name: Setup Virtual Display
-          command: |
-            Xvfb :99 -ac &
-            export DISPLAY=:99
-            echo "DISPLAY variable set to :99"
-            sleep 3  # Allow Xvfb to initialize
-      - run:
           name: Create Results Directory
           command: mkdir -p results
       - run:
           name: Activate virtual environment and run API Tests
           command: |
             . venv/bin/activate
-            export DISPLAY=:99
             python -m pytest --alluredir=test_results/
       - run:
           name: Activate virtual environment and run UI Tests
           command: |
             . venv/bin/activate
-            export DISPLAY=:99
-            Xvfb :99 -ac &
-            sleep 3
             python -m pytest --alluredir=test_results/
       - store_test_results:
           path: results
