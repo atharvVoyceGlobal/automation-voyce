@@ -24,15 +24,9 @@ from base.base_class import Base
 from database.Databricks import Databricks
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
-<<<<<<< HEAD
-from ev import EV
-
-class Replace_password2(Base, Databricks, Database, EV):
-=======
 
 
 class Replace_password2(Base, Databricks, Database):
->>>>>>> 51a303e (Initial commit)
     url = 'https://mail.google.com/mail/u/0/#inbox'
 
     def __init__(self, driver):
@@ -288,17 +282,10 @@ class Replace_password2(Base, Databricks, Database):
             self.assert_url("https://staging.vip.voyceglobal.com/auth/forgot-password")
             with allure.step("Forgot password with valid data"):
                 Logger.add_start_step(method='Forgot password with no valid data')
-<<<<<<< HEAD
-            self.input_email(self.my_accaunt)
-            self.click_submit_button()
-            self.assert_word(self.get_successful_send(),
-                             f"Email has been successfully sent to {self.my_accaunt}")
-=======
             self.input_email("nikita.barshchuk@voyceglobal.com")
             self.click_submit_button()
             self.assert_word(self.get_successful_send(),
                              "Email has been successfully sent to nikita.barshchuk@voyceglobal.com")
->>>>>>> 51a303e (Initial commit)
             time.sleep(10)
 
             database = self.client["auth-customer"]
@@ -319,11 +306,7 @@ class Replace_password2(Base, Databricks, Database):
             finally:
                 self.client.close()
 
-<<<<<<< HEAD
-            assert_equal(latest_email, self.my_accaunt, "The latest email in the database does not "
-=======
             assert_equal(latest_email, "nikita.barshchuk@voyceglobal.com", "The latest email in the database does not "
->>>>>>> 51a303e (Initial commit)
                                                                            "match the expected email")
             print("data is correct")
             self.driver.get(self.url)
@@ -370,17 +353,8 @@ class Replace_password2(Base, Databricks, Database):
             window_handles = self.driver.window_handles
             self.driver.switch_to.window(window_handles[-1])
             time.sleep(10)
-<<<<<<< HEAD
-            self.input_password1(self.deafult_password)
-            time.sleep(3)
-            self.input_password2(self.deafult_password)
-            self.click_reset_b()
-            self.assert_word(self.get_notification(), 'Password has been successfully updated')
-#
-=======
             self.input_password1('Admin@123')
             time.sleep(3)
             self.input_password2('Admin@123')
             self.click_reset_b()
             self.assert_word(self.get_notification(), 'Password has been successfully updated')
->>>>>>> 51a303e (Initial commit)

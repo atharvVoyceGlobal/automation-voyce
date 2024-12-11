@@ -40,7 +40,7 @@ jobs:
           name: Activate virtual environment and run API Tests
           command: |
             . venv/bin/activate
-            python -m pytest --alluredir=test_results/
+            python -m pytest API_test.py --alluredir=test_results/
       # - run:
       #     name: Setup Selenium WebDriver
       #     command: |
