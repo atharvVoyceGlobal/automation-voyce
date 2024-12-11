@@ -8,18 +8,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support import expected_conditions as EC
 from base.base_class import Base
-<<<<<<< HEAD
-from ev import EV
-
-
-
-class Login_page(Base, EV):
-=======
 
 
 class Login_page(Base):
     url = 'https://staging.admin.vip.voyceglobal.com/auth/login'
->>>>>>> 51a303e (Initial commit)
     url1 = 'https://admin.vip.voyceglobal.com/auth/login'
 
     def __init__(self, driver):
@@ -30,11 +22,7 @@ class Login_page(Base):
 
     login_field = "//*[@id='email']"
     password_field = "//*[@id='password']"
-<<<<<<< HEAD
-    button_login = "//*[@id='root']/div/div[3]/div/div/div/div/div/div[2]/div/form/div[3]/div/div/div/div/div/button/span"
-=======
     button_login = "//*[@id='root']/div/div[3]/div/div/div/div/div/div[2]/div[4]/form/div[3]/div/div/div/div/div/button"
->>>>>>> 51a303e (Initial commit)
     main_word = "//*[@id='header-container-id']/div/div[1]/div"
     error_email = "//*[@id='email_help']/div"
     error_password = "//*[@id='password_help']/div"
@@ -125,19 +113,11 @@ class Login_page(Base):
 
     def authorization(self):
         self.driver.get(self.url)
-<<<<<<< HEAD
-        self.input_login(self.my_accaunt_wd)
-        self.input_password(self.my_accaunt)
-        self.click_button_login()
-        time.sleep(10)
-        self.assert_url('https://staging.admin.vip.voyceglobal.com/dashboard')
-=======
         self.input_login("nikita.barshchuk")
         self.input_password("Admin@123")
         self.click_button_login()
         time.sleep(30)
         self.assert_url('https://staging.admin.vip.voyceglobal.com/pages')
->>>>>>> 51a303e (Initial commit)
         self.assert_word(self.get_main_word(), 'Dashboard')
         with allure.step("VALID_authorization"):
             Logger.add_end_step(url=self.driver.current_url, method='VALID_authorization')
@@ -149,15 +129,9 @@ class Login_page(Base):
         try:
             local_driver.get(self.url)
             WebDriverWait(local_driver, 10).until(EC.element_to_be_clickable((By.XPATH, self.login_field))).send_keys(
-<<<<<<< HEAD
-                self.my_accaunt_wd)
-            WebDriverWait(local_driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, self.password_field))).send_keys(self.deafult_password)
-=======
                 "nikita.barshchuk")
             WebDriverWait(local_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, self.password_field))).send_keys("Admin@123")
->>>>>>> 51a303e (Initial commit)
             WebDriverWait(local_driver, 10).until(EC.element_to_be_clickable((By.XPATH, self.button_login))).click()
 
             # Здесь используем WebDriverWait для проверки успешной загрузки страницы
@@ -182,13 +156,8 @@ class Login_page(Base):
 ###TODO nikita.barshchuk PASSQORD: Gomynkyl165432_#
     def authorization_QA_HUD(self):
         self.driver.get(self.url)
-<<<<<<< HEAD
-        self.input_login(self.login_qa_hud)
-        self.input_password(self.deafult_password)
-=======
         self.input_login("nikita.qa")
         self.input_password("Admin@123")
->>>>>>> 51a303e (Initial commit)
         self.click_button_login()
         time.sleep(30)
         self.assert_word(self.get_main_word(), 'Dashboard')
@@ -198,13 +167,8 @@ class Login_page(Base):
 
     def authorization_PROD(self):
         self.driver.get('https://admin.vip.voyceglobal.com/auth/login')
-<<<<<<< HEAD
-        self.input_login(self.my_accaunt_wd)
-        self.input_password(self.my_password)
-=======
         self.input_login("nikita.barshchuk")
         self.input_password("Gomynkyl165432_#")
->>>>>>> 51a303e (Initial commit)
         self.click_button_login()
         time.sleep(5)
         self.assert_url('https://admin.vip.voyceglobal.com/pages')
@@ -219,13 +183,8 @@ class Login_page(Base):
 
     def log_in_Wei_Portal(self):
         self.driver.get('https://voyceglobal.com/manager/Main/VoyceCSRCompanys.aspx?LoginSessionId=442291&LoginProcessorId=968232&VoyceToken=55F5F1878BFA4CBBAB3273FF49FB0C49&v=202404101611494813&NavMenu=NavMenu_ProfileGeneral&func=')
-<<<<<<< HEAD
-        self.input_login(self.my_accaunt)
-        self.input_password(self.wei_p)
-=======
         self.input_login("nikita.barshchuk@voyceglobal.com")
         self.input_password("cC086B58")
->>>>>>> 51a303e (Initial commit)
         self.click_button_login()
         time.sleep(5)
         self.assert_url('https://admin.vip.voyceglobal.com/pages')
