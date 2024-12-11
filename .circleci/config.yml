@@ -16,27 +16,14 @@ jobs:
           command: |
             sudo apt-get update && sudo apt-get install -y nodejs npm
       - run:
-          name: Find and export NPX path
-          command: |
-            NPX_PATH=$(which npx)
-            echo "export NPX_PATH=$NPX_PATH" >> $BASH_ENV
-            source $BASH_ENV
-            echo "NPX is located at: $NPX_PATH"
-      - run:
-          name: Install Puppeteer globally
-          command: |
-            sudo npm install -g @puppeteer/browsers
-      - run:
           name: Verify npm and npx installation
           command: |
-            echo "NPM version:" && npm --version
-            echo "NPX version:" && npx --version
+            npm --version
+            npx --version
       - run:
           name: Create virtual environment if not exists
           command: |
-            if [ ! -d "venv" ]; then
-              python -m venv venv
-            fi
+            python -m venv venv
       - run:
           name: Install Python dependencies
           command: |
@@ -55,10 +42,6 @@ jobs:
       - restore_cache:
           keys:
             - v1-venv-{{ checksum "requirements.txt" }}
-      - run:
-          name: Install Chrome and ChromeDriver using NPX
-          command: |
-            $NPX_PATH @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
       - run:
           name: Clean previous results
           command: |
