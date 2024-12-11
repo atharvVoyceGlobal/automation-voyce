@@ -51,7 +51,7 @@ jobs:
       - run:
           name: Install Chrome and ChromeDriver
           command: |
-            npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
+            ./node_modules/.bin/npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
       - run:
           name: Clean previous results
           command: |
