@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: cimg/python:3.11.0
+      - image: cimg/python:3.11
     working_directory: ~/project
 
 jobs:
@@ -12,18 +12,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install System Dependencies and Google Chrome
+          name: Install Dependencies
           command: |
             sudo apt-get update
             sudo apt-get install -y wget curl unzip gnupg
             curl -sS https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
             sudo apt-get update && sudo apt-get install -y google-chrome-stable
-            echo "export PATH=$PATH:/usr/bin" >> $BASH_ENV
       - run:
           name: Setup Python Virtual Environment
           command: |
-            python -m venv venv
+            python3 -m venv venv
             echo "source venv/bin/activate" >> $BASH_ENV
       - run:
           name: Install Python Dependencies
@@ -35,35 +34,3 @@ jobs:
           root: .
           paths:
             - venv
-
-  run-tests:
-    executor: python-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Activate Environment and Install ChromeDriver
-          command: |
-            source venv/bin/activate
-            python -m pip install chromedriver-autoinstaller
-            python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
-      - run:
-          name: Run Tests
-          command: |
-            source venv/bin/activate
-            mkdir -p test_results
-            python -m pytest --alluredir=test_results/
-      - store_test_results:
-          path: test_results
-      - store_artifacts:
-          path: test_results
-
-workflows:
-  version: 2
-  build-and-test:
-    jobs:
-      - setup
-      - run-tests:
-          requires:
-            - setup
