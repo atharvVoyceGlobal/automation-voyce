@@ -371,27 +371,37 @@ class TestVIPCustomer:
         self.step_results = step_results
 
     def create_graph_and_attach_to_allure(self):
+        # Получение пути текущей директории
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        downloads_directory = os.path.join(current_directory, "Downloads")
+    
+        # Создание папки "Downloads", если она не существует
+        if not os.path.exists(downloads_directory):
+            os.makedirs(downloads_directory)
+    
         # Создание общего графика для всех результатов
         total_steps = sum(result['total'] for result in self.step_results.values())
         total_failed = sum(result['failed'] for result in self.step_results.values())
         total_successful = total_steps - total_failed
-
+    
+        overall_graph_path = os.path.join(downloads_directory, "overall_results_graph.png")
         self.create_and_save_graph(
             'Overall Test Results',
             ['Successful Steps', 'Failed Steps'],
             [total_successful, total_failed],
-            '/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads/overall_results_graph.png'
+            overall_graph_path
         )
-
+    
         # Создание индивидуальных графиков для каждого метода
         for step_name, results in self.step_results.items():
             successful_steps = results['total'] - results['failed']
             failed_steps = results['failed']
+            step_graph_path = os.path.join(downloads_directory, f"{step_name}_results_graph.png")
             self.create_and_save_graph(
                 f'{step_name} Results',
                 ['Successful Steps', 'Failed Steps'],
                 [successful_steps, failed_steps],
-                f'/Users/nikitabarshchuk/PycharmProjects/pythonProject3/Downloads/{step_name}_results_graph.png'
+                step_graph_path
             )
 
     def create_and_save_graph(self, title, labels, values, graph_path):
