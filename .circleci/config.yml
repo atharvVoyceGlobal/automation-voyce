@@ -17,15 +17,14 @@ jobs:
             apt-get update
             apt-get install -y wget unzip nodejs npm
       - run:
+          name: Install Puppeteer
+          command: |
+            npm install -g @puppeteer/browsers
+      - run:
           name: Install Chrome and ChromeDriver
           command: |
-            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
-            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-            apt-get update
-            apt-get install -y google-chrome-stable
-            wget https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-            unzip chromedriver_linux64.zip -d /usr/local/bin
-            rm chromedriver_linux64.zip
+            npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
+            cp /root/project/chrome_installation/chromedriver /usr/local/bin/
       - run:
           name: Create virtual environment if not exists
           command: |
