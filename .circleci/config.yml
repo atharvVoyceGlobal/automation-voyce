@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: python:3.11-slim
+      - image: python:3.11
     working_directory: ~/project
 
 jobs:
@@ -16,6 +16,11 @@ jobs:
           command: |
             apt-get update
             apt-get install -y wget unzip libodbc1 odbcinst unixodbc-dev
+      - run:
+          name: Verify ODBC installation
+          command: |
+            odbcinst -j
+            ls -l /usr/lib/*odbc*
       - run:
           name: Create virtual environment if not exists
           command: |
@@ -43,8 +48,8 @@ jobs:
       - run:
           name: Clean previous results
           command: |
-            rm -rf results || true
-            mkdir -p results
+            rm -rf test_results || true
+            mkdir -p test_results
       - run:
           name: Activate virtual environment and run API Tests
           command: |
