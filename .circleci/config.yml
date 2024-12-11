@@ -12,14 +12,21 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Create virtual environment
-          command: python -m venv venv
+          name: Install system dependencies
+          command: |
+            apt-get update
+            apt-get install -y wget unzip libodbc1 odbcinst unixodbc-dev
+      - run:
+          name: Create virtual environment if not exists
+          command: |
+            if [ ! -d "venv" ]; then
+              python -m venv venv
+            fi
       - run:
           name: Install Python dependencies
           command: |
             . venv/bin/activate
-            python -m pip install --upgrade pip
-            pip install pytest
+            python -m pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
       - save_cache:
           key: v1-venv-{{ checksum "requirements.txt" }}
@@ -34,8 +41,10 @@ jobs:
           keys:
             - v1-venv-{{ checksum "requirements.txt" }}
       - run:
-          name: Create Results Directory
-          command: mkdir -p results
+          name: Clean previous results
+          command: |
+            rm -rf results || true
+            mkdir -p results
       - run:
           name: Activate virtual environment and run API Tests
           command: |
@@ -47,9 +56,9 @@ jobs:
             . venv/bin/activate
             python -m pytest --alluredir=test_results/
       - store_test_results:
-          path: results
+          path: test_results
       - store_artifacts:
-          path: results
+          path: test_results
 
 workflows:
   version: 2
