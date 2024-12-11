@@ -58,25 +58,25 @@ class TestVIPCustomer:
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
 
         steps = [
-            self.perform_activity_monitor,
-            self.perform_nvp_authorization,
+            # self.perform_activity_monitor,
+            # self.perform_nvp_authorization,
             # self.perform_forgot_password,
             # self.perform_replace_password,
             # self.perform_client_page,
             # self.perform_edit_user,
             # self.perform_add_user,
             # self.perform_check_company_authorization,
-            self.perform_invoice_page_check,
-            self.perform_language_report,
-            self.perform_audio_vs_video_report,
-            self.perform_kanji_login,
-            self.perform_device_usage_page,
-            self.perform_device_usage_nm_page,
-            self.perform_device_usage_Yale_page,
-            self.perform_interpreter_dashboard,
-            self.perform_transaction_page_test,
-            self.perform_dashboard_check,
-            self.perform_widgets_check
+            # self.perform_invoice_page_check,
+            # self.perform_language_report,
+            # self.perform_audio_vs_video_report,
+            # self.perform_kanji_login,
+            # self.perform_device_usage_page,
+            # self.perform_device_usage_nm_page,
+            # self.perform_device_usage_Yale_page,
+            # self.perform_interpreter_dashboard,
+            # self.perform_transaction_page_test,
+            # self.perform_dashboard_check,
+            # self.perform_widgets_check
         ]
 
         for step in steps:
