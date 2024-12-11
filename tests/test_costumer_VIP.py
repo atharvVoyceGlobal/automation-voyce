@@ -66,7 +66,8 @@ def install_browser_and_driver():
     chromedriver_autoinstaller.install()  # Автоматическая установка ChromeDriver
     print("ChromeDriver успешно установлен!")
 
-    chrome_path = shutil.which("google-chrome")
+    # Убедимся, что Chrome установлен
+    chrome_path = shutil.which("google-chrome") or shutil.which("google-chrome-stable")
     if not chrome_path:
         raise FileNotFoundError("Google Chrome не найден. Убедитесь, что он установлен.")
 
