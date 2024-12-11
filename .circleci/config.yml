@@ -3,34 +3,64 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: cimg/python:3.11
+      - image: python:3.11-slim
     working_directory: ~/project
 
 jobs:
-  setup:
+  install-dependencies:
     executor: python-executor
     steps:
       - checkout
       - run:
-          name: Install Dependencies
+          name: Install System Dependencies
           command: |
-            sudo apt-get update
-            sudo apt-get install -y wget curl unzip gnupg
-            curl -sS https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-            sudo apt-get update && sudo apt-get install -y google-chrome-stable
+            apt-get update && apt-get install -y wget curl unzip
       - run:
-          name: Setup Python Virtual Environment
-          command: |
-            python3 -m venv venv
-            echo "source venv/bin/activate" >> $BASH_ENV
+          name: Create Virtual Environment
+          command: python -m venv venv
       - run:
           name: Install Python Dependencies
           command: |
-            source venv/bin/activate
-            pip install --upgrade pip setuptools wheel
+            . venv/bin/activate
+            python -m pip install --upgrade pip
             pip install -r requirements.txt
-      - persist_to_workspace:
-          root: .
+      - save_cache:
+          key: v1-pip-cache-{{ checksum "requirements.txt" }}
           paths:
-            - venv
+            - ~/.cache/pip
+
+  run-tests:
+    executor: python-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-pip-cache-{{ checksum "requirements.txt" }}
+      - run:
+          name: Create Virtual Environment
+          command: python -m venv venv
+      - run:
+          name: Activate Virtual Environment and Install Dependencies
+          command: |
+            . venv/bin/activate
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+      - run:
+          name: Run API Tests
+          command: |
+            . venv/bin/activate
+            mkdir -p test_results
+            python -m pytest --alluredir=test_results/
+      - store_test_results:
+          path: test_results
+      - store_artifacts:
+          path: test_results
+
+workflows:
+  version: 2
+  test-and-build:
+    jobs:
+      - install-dependencies
+      - run-tests:
+          requires:
+            - install-dependencies
