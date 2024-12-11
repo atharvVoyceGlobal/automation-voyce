@@ -12,26 +12,24 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install System Dependencies
+          name: Install Chromium Browser and System Dependencies
           command: |
-            apt-get update && apt-get install -y wget curl unzip gnupg
-            curl -sS https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
-            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-            apt-get update && apt-get install -y google-chrome-stable
+            apt-get update && apt-get install -y wget curl unzip gnupg chromium-driver chromium-browser
       - run:
-          name: Verify Chrome Installation and PATH
+          name: Verify Chromium Installation and PATH
           command: |
-            google-chrome --version || echo "Google Chrome не установлен"
-            which google-chrome || echo "Google Chrome не найден в PATH"
+            echo "Проверяем установку Chromium..."
+            chromium-browser --version || echo "Chromium не установлен"
+            which chromium-browser || echo "Chromium не найден в PATH"
             echo $PATH
       - run:
           name: Debug PATH
           command: |
             echo "Текущий PATH:"
             echo $PATH
-            ls /usr/bin/google-chrome || echo "Google Chrome не найден"
+            ls /usr/bin/chromium-browser || echo "Chromium не найден"
       - run:
-          name: Add Chrome to PATH
+          name: Add Chromium to PATH
           command: |
             export PATH=$PATH:/usr/bin
             echo 'export PATH=$PATH:/usr/bin' >> $BASH_ENV
