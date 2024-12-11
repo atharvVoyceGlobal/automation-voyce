@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: python:3.11
+      - image: cimg/python:3.11.0
     working_directory: ~/project
 
 jobs:
@@ -14,17 +14,23 @@ jobs:
       - run:
           name: Install Node.js and npm
           command: |
-            curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
-            apt-get install -y nodejs
+            sudo apt-get update && sudo apt-get install -y nodejs npm
       - run:
-          name: Verify npm and npx installation
+          name: Find and export NPX path
           command: |
-            npm --version
-            /usr/bin/npx --version
+            NPX_PATH=$(which npx)
+            echo "export NPX_PATH=$NPX_PATH" >> $BASH_ENV
+            source $BASH_ENV
+            echo "NPX is located at: $NPX_PATH"
       - run:
           name: Install Puppeteer globally
           command: |
-            npm install -g @puppeteer/browsers
+            sudo npm install -g @puppeteer/browsers
+      - run:
+          name: Verify npm and npx installation
+          command: |
+            echo "NPM version:" && npm --version
+            echo "NPX version:" && npx --version
       - run:
           name: Create virtual environment if not exists
           command: |
@@ -50,9 +56,9 @@ jobs:
           keys:
             - v1-venv-{{ checksum "requirements.txt" }}
       - run:
-          name: Install Chrome and ChromeDriver
+          name: Install Chrome and ChromeDriver using NPX
           command: |
-            /usr/bin/npx @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
+            $NPX_PATH @puppeteer/browsers install chrome@stable --path /root/project/chrome_installation
       - run:
           name: Clean previous results
           command: |
