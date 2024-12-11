@@ -220,9 +220,13 @@ class TestVIPCustomer:
     @pytest.fixture(scope="session", autouse=True)
     def analyze_and_report(self, request):
         def finalizer():
-            self.analyze_allure_results('/Users/nikitabarshchuk/PycharmProjects/pythonProject3/test_results2')
-            self.create_graph_and_attach_to_allure()
+            current_directory = os.path.dirname(os.path.abspath(__file__))
+            results_directory = os.path.join(current_directory, 'test_results2')
+            if not os.path.exists(results_directory):
+                os.makedirs(results_directory)
 
+            self.analyze_allure_results(results_directory)
+            self.create_graph_and_attach_to_allure()
         request.addfinalizer(finalizer)
 
     def analyze_allure_results(self, directory):
