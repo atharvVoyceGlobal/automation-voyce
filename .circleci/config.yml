@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: cimg/python:3.11.0
+      - image: cimg/python:3.11.0  # Использование обновленного образа
     working_directory: ~/project
 
 jobs:
@@ -12,22 +12,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install Node.js and npm
-          command: |
-            sudo apt-get update && sudo apt-get install -y nodejs npm
-      - run:
-          name: Verify npm and npx installation
-          command: |
-            npm --version
-            npx --version
-      - run:
-          name: Create virtual environment if not exists
+          name: Create and activate virtual environment
           command: |
             python -m venv venv
+            echo "source venv/bin/activate" >> $BASH_ENV
       - run:
           name: Install Python dependencies
           command: |
-            . venv/bin/activate
             python -m pip install --upgrade pip setuptools wheel
             pip install -r requirements.txt
       - save_cache:
@@ -48,9 +39,8 @@ jobs:
             rm -rf test_results || true
             mkdir -p test_results
       - run:
-          name: Activate virtual environment and run tests
+          name: Run tests
           command: |
-            . venv/bin/activate
             python -m pytest --alluredir=test_results/
       - store_test_results:
           path: test_results
