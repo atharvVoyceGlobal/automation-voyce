@@ -22,13 +22,9 @@ jobs:
             npm --version
             npx --version
       - run:
-          name: Install Puppeteer
+          name: Install Puppeteer globally
           command: |
-            npm install @puppeteer/browsers
-      - run:
-          name: Verify Puppeteer installation
-          command: |
-            ls -la ./node_modules/.bin
+            npm install -g @puppeteer/browsers
       - run:
           name: Create virtual environment if not exists
           command: |
