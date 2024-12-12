@@ -19,11 +19,13 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get install -y chromium-browser
+            echo "Chromium installed at: $(which chromium-browser)"
       - run:
           name: Install Chromedriver
           command: |
             sudo apt-get update
             sudo apt-get install -y chromium-chromedriver
+            echo "Chromedriver installed at: $(which chromedriver)"
       - run:
           name: Verify Chromium Installation
           command: |
