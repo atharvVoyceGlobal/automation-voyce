@@ -12,13 +12,21 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Verify Chromium and Chromedriver
+          name: Install Chrome and Chromedriver
           command: |
-            echo "Проверяем установку Chromium и Chromedriver..."
-            chromium-browser --version || echo "Chromium не установлен"
-            chromedriver --version || echo "Chromedriver не установлен"
-            ls -l /usr/bin/chromium-browser || echo "Chromium отсутствует"
-            ls -l /usr/bin/chromedriver || echo "Chromedriver отсутствует"
+            apt-get update && apt-get install -y wget curl gnupg
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
+            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+            apt-get update && apt-get install -y google-chrome-stable
+            wget https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
+            unzip chromedriver_linux64.zip -d /usr/bin/
+            chmod +x /usr/bin/chromedriver
+            rm chromedriver_linux64.zip
+      - run:
+          name: Verify Chrome and Chromedriver
+          command: |
+            google-chrome --version
+            chromedriver --version
       - run:
           name: Create Virtual Environment
           command: python -m venv venv
@@ -48,18 +56,14 @@ jobs:
           keys:
             - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
-          name: Verify Chromium and Chromedriver before Tests
+          name: Verify Chrome and Chromedriver before Tests
           command: |
-            echo "Проверяем пути перед запуском тестов..."
-            chromium-browser --version
+            google-chrome --version
             chromedriver --version
-            ls -l /usr/bin/chromium-browser
-            ls -l /usr/bin/chromedriver
       - run:
           name: Run API Tests
           command: |
             . venv/bin/activate
-            echo "Using built-in Chromium and Chromedriver..."
             mkdir -p test_results
             python -m pytest --alluredir=test_results/
       - store_test_results:
