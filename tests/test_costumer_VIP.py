@@ -125,9 +125,9 @@ def driver():
     log_and_run(f"ls -l {chrome_assembled}")
     log_and_run(f"ls -l {chromedriver_path}")
 
-    # Check versions
-    log_and_run(f"{chrome_assembled} --version || echo '[ERROR] Cannot fetch Chrome version'")
-    log_and_run(f"{chromedriver_path} --version || echo '[ERROR] Cannot fetch Chromedriver version'")
+    # Check if Chrome is executable
+    if not os.access(chrome_assembled, os.X_OK):
+        raise PermissionError(f"[ERROR] Chrome is not executable: {chrome_assembled}")
 
     # Configure WebDriver
     chrome_options = Options()
@@ -150,10 +150,8 @@ def driver():
         raise
 
     yield driver
-
     print("[INFO] Closing WebDriver...")
     driver.quit()
-
 
 
 # Добавь фикстуру в класс
