@@ -15,52 +15,27 @@ jobs:
           name: Install Chrome and Chromedriver
           command: |
             sudo apt-get update && sudo apt-get install -y wget curl gnupg unzip libnss3 libxss1 libgconf-2-4 libasound2
-            echo "Скачиваем Chrome и Chromedriver напрямую с предоставленных ссылок..."
-            
-            # Скачиваем Chrome
             wget -O chrome-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chrome-linux64.zip
             unzip chrome-linux64.zip -d /usr/local/bin/
             sudo chmod -R +x /usr/local/bin/chrome-linux64/
             rm chrome-linux64.zip
-            echo "Chrome установлен."
-
-            # Скачиваем Chromedriver
             wget -O chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chromedriver-linux64.zip
             unzip chromedriver-linux64.zip -d /usr/local/bin/
             sudo mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
             sudo chmod +x /usr/local/bin/chromedriver
             rm -rf chromedriver-linux64.zip /usr/local/bin/chromedriver-linux64/
-            echo "Chromedriver установлен."
-      - run:
-          name: Debug Chrome Installation
-          command: |
-            echo "Отладка Chrome и Chromedriver:"
-            echo "Содержимое /usr/local/bin:"
-            ls -l /usr/local/bin/
-            echo "Содержимое /usr/local/bin/chrome-linux64:"
-            ls -l /usr/local/bin/chrome-linux64 || echo "chrome-linux64 отсутствует"
-            echo "Проверяем запуск Chrome:"
-            /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не запускается"
-            echo "Проверяем запуск Chromedriver:"
-            /usr/local/bin/chromedriver --version || echo "Chromedriver не запускается"
-      - save_cache:
-          key: v1-chrome-cache
-          paths:
-            - /usr/local/bin/chrome-linux64
-            - /usr/local/bin/chromedriver
       - run:
           name: Create Virtual Environment
-          command: python -m venv venv
+          command: |
+            echo "Создаём виртуальную среду..."
+            python -m venv venv || echo "Ошибка при создании виртуальной среды"
+            ls -l
       - run:
           name: Install Python Dependencies
           command: |
             . venv/bin/activate
             python -m pip install --upgrade pip
             pip install -r requirements.txt
-      - save_cache:
-          key: v1-pip-cache-{{ checksum "requirements.txt" }}
-          paths:
-            - ~/.cache/pip
       - save_cache:
           key: v1-venv-cache-{{ checksum "requirements.txt" }}
           paths:
@@ -72,18 +47,14 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v1-chrome-cache
-      - restore_cache:
-          keys:
-            - v1-pip-cache-{{ checksum "requirements.txt" }}
             - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
-          name: Verify Chrome and Chromedriver before Tests
+          name: Debug Virtual Environment
           command: |
-            echo "Проверяем запуск Chrome перед тестами:"
-            /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не найден"
-            echo "Проверяем запуск Chromedriver перед тестами:"
-            /usr/local/bin/chromedriver --version || echo "Chromedriver не найден"
+            echo "Отладка виртуальной среды..."
+            ls -l
+            ls -l venv || echo "Директория venv не найдена"
+            . venv/bin/activate || echo "Ошибка активации виртуальной среды"
       - run:
           name: Run API Tests
           command: |
@@ -94,16 +65,6 @@ jobs:
           path: test_results
       - store_artifacts:
           path: test_results
-      - run:
-          name: Debug Logs
-          command: |
-            mkdir -p ~/debug_logs
-            ls -l /usr/local/bin/ > ~/debug_logs/bin_contents.txt
-            ls -l /usr/local/bin/chrome-linux64/ > ~/debug_logs/chrome_contents.txt || echo "chrome-linux64 отсутствует" >> ~/debug_logs/errors.txt
-            /usr/local/bin/chrome-linux64/chrome --version > ~/debug_logs/chrome_version.txt || echo "Chrome не запускается" >> ~/debug_logs/errors.txt
-            /usr/local/bin/chromedriver --version > ~/debug_logs/chromedriver_version.txt || echo "Chromedriver не запускается" >> ~/debug_logs/errors.txt
-      - store_artifacts:
-          path: ~/debug_logs
 
 workflows:
   version: 2
