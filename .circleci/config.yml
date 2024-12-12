@@ -17,13 +17,11 @@ jobs:
       - run:
           name: Install Chromium
           command: |
-            . venv/bin/activate
             sudo apt-get update
             sudo apt-get install -y chromium-browser
       - run:
           name: Verify Chromium Installation
           command: |
-            . venv/bin/activate
             echo "Проверяем установку Chromium..."
             chromium-browser --version || echo "Chromium не установлен"
       - run:
@@ -57,13 +55,14 @@ jobs:
             . venv/bin/activate
             export CHROME_BINARY=$(which chromium-browser)
             export CHROMEDRIVER_PATH=$(which chromedriver)
-            echo "CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
-            echo "CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
+            echo "export CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
+            echo "export CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: Verify Environment Variables
           command: |
             . venv/bin/activate
+            source $BASH_ENV
             echo "CHROME_BINARY: $CHROME_BINARY"
             echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
             if [ -z "$CHROME_BINARY" ] || [ -z "$CHROMEDRIVER_PATH" ]; then
@@ -74,6 +73,7 @@ jobs:
           name: Run API Tests
           command: |
             . venv/bin/activate
+            source $BASH_ENV
             mkdir -p test_results
             python -m pytest --alluredir=test_results/
       - store_test_results:
