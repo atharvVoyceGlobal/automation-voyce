@@ -28,31 +28,42 @@ import chromedriver_autoinstaller
 from ev import EV
 
 
+def log_and_run(command):
+    """Helper function to log and execute shell commands."""
+    print(f"[DEBUG] Running command: {command}")
+    result = os.system(command)
+    if result != 0:
+        print(f"[ERROR] Command failed: {command}")
+    return result
+
 @pytest.fixture
 def driver():
     """
     Configure Selenium WebDriver using pre-stored Chromium and Chromedriver binaries.
     """
     # Define file paths inside the project
-    chrome_parts = ["chrome_part_aa", "chrome_part_ab", "chrome_part_ac"]
     chrome_assembled = "chrome"
     chromedriver_path = "chromedriver"
 
-    # Assemble Chrome binary if not already assembled
+    # Ensure Chrome binary exists
     if not os.path.exists(chrome_assembled):
-        print("[INFO] Assembling Chrome binary from parts...")
-        with open(chrome_assembled, "wb") as assembled_file:
-            for part in chrome_parts:
-                if not os.path.exists(part):
-                    raise FileNotFoundError(f"Part file {part} is missing.")
-                with open(part, "rb") as part_file:
-                    assembled_file.write(part_file.read())
-        os.chmod(chrome_assembled, 0o755)
-        print("[INFO] Chrome binary assembled successfully.")
+        raise FileNotFoundError(f"Chrome binary not found at: {chrome_assembled}")
+    else:
+        print(f"[INFO] Chrome binary found at: {os.path.abspath(chrome_assembled)}")
 
     # Ensure Chromedriver exists
     if not os.path.exists(chromedriver_path):
         raise FileNotFoundError(f"Chromedriver not found at: {chromedriver_path}")
+    else:
+        print(f"[INFO] Chromedriver binary found at: {os.path.abspath(chromedriver_path)}")
+
+    # Check file permissions
+    log_and_run(f"ls -l {chrome_assembled}")
+    log_and_run(f"ls -l {chromedriver_path}")
+
+    # Check versions
+    log_and_run(f"{os.path.abspath(chrome_assembled)} --version || echo '[ERROR] Cannot fetch Chrome version'")
+    log_and_run(f"{os.path.abspath(chromedriver_path)} --version || echo '[ERROR] Cannot fetch Chromedriver version'")
 
     # Configure WebDriver
     chrome_options = Options()
@@ -62,18 +73,24 @@ def driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--headless")  # Enable headless mode for CI
 
     print("[INFO] Initializing WebDriver...")
     try:
         driver_service = ChromeService(executable_path=os.path.abspath(chromedriver_path))
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+        print("[INFO] WebDriver initialized successfully.")
     except Exception as e:
         print(f"[ERROR] Error initializing WebDriver: {e}")
+        print("[DEBUG] Retrying with additional diagnostics...")
+        log_and_run(f"ps -ef | grep {os.path.basename(chrome_assembled)}")
         raise
 
     yield driver
+
     print("[INFO] Closing WebDriver...")
     driver.quit()
+    print("[INFO] WebDriver closed successfully.")
 
 @allure.feature("Testing the administrative interface for VIP customers")
 @allure.story("VIP Admin Test")
