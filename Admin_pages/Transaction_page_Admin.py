@@ -336,10 +336,10 @@ class Transaction_page_A(Graphs, EV):
         return WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, self.log_out)))
 
     def get_next(self):
-        return WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, self.next)))
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.next)))
 
     def get_next2(self):
-        return WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, self.next2)))
+        return WebDriverWait(self.driver, 30).until(EC.element_to_be_clickable((By.XPATH, self.next2)))
 
     def get_log_out2(self):
         return WebDriverWait(self.driver, 5).until(EC.element_to_be_clickable((By.XPATH, self.log_out2)))
