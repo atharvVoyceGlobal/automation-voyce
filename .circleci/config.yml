@@ -67,8 +67,8 @@ jobs:
             . venv/bin/activate
             export CHROME_BINARY=$(which chromium-browser)
             export CHROMEDRIVER_PATH=$(which chromedriver)
-            echo "export CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
-            echo "export CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
+            echo "CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
+            echo "CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: Verify Environment Variables
