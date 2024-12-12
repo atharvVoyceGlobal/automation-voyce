@@ -52,8 +52,10 @@ jobs:
       - run:
           name: Set Environment Variables
           command: |
-            echo 'export CHROME_BINARY=$(which chromium-browser)' >> $BASH_ENV
-            echo 'export CHROMEDRIVER_PATH=$(which chromedriver)' >> $BASH_ENV
+            export CHROME_BINARY=$(which chromium-browser)
+            export CHROMEDRIVER_PATH=$(which chromedriver)
+            echo "CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
+            echo "CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: Verify Environment Variables
