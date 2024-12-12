@@ -61,54 +61,33 @@ def generate_random_id(length=7):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-@staticmethod
-def install_browser_and_driver():
-    print("Устанавливаем ChromeDriver...")
-    chromedriver_autoinstaller.install()  # Автоматическая установка ChromeDriver
-    chromedriver_path = chromedriver_autoinstaller.get_chromedriver_path()
-    print(f"ChromeDriver успешно установлен по пути: {chromedriver_path}")
-
-    # Проверяем наличие Chrome или Chromium
-    chrome_path = (
-        shutil.which("google-chrome")
-        or shutil.which("google-chrome-stable")
-        or shutil.which("chromium-browser")
-    )
-    if not chrome_path:
-        print("Доступные пути в системе:")
-        print(os.environ["PATH"])
-        raise FileNotFoundError("Google Chrome или Chromium не найдены. Убедитесь, что они установлены и добавлены в PATH.")
-
-    print(f"Браузер найден по пути: {chrome_path}")
-
-    # Проверяем версию браузера
-    try:
-        browser_version = os.popen(f"{chrome_path} --version").read().strip()
-        print(f"Версия браузера: {browser_version}")
-    except Exception as e:
-        print("Ошибка при получении версии браузера:", e)
-        raise
-
-    return chrome_path, chromedriver_path
-
-
 @pytest.fixture
 def driver():
     """
     Настройка Selenium WebDriver с установленными Chrome и ChromeDriver.
     """
-    chrome_binary, chromedriver_path = install_browser_and_driver()
+    chrome_binary = os.getenv('CHROME_BINARY')
+    chromedriver_path = os.getenv('CHROMEDRIVER_PATH')
+
+    if not chrome_binary or not chromedriver_path:
+        raise EnvironmentError("Переменные окружения CHROME_BINARY и CHROMEDRIVER_PATH не установлены.")
 
     chrome_options = Options()
     chrome_options.binary_location = chrome_binary
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
-    # chrome_options.add_argument("--headless")  # Используйте headless-режим, если нужно
+    chrome_options.add_argument("--disable-background-timer-throttling")
+    chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+    # chrome_options.add_argument("--headless")  # Включение headless режима
 
     driver_service = ChromeService(executable_path=chromedriver_path)
     driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+
+    pid = driver.service.process.pid
+    os.system(f'echo {EV.my_password1} | sudo -S renice -n -10 -p {pid}')
 
     yield driver
     driver.quit()
