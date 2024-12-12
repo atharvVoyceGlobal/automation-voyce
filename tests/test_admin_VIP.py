@@ -35,8 +35,25 @@ def driver():
     """
     # Пути для Chromium и Chromedriver
     chrome_binary = "/usr/local/bin/chrome-linux64/chrome"
-    chromedriver_path = "/usr/local/bin/chromedriver-linux64/chromedriver"
+    chromedriver_path = "/usr/local/bin/chromedriver"
 
+    # Проверка наличия файлов
+    print("\n[DEBUG] Проверяем наличие бинарных файлов...")
+    if not os.path.exists(chrome_binary):
+        print(f"[ERROR] Chromium не найден по пути: {chrome_binary}")
+    else:
+        print(f"[DEBUG] Chromium найден по пути: {chrome_binary}")
+        os.system(f"ls -l {chrome_binary}")
+        os.system(f"{chrome_binary} --version || echo '[ERROR] Chromium не запускается'")
+
+    if not os.path.exists(chromedriver_path):
+        print(f"[ERROR] Chromedriver не найден по пути: {chromedriver_path}")
+    else:
+        print(f"[DEBUG] Chromedriver найден по пути: {chromedriver_path}")
+        os.system(f"ls -l {chromedriver_path}")
+        os.system(f"{chromedriver_path} --version || echo '[ERROR] Chromedriver не запускается'")
+
+    # Если один из файлов отсутствует, выходим с ошибкой
     if not os.path.exists(chrome_binary):
         raise EnvironmentError(f"Chromium не найден по пути: {chrome_binary}")
     if not os.path.exists(chromedriver_path):
@@ -52,10 +69,16 @@ def driver():
     chrome_options.add_argument("--disable-software-rasterizer")
     chrome_options.add_argument("--headless")  # Включение headless режима для CI
 
-    driver_service = ChromeService(executable_path=chromedriver_path)
-    driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+    print("[DEBUG] Инициализируем WebDriver...")
+    try:
+        driver_service = ChromeService(executable_path=chromedriver_path)
+        driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+    except Exception as e:
+        print(f"[ERROR] Ошибка при инициализации WebDriver: {e}")
+        raise
 
     yield driver
+    print("[DEBUG] Закрываем WebDriver...")
     driver.quit()
 
 
