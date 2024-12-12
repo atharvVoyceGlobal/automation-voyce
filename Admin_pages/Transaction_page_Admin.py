@@ -2447,8 +2447,8 @@ class Transaction_page_A(Graphs, EV):
 
         time.sleep(20)
         self.screenshot()
-        self.click_element_center()
-        time.sleep(5)
+        # self.click_element_center()
+        # time.sleep(5)
         self.click_db_in_mail()
         time.sleep(1)
         self.click_more_and_delete()
