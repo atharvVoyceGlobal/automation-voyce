@@ -64,14 +64,16 @@ def generate_random_id(length=7):
 @pytest.fixture
 def driver():
     """
-    Настройка Selenium WebDriver с установленными Chrome и ChromeDriver.
+    Настройка Selenium WebDriver с предустановленными Chromium и Chromedriver.
     """
-    chrome_binary = os.getenv('CHROME_BINARY')
-    chromedriver_path = os.getenv('CHROMEDRIVER_PATH')
+    # Проверяем, что Chromium и Chromedriver доступны
+    chrome_binary = shutil.which("chromium-browser") or shutil.which("google-chrome")
+    chromedriver_path = shutil.which("chromedriver")
 
     if not chrome_binary or not chromedriver_path:
-        raise EnvironmentError("Переменные окружения CHROME_BINARY и CHROMEDRIVER_PATH не установлены.")
+        raise EnvironmentError("Chromium или Chromedriver не найдены в PATH.")
 
+    # Настраиваем Selenium WebDriver
     chrome_options = Options()
     chrome_options.binary_location = chrome_binary
     chrome_options.add_argument("--disable-gpu")
@@ -79,19 +81,13 @@ def driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--disable-background-timer-throttling")
-    chrome_options.add_argument("--disable-backgrounding-occluded-windows")
-    # chrome_options.add_argument("--headless")  # Включение headless режима
+    chrome_options.add_argument("--headless")  # Включение headless режима для CI
 
     driver_service = ChromeService(executable_path=chromedriver_path)
     driver = webdriver.Chrome(service=driver_service, options=chrome_options)
 
-    pid = driver.service.process.pid
-    os.system(f'echo {EV.my_password1} | sudo -S renice -n -10 -p {pid}')
-
     yield driver
     driver.quit()
-
 
 # Добавь фикстуру в класс
 @pytest.mark.usefixtures("driver")
