@@ -62,19 +62,19 @@ class Base:
     """method screen shot"""
 
     def screenshot(self):
-    # Ensure the 'test_results' directory exists
-    screen_dir = "/home/circleci/project/test_results"
-    if not os.path.exists(screen_dir):
-        os.makedirs(screen_dir)
-
-    # Generate a timestamped filename for the screenshot
-    now_date = datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S")
-    photo = f"photo_{now_date}.png"
-    file_path = os.path.join(screen_dir, photo)
-
-    # Save the screenshot
-    self.driver.save_screenshot(file_path)
-    print(f"[INFO] Screenshot saved: {file_path}")
+        # Ensure the 'test_results' directory exists
+        screen_dir = "/home/circleci/project/test_results"
+        if not os.path.exists(screen_dir):
+            os.makedirs(screen_dir)
+    
+        # Generate a timestamped filename for the screenshot
+        now_date = datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S")
+        photo = f"photo_{now_date}.png"
+        file_path = os.path.join(screen_dir, photo)
+    
+        # Save the screenshot
+        self.driver.save_screenshot(file_path)
+        print(f"[INFO] Screenshot saved: {file_path}")
 
     """method assert url"""
 
