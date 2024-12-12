@@ -34,12 +34,21 @@ def driver():
     Configure Selenium WebDriver using pre-stored Chromium and Chromedriver binaries.
     """
     # Define file paths inside the project
+    chrome_parts = ["chrome_part_aa", "chrome_part_ab", "chrome_part_ac"]
     chrome_assembled = "chrome"
     chromedriver_path = "chromedriver"
 
-    # Ensure Chrome binary exists
+    # Assemble Chrome binary if not already assembled
     if not os.path.exists(chrome_assembled):
-        raise FileNotFoundError(f"Chrome binary not found at: {chrome_assembled}")
+        print("[INFO] Assembling Chrome binary from parts...")
+        with open(chrome_assembled, "wb") as assembled_file:
+            for part in chrome_parts:
+                if not os.path.exists(part):
+                    raise FileNotFoundError(f"Part file {part} is missing.")
+                with open(part, "rb") as part_file:
+                    assembled_file.write(part_file.read())
+        os.chmod(chrome_assembled, 0o755)
+        print("[INFO] Chrome binary assembled successfully.")
 
     # Ensure Chromedriver exists
     if not os.path.exists(chromedriver_path):
@@ -53,7 +62,6 @@ def driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--headless")  # Enable headless mode for CI
 
     print("[INFO] Initializing WebDriver...")
     try:
