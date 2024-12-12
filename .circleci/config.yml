@@ -55,26 +55,21 @@ jobs:
           keys:
             - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
-          name: Debug Environment Variables
-          command: |
-            echo "Debugging environment variables..."
-            echo "PATH: $PATH"
-            echo "CHROME_BINARY before setting: $CHROME_BINARY"
-            echo "CHROMEDRIVER_PATH before setting: $CHROMEDRIVER_PATH"
-      - run:
           name: Set Environment Variables
           command: |
-            . venv/bin/activate
+            echo "Setting environment variables..."
             export CHROME_BINARY=$(which chromium-browser)
             export CHROMEDRIVER_PATH=$(which chromedriver)
             echo "CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
             echo "CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
             source $BASH_ENV
+            echo "CHROME_BINARY after setting: $CHROME_BINARY"
+            echo "CHROMEDRIVER_PATH after setting: $CHROMEDRIVER_PATH"
       - run:
-          name: Verify Environment Variables
+          name: Debug Environment Variables
           command: |
-            . venv/bin/activate
-            source $BASH_ENV
+            echo "Debugging environment variables..."
+            echo "PATH: $PATH"
             echo "CHROME_BINARY: $CHROME_BINARY"
             echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
             if [ -z "$CHROME_BINARY" ] || [ -z "$CHROMEDRIVER_PATH" ]; then
@@ -86,6 +81,9 @@ jobs:
           command: |
             . venv/bin/activate
             source $BASH_ENV
+            echo "Running tests with environment variables:"
+            echo "CHROME_BINARY: $CHROME_BINARY"
+            echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
             mkdir -p test_results
             python -m pytest --alluredir=test_results/
       - store_test_results:
