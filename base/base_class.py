@@ -61,9 +61,19 @@ class Base:
     """method screen shot"""
 
     def screenshot(self):
-        now_date = datetime.datetime.utcnow().strftime("%Y,%m,%d,%H,%M,%S")
-        photo = "photos " + now_date + ".png"
-        self.driver.save_screenshot('/Users/nikitabarshchuk/PycharmProjects/pythonProject3/screen/' + photo)
+        # Ensure the 'screen' directory exists
+        screen_dir = "screen"
+        if not os.path.exists(screen_dir):
+            os.makedirs(screen_dir)
+    
+        # Generate a timestamped filename for the screenshot
+        now_date = datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S")
+        photo = f"photo_{now_date}.png"
+        file_path = os.path.join(screen_dir, photo)
+    
+        # Save the screenshot
+        self.driver.save_screenshot(file_path)
+        print(f"[INFO] Screenshot saved: {file_path}")
 
     """method assert url"""
 
