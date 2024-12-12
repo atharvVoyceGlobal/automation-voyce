@@ -66,9 +66,9 @@ def driver():
     """
     Настройка Selenium WebDriver с предустановленными Chromium и Chromedriver.
     """
-    # Явно указываем пути для Chromium и Chromedriver
-    chrome_binary = "/usr/bin/chromium-browser"
-    chromedriver_path = "/usr/bin/chromedriver"
+    # Пути для Chromium и Chromedriver
+    chrome_binary = "/usr/local/bin/chrome-linux64/chrome"
+    chromedriver_path = "/usr/local/bin/chromedriver-linux64/chromedriver"
 
     if not os.path.exists(chrome_binary):
         raise EnvironmentError(f"Chromium не найден по пути: {chrome_binary}")
