@@ -14,13 +14,13 @@ jobs:
       - run:
           name: Install Chrome and Chromedriver
           command: |
-            apt-get update && apt-get install -y wget curl gnupg
-            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -
-            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-            apt-get update && apt-get install -y google-chrome-stable
+            sudo apt-get update && sudo apt-get install -y wget curl gnupg
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update && sudo apt-get install -y google-chrome-stable
             wget https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
-            unzip chromedriver_linux64.zip -d /usr/bin/
-            chmod +x /usr/bin/chromedriver
+            sudo unzip chromedriver_linux64.zip -d /usr/bin/
+            sudo chmod +x /usr/bin/chromedriver
             rm chromedriver_linux64.zip
       - run:
           name: Verify Chrome and Chromedriver
