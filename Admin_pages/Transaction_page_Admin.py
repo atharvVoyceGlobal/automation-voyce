@@ -2425,10 +2425,13 @@ class Transaction_page_A(Graphs, EV):
 
         # Переход на Gmail
         self.driver.get(self.url123)
+        self.screenshot()
         time.sleep(10)
-
+        
+        self.screenshot()
         self.input_login(self.my_accaunt)
         time.sleep(3)
+        self.screenshot()
         self.press_return_key()
         time.sleep(3)
         self.input_password(self.my_password)
