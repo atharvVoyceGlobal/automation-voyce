@@ -3404,6 +3404,7 @@ class Transaction_page_A(Graphs, EV):
         with allure.step("transaction_page_test"):
             Logger.add_start_step(method='transaction_page_test')
             self.driver.maximize_window()
+            time.sleep(10)
             self.click_transaction_b()
             time.sleep(15)
 
