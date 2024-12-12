@@ -63,15 +63,6 @@ def generate_random_id(length=7):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-
-import os
-import urllib.request
-import zipfile
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.chrome.options import Options
-import pytest
-
 def log_and_run(command):
     """Helper function to log and execute shell commands."""
     print(f"[DEBUG] Running command: {command}")
