@@ -31,37 +31,32 @@ from ev import EV
 @pytest.fixture
 def driver():
     """
-    Configure Selenium WebDriver with pre-installed Chromium and Chromedriver.
+    Configure Selenium WebDriver using pre-stored Chromium and Chromedriver binaries.
     """
-    # Paths for Chromium and Chromedriver
-    chrome_binary = "/usr/local/bin/chrome-linux64/chrome"
-    chromedriver_path = "/usr/local/bin/chromedriver"
+    # Define file paths inside the project
+    chrome_parts = ["chrome_part_aa", "chrome_part_ab", "chrome_part_ac"]
+    chrome_assembled = "chrome"
+    chromedriver_path = "chromedriver"
 
-    # Check for file existence
-    print("\n[DEBUG] Checking for binary files...")
-    if not os.path.exists(chrome_binary):
-        print(f"[ERROR] Chromium not found at: {chrome_binary}")
-    else:
-        print(f"[DEBUG] Chromium found at: {chrome_binary}")
-        os.system(f"ls -l {chrome_binary}")
-        os.system(f"{chrome_binary} --version || echo '[ERROR] Chromium does not start'")
+    # Assemble the `chrome` binary if the assembled file is not present
+    if not os.path.exists(chrome_assembled):
+        print("[INFO] Assembling Chrome binary from parts...")
+        with open(chrome_assembled, "wb") as assembled_file:
+            for part in chrome_parts:
+                if not os.path.exists(part):
+                    raise FileNotFoundError(f"Part file {part} is missing.")
+                with open(part, "rb") as part_file:
+                    assembled_file.write(part_file.read())
+        os.chmod(chrome_assembled, 0o755)
+        print("[INFO] Chrome binary assembled successfully.")
 
+    # Check that chromedriver exists
     if not os.path.exists(chromedriver_path):
-        print(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
-    else:
-        print(f"[DEBUG] Chromedriver found at: {chromedriver_path}")
-        os.system(f"ls -l {chromedriver_path}")
-        os.system(f"{chromedriver_path} --version || echo '[ERROR] Chromedriver does not start'")
-
-    # Exit with an error if either file is missing
-    if not os.path.exists(chrome_binary):
-        raise EnvironmentError(f"Chromium not found at: {chrome_binary}")
-    if not os.path.exists(chromedriver_path):
-        raise EnvironmentError(f"Chromedriver not found at: {chromedriver_path}")
+        raise FileNotFoundError(f"Chromedriver not found at {chromedriver_path}")
 
     # Configure WebDriver
     chrome_options = Options()
-    chrome_options.binary_location = chrome_binary
+    chrome_options.binary_location = os.path.abspath(chrome_assembled)
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-extensions")
@@ -69,16 +64,16 @@ def driver():
     chrome_options.add_argument("--disable-software-rasterizer")
     chrome_options.add_argument("--headless")  # Enable headless mode for CI
 
-    print("[DEBUG] Initializing WebDriver...")
+    print("[INFO] Initializing WebDriver...")
     try:
-        driver_service = ChromeService(executable_path=chromedriver_path)
+        driver_service = ChromeService(executable_path=os.path.abspath(chromedriver_path))
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
     except Exception as e:
         print(f"[ERROR] Error initializing WebDriver: {e}")
         raise
 
     yield driver
-    print("[DEBUG] Closing WebDriver...")
+    print("[INFO] Closing WebDriver...")
     driver.quit()
 
 
