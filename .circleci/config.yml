@@ -60,6 +60,10 @@ jobs:
           command: |
             echo "CHROME_BINARY: $CHROME_BINARY"
             echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
+            if [ -z "$CHROME_BINARY" ] || [ -z "$CHROMEDRIVER_PATH" ]; then
+              echo "Переменные окружения не установлены"
+              exit 1
+            fi
       - run:
           name: Run API Tests
           command: |
