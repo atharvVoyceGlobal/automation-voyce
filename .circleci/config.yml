@@ -13,6 +13,14 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install dependencies for Chrome
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y \
+              libnss3 libnspr4 libx11-xcb1 libxcomposite1 libxcursor1 \
+              libxdamage1 libxi6 libxtst6 libxrandr2 libasound2 \
+              libpangocairo-1.0-0 libcups2 libatk1.0-0 libatspi2.0-0 libdrm2
+      - run:
           name: Create Virtual Environment
           command: |
             echo "Creating virtual environment..."
