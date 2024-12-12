@@ -74,6 +74,18 @@ jobs:
             echo "PATH: $PATH"
             echo "CHROME_BINARY: $CHROME_BINARY"
             echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
+            echo "Checking if Chromium is installed..."
+            if command -v chromium-browser &> /dev/null; then
+              echo "Chromium is installed at: $(which chromium-browser)"
+            else
+              echo "Chromium is not installed"
+            fi
+            echo "Checking if Chromedriver is installed..."
+            if command -v chromedriver &> /dev/null; then
+              echo "Chromedriver is installed at: $(which chromedriver)"
+            else
+              echo "Chromedriver is not installed"
+            fi
             if [ -z "$CHROME_BINARY" ] || [ -z "$CHROMEDRIVER_PATH" ]; then
               echo "Переменные окружения не установлены"
               exit 1
