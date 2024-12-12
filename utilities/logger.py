@@ -2,13 +2,15 @@ import datetime
 import os
 
 
-class Logger():
-    file_name = f"/Users/nikitabarshchuk/PycharmProjects/pythonProject3/logs/" + \
-                str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")) + ".logs"
+class Logger:
+    # Относительный путь к папке logs
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)  # Создаем директорию, если она не существует
+    file_name = os.path.join(log_dir, f"{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.logs")
 
     @classmethod
     def write_log_to_file(cls, data: str):
-        with open(cls.file_name, 'a', encoding='utf=8') as logger_file:
+        with open(cls.file_name, 'a', encoding='utf-8') as logger_file:
             logger_file.write(data)
 
     @classmethod
@@ -22,6 +24,7 @@ class Logger():
         data_to_add += "\n"
 
         cls.write_log_to_file(data_to_add)
+
 
     @classmethod
     def add_end_step(cls, url: str, method: str):
