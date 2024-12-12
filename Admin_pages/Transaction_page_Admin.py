@@ -2433,20 +2433,20 @@ class Transaction_page_A(Graphs, EV):
 
         # Переход на Gmail
         self.driver.get(self.url123)
-        self.screenshot()
         time.sleep(10)
         
         self.input_login(self.my_accaunt)
         time.sleep(3)
-        self.screenshot()
         self.press_return_key()
         time.sleep(3)
         self.screenshot()
         self.input_password(self.my_password)
         time.sleep(3)
         self.press_return_key()
+        self.screenshot()
 
         time.sleep(20)
+        self.screenshot()
         self.click_element_center()
         time.sleep(5)
         self.click_db_in_mail()
