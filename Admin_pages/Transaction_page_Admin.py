@@ -3922,3 +3922,4 @@ class Transaction_page_A(Graphs, EV):
             time.sleep(5)
             self.input_company("Hennepin Healthcare")
             self.process_search_and_verify()
+
