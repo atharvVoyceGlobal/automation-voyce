@@ -50,10 +50,10 @@ jobs:
           keys:
             - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
-          name: Install Browser and Driver
+          name: Set Environment Variables
           command: |
-            . venv/bin/activate
-            python install_browser_and_driver.py
+            echo 'export CHROME_BINARY=$(which chromium-browser)' >> $BASH_ENV
+            echo 'export CHROMEDRIVER_PATH=$(which chromedriver)' >> $BASH_ENV
       - run:
           name: Run API Tests
           command: |
