@@ -66,14 +66,16 @@ def driver():
     """
     Настройка Selenium WebDriver с предустановленными Chromium и Chromedriver.
     """
-    # Проверяем, что Chromium и Chromedriver доступны
-    chrome_binary = shutil.which("chromium-browser") or shutil.which("google-chrome")
-    chromedriver_path = shutil.which("chromedriver")
+    # Явно указываем пути для Chromium и Chromedriver
+    chrome_binary = "/usr/bin/chromium-browser"
+    chromedriver_path = "/usr/bin/chromedriver"
 
-    if not chrome_binary or not chromedriver_path:
-        raise EnvironmentError("Chromium или Chromedriver не найдены в PATH.")
+    if not os.path.exists(chrome_binary):
+        raise EnvironmentError(f"Chromium не найден по пути: {chrome_binary}")
+    if not os.path.exists(chromedriver_path):
+        raise EnvironmentError(f"Chromedriver не найден по пути: {chromedriver_path}")
 
-    # Настраиваем Selenium WebDriver
+    # Настройка WebDriver
     chrome_options = Options()
     chrome_options.binary_location = chrome_binary
     chrome_options.add_argument("--disable-gpu")
