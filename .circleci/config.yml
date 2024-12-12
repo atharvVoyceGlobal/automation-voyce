@@ -24,11 +24,13 @@ jobs:
             CHROME_MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d. -f1)
 
             # Получаем соответствующую версию Chromedriver
-            CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_VERSION")
+            CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_VERSION" | grep -oE '[0-9]+(\.[0-9]+)*')
 
             # Проверяем, что версия Chromedriver получена корректно
             if [ -z "$CHROMEDRIVER_VERSION" ]; then
               echo "Не удалось получить версию Chromedriver для Chrome версии $CHROME_VERSION"
+              echo "Ответ от API:"
+              curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_VERSION"
               exit 1
             fi
 
