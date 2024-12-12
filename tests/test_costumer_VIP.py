@@ -64,35 +64,35 @@ def generate_random_id(length=7):
 @pytest.fixture
 def driver():
     """
-    Настройка Selenium WebDriver с предустановленными Chromium и Chromedriver.
+    Configure Selenium WebDriver with pre-installed Chromium and Chromedriver.
     """
-    # Пути для Chromium и Chromedriver
+    # Paths for Chromium and Chromedriver
     chrome_binary = "/usr/local/bin/chrome-linux64/chrome"
     chromedriver_path = "/usr/local/bin/chromedriver"
 
-    # Проверка наличия файлов
-    print("\n[DEBUG] Проверяем наличие бинарных файлов...")
+    # Check for file existence
+    print("\n[DEBUG] Checking for binary files...")
     if not os.path.exists(chrome_binary):
-        print(f"[ERROR] Chromium не найден по пути: {chrome_binary}")
+        print(f"[ERROR] Chromium not found at: {chrome_binary}")
     else:
-        print(f"[DEBUG] Chromium найден по пути: {chrome_binary}")
+        print(f"[DEBUG] Chromium found at: {chrome_binary}")
         os.system(f"ls -l {chrome_binary}")
-        os.system(f"{chrome_binary} --version || echo '[ERROR] Chromium не запускается'")
+        os.system(f"{chrome_binary} --version || echo '[ERROR] Chromium does not start'")
 
     if not os.path.exists(chromedriver_path):
-        print(f"[ERROR] Chromedriver не найден по пути: {chromedriver_path}")
+        print(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
     else:
-        print(f"[DEBUG] Chromedriver найден по пути: {chromedriver_path}")
+        print(f"[DEBUG] Chromedriver found at: {chromedriver_path}")
         os.system(f"ls -l {chromedriver_path}")
-        os.system(f"{chromedriver_path} --version || echo '[ERROR] Chromedriver не запускается'")
+        os.system(f"{chromedriver_path} --version || echo '[ERROR] Chromedriver does not start'")
 
-    # Если один из файлов отсутствует, выходим с ошибкой
+    # Exit with an error if either file is missing
     if not os.path.exists(chrome_binary):
-        raise EnvironmentError(f"Chromium не найден по пути: {chrome_binary}")
+        raise EnvironmentError(f"Chromium not found at: {chrome_binary}")
     if not os.path.exists(chromedriver_path):
-        raise EnvironmentError(f"Chromedriver не найден по пути: {chromedriver_path}")
+        raise EnvironmentError(f"Chromedriver not found at: {chromedriver_path}")
 
-    # Настройка WebDriver
+    # Configure WebDriver
     chrome_options = Options()
     chrome_options.binary_location = chrome_binary
     chrome_options.add_argument("--disable-gpu")
@@ -100,18 +100,18 @@ def driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--headless")  # Включение headless режима для CI
+    chrome_options.add_argument("--headless")  # Enable headless mode for CI
 
-    print("[DEBUG] Инициализируем WebDriver...")
+    print("[DEBUG] Initializing WebDriver...")
     try:
         driver_service = ChromeService(executable_path=chromedriver_path)
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
     except Exception as e:
-        print(f"[ERROR] Ошибка при инициализации WebDriver: {e}")
+        print(f"[ERROR] Error initializing WebDriver: {e}")
         raise
 
     yield driver
-    print("[DEBUG] Закрываем WebDriver...")
+    print("[DEBUG] Closing WebDriver...")
     driver.quit()
 
 # Добавь фикстуру в класс
