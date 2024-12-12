@@ -52,7 +52,7 @@ class Transaction_page_A(Graphs, EV):
 
     # Подключение к Jira
 
-    url1 = 'https://mail.google.com/mail/u/0/#inbox'
+    url123 = 'https://mail.google.com/mail/u/0/#inbox'
     # Locators
     Search1 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
     Search2 = '//*[@id="scrollableDiv"]/div/div/div/label/span[1]'
@@ -2424,7 +2424,7 @@ class Transaction_page_A(Graphs, EV):
         self.driver.switch_to.window(new_tab_index)
 
         # Переход на Gmail
-        self.driver.get(self.url1)
+        self.driver.get(self.url123)
         time.sleep(10)
 
         self.input_login(self.my_accaunt)
