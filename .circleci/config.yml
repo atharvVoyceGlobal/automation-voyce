@@ -5,6 +5,7 @@ executors:
     docker:
       - image: cimg/python:3.11-browsers
     working_directory: ~/project
+    resource_class: large  # Увеличивает ресурсы для выполнения
 
 jobs:
   install-dependencies:
