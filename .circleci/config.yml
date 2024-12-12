@@ -15,37 +15,26 @@ jobs:
           name: Install Chrome and Chromedriver
           command: |
             sudo apt-get update && sudo apt-get install -y wget curl gnupg unzip
-            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-            echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-            sudo apt-get update && sudo apt-get install -y google-chrome-stable
+            echo "Скачиваем Chrome и Chromedriver напрямую с предоставленных ссылок..."
+            
+            # Скачиваем Chrome
+            wget -O chrome-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chrome-linux64.zip
+            unzip chrome-linux64.zip -d /usr/local/bin/
+            sudo chmod +x /usr/local/bin/chrome-linux64
+            rm chrome-linux64.zip
+            echo "Chrome установлен."
 
-            # Получаем основную версию Chrome
-            CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-            CHROME_MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d. -f1)
-
-            # Получаем соответствующую версию Chromedriver
-            CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_VERSION" | grep -oE '[0-9]+(\.[0-9]+)*')
-
-            # Проверяем, что версия Chromedriver получена корректно
-            if [ -z "$CHROMEDRIVER_VERSION" ]; then
-              echo "Не удалось получить версию Chromedriver для Chrome версии $CHROME_VERSION"
-              echo "Ответ от API:"
-              curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_MAJOR_VERSION"
-              exit 1
-            fi
-
-            echo "Устанавливаем Chromedriver версии $CHROMEDRIVER_VERSION для Chrome версии $CHROME_VERSION"
-
-            # Загружаем Chromedriver
-            wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
-            sudo unzip chromedriver_linux64.zip -d /usr/bin/
-            sudo chmod +x /usr/bin/chromedriver
-            rm chromedriver_linux64.zip
+            # Скачиваем Chromedriver
+            wget -O chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chromedriver-linux64.zip
+            unzip chromedriver-linux64.zip -d /usr/local/bin/
+            sudo chmod +x /usr/local/bin/chromedriver
+            rm chromedriver-linux64.zip
+            echo "Chromedriver установлен."
       - run:
           name: Verify Chrome and Chromedriver
           command: |
-            google-chrome --version
-            chromedriver --version
+            /usr/local/bin/chrome-linux64 --version || echo "Chrome не установлен"
+            /usr/local/bin/chromedriver --version || echo "Chromedriver не установлен"
       - run:
           name: Create Virtual Environment
           command: python -m venv venv
@@ -77,8 +66,8 @@ jobs:
       - run:
           name: Verify Chrome and Chromedriver before Tests
           command: |
-            google-chrome --version
-            chromedriver --version
+            /usr/local/bin/chrome-linux64 --version
+            /usr/local/bin/chromedriver --version
       - run:
           name: Run API Tests
           command: |
