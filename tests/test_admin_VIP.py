@@ -29,6 +29,7 @@ from ev import EV
 
 
 
+@staticmethod
 def install_browser_and_driver():
     print("Устанавливаем ChromeDriver...")
     chromedriver_autoinstaller.install()  # Автоматическая установка ChromeDriver
