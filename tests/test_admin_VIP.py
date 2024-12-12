@@ -34,25 +34,16 @@ def driver():
     Configure Selenium WebDriver using pre-stored Chromium and Chromedriver binaries.
     """
     # Define file paths inside the project
-    chrome_parts = ["chrome_part_aa", "chrome_part_ab", "chrome_part_ac"]
     chrome_assembled = "chrome"
     chromedriver_path = "chromedriver"
 
-    # Assemble the `chrome` binary if the assembled file is not present
+    # Ensure Chrome binary exists
     if not os.path.exists(chrome_assembled):
-        print("[INFO] Assembling Chrome binary from parts...")
-        with open(chrome_assembled, "wb") as assembled_file:
-            for part in chrome_parts:
-                if not os.path.exists(part):
-                    raise FileNotFoundError(f"Part file {part} is missing.")
-                with open(part, "rb") as part_file:
-                    assembled_file.write(part_file.read())
-        os.chmod(chrome_assembled, 0o755)
-        print("[INFO] Chrome binary assembled successfully.")
+        raise FileNotFoundError(f"Chrome binary not found at: {chrome_assembled}")
 
-    # Check that chromedriver exists
+    # Ensure Chromedriver exists
     if not os.path.exists(chromedriver_path):
-        raise FileNotFoundError(f"Chromedriver not found at {chromedriver_path}")
+        raise FileNotFoundError(f"Chromedriver not found at: {chromedriver_path}")
 
     # Configure WebDriver
     chrome_options = Options()
@@ -75,7 +66,6 @@ def driver():
     yield driver
     print("[INFO] Closing WebDriver...")
     driver.quit()
-
 
 @allure.feature("Testing the administrative interface for VIP customers")
 @allure.story("VIP Admin Test")
