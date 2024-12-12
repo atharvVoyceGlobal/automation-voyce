@@ -12,18 +12,20 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Create Virtual Environment
+          command: python -m venv venv
+      - run:
           name: Install Chromium
           command: |
+            . venv/bin/activate
             sudo apt-get update
             sudo apt-get install -y chromium-browser
       - run:
           name: Verify Chromium Installation
           command: |
+            . venv/bin/activate
             echo "Проверяем установку Chromium..."
             chromium-browser --version || echo "Chromium не установлен"
-      - run:
-          name: Create Virtual Environment
-          command: python -m venv venv
       - run:
           name: Install Python Dependencies
           command: |
@@ -52,6 +54,7 @@ jobs:
       - run:
           name: Set Environment Variables
           command: |
+            . venv/bin/activate
             export CHROME_BINARY=$(which chromium-browser)
             export CHROMEDRIVER_PATH=$(which chromedriver)
             echo "CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
@@ -60,6 +63,7 @@ jobs:
       - run:
           name: Verify Environment Variables
           command: |
+            . venv/bin/activate
             echo "CHROME_BINARY: $CHROME_BINARY"
             echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
             if [ -z "$CHROME_BINARY" ] || [ -z "$CHROMEDRIVER_PATH" ]; then
