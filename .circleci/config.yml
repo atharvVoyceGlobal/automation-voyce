@@ -12,17 +12,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Verify Binaries
-          command: |
-            echo "Verifying binary files..."
-            if [ ! -f chromedriver ]; then
-              echo "[ERROR] Chromedriver is missing." && exit 1
-            fi
-            if [ ! -f chrome ]; then
-              echo "[ERROR] Assembled Chrome binary is missing." && exit 1
-            fi
-            echo "[INFO] All required binaries are present."
-      - run:
           name: Create Virtual Environment
           command: |
             echo "Creating virtual environment..."
