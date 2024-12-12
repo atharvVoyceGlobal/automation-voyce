@@ -14,11 +14,17 @@ jobs:
       - run:
           name: Install Chrome and Chromedriver
           command: |
-            sudo apt-get update && sudo apt-get install -y wget curl gnupg
+            sudo apt-get update && sudo apt-get install -y wget curl gnupg unzip
             wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
             echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
             sudo apt-get update && sudo apt-get install -y google-chrome-stable
-            wget https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
+
+            # Определяем точную версию Chrome
+            CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
+            CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+
+            # Устанавливаем Chromedriver соответствующей версии
+            wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
             sudo unzip chromedriver_linux64.zip -d /usr/bin/
             sudo chmod +x /usr/bin/chromedriver
             rm chromedriver_linux64.zip
