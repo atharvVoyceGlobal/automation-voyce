@@ -14,7 +14,7 @@ jobs:
       - run:
           name: Install Chrome and Chromedriver
           command: |
-            sudo apt-get update && sudo apt-get install -y wget curl gnupg unzip
+            sudo apt-get update && sudo apt-get install -y wget curl gnupg unzip libnss3 libxss1 libgconf-2-4 libasound2
             echo "Скачиваем Chrome и Chromedriver напрямую с предоставленных ссылок..."
             
             # Скачиваем Chrome
@@ -32,10 +32,19 @@ jobs:
             rm -rf chromedriver-linux64.zip /usr/local/bin/chromedriver-linux64/
             echo "Chromedriver установлен."
       - run:
-          name: Verify Chrome and Chromedriver
+          name: Verify Chrome and Chromedriver Installation
           command: |
-            /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не установлен"
-            /usr/local/bin/chromedriver --version || echo "Chromedriver не установлен"
+            echo "Проверяем содержимое /usr/local/bin:"
+            ls -l /usr/local/bin/
+            
+            echo "Проверяем содержимое /usr/local/bin/chrome-linux64:"
+            ls -l /usr/local/bin/chrome-linux64 || echo "Папка chrome-linux64 отсутствует"
+            
+            echo "Проверяем запуск Chrome:"
+            /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не запускается"
+            
+            echo "Проверяем запуск Chromedriver:"
+            /usr/local/bin/chromedriver --version || echo "Chromedriver не запускается"
       - run:
           name: Create Virtual Environment
           command: python -m venv venv
@@ -67,18 +76,31 @@ jobs:
       - run:
           name: Verify Chrome and Chromedriver before Tests
           command: |
-            /usr/local/bin/chrome-linux64/chrome --version
-            /usr/local/bin/chromedriver --version
+            echo "Проверяем запуск Chrome перед тестами:"
+            /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не найден"
+            
+            echo "Проверяем запуск Chromedriver перед тестами:"
+            /usr/local/bin/chromedriver --version || echo "Chromedriver не найден"
       - run:
           name: Run API Tests
           command: |
             . venv/bin/activate
             mkdir -p test_results
-            python -m pytest --alluredir=test_results/
+            python -m pytest --alluredir=test_results/ --capture=tee-sys -v
       - store_test_results:
           path: test_results
       - store_artifacts:
           path: test_results
+      - run:
+          name: Debugging Logs
+          command: |
+            mkdir -p ~/debug_logs
+            ls -l /usr/local/bin/ > ~/debug_logs/bin_contents.txt
+            ls -l /usr/local/bin/chrome-linux64/ > ~/debug_logs/chrome_contents.txt || echo "chrome-linux64 отсутствует" >> ~/debug_logs/errors.txt
+            /usr/local/bin/chrome-linux64/chrome --version > ~/debug_logs/chrome_version.txt || echo "Chrome не запускается" >> ~/debug_logs/errors.txt
+            /usr/local/bin/chromedriver --version > ~/debug_logs/chromedriver_version.txt || echo "Chromedriver не запускается" >> ~/debug_logs/errors.txt
+      - store_artifacts:
+          path: ~/debug_logs
 
 workflows:
   version: 2
