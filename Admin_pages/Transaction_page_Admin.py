@@ -2414,36 +2414,36 @@ class Transaction_page_A(Graphs, EV):
         """
         Проверяет Gmail, выполняя вход только если требуется.
         """
-        try:
-            # Открытие новой вкладки
-            self.driver.execute_script("window.open('');")
-            time.sleep(2)
 
-            # Переключение на новую вкладку
-            new_tab_index = self.driver.window_handles[-1]
-            self.driver.switch_to.window(new_tab_index)
+        # Открытие новой вкладки
+        self.driver.execute_script("window.open('');")
+        time.sleep(2)
 
-            # Переход на Gmail
-            self.driver.get(self.url1)
-            time.sleep(10)
+        # Переключение на новую вкладку
+        new_tab_index = self.driver.window_handles[-1]
+        self.driver.switch_to.window(new_tab_index)
 
-            self.input_login(self.my_accaunt)
-            self.click_next()
-            time.sleep(3)
-            self.input_password(self.my_password)
-            time.sleep(3)
-            self.click_next2()
-   
-            time.sleep(20)
-            self.click_element_center()
-            time.sleep(5)
-            self.click_db_in_mail()
-            time.sleep(1)
-            self.click_more_and_delete()
-            self.driver.close()
-            time.sleep(5)
-            self.driver.switch_to.window(original_tab)
-            time.sleep(10)
+        # Переход на Gmail
+        self.driver.get(self.url1)
+        time.sleep(10)
+
+        self.input_login(self.my_accaunt)
+        self.click_next()
+        time.sleep(3)
+        self.input_password(self.my_password)
+        time.sleep(3)
+        self.click_next2()
+
+        time.sleep(20)
+        self.click_element_center()
+        time.sleep(5)
+        self.click_db_in_mail()
+        time.sleep(1)
+        self.click_more_and_delete()
+        self.driver.close()
+        time.sleep(5)
+        self.driver.switch_to.window(original_tab)
+        time.sleep(10)
 
     def compare_data_for_periods(self):
         with allure.step("Compare data with DB by Periods"):
