@@ -20,20 +20,21 @@ jobs:
             # Скачиваем Chrome
             wget -O chrome-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chrome-linux64.zip
             unzip chrome-linux64.zip -d /usr/local/bin/
-            sudo chmod +x /usr/local/bin/chrome-linux64
+            sudo chmod -R +x /usr/local/bin/chrome-linux64/
             rm chrome-linux64.zip
             echo "Chrome установлен."
 
             # Скачиваем Chromedriver
             wget -O chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chromedriver-linux64.zip
             unzip chromedriver-linux64.zip -d /usr/local/bin/
+            sudo mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
             sudo chmod +x /usr/local/bin/chromedriver
-            rm chromedriver-linux64.zip
+            rm -rf chromedriver-linux64.zip /usr/local/bin/chromedriver-linux64/
             echo "Chromedriver установлен."
       - run:
           name: Verify Chrome and Chromedriver
           command: |
-            /usr/local/bin/chrome-linux64 --version || echo "Chrome не установлен"
+            /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не установлен"
             /usr/local/bin/chromedriver --version || echo "Chromedriver не установлен"
       - run:
           name: Create Virtual Environment
@@ -66,7 +67,7 @@ jobs:
       - run:
           name: Verify Chrome and Chromedriver before Tests
           command: |
-            /usr/local/bin/chrome-linux64 --version
+            /usr/local/bin/chrome-linux64/chrome --version
             /usr/local/bin/chromedriver --version
       - run:
           name: Run API Tests
