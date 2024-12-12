@@ -1,3 +1,5 @@
+import urllib.request
+import zipfile
 import time
 import allure
 import pytest
