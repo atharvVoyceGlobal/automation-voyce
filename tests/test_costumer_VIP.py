@@ -92,14 +92,15 @@ def download_and_extract_chrome():
             extracted_files = os.listdir(extract_path)
             print(f"[DEBUG] Extracted files: {extracted_files}")
 
-            # Locate the extracted Chrome binary
-            chrome_binary = os.path.join(extract_path, "chrome")
-            if os.path.exists(chrome_binary):
-                os.rename(chrome_binary, "chrome")
-                os.chmod("chrome", 0o755)
-                print("[INFO] Chrome binary is ready.")
+            # Recursively search for the Chrome binary
+            for root, dirs, files in os.walk(extract_path):
+                if "chrome" in files:
+                    chrome_binary = os.path.join(root, "chrome")
+                    os.rename(chrome_binary, "chrome")
+                    os.chmod("chrome", 0o755)
+                    print("[INFO] Chrome binary is ready.")
+                    break
             else:
-                print(f"[ERROR] Chrome binary not found in extracted files: {extracted_files}")
                 raise FileNotFoundError("[ERROR] Chrome binary not found after extraction.")
         except Exception as e:
             print(f"[ERROR] Failed to download or extract Chrome: {e}")
