@@ -40,47 +40,10 @@ jobs:
           keys:
             - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
-          name: Set Environment Variables
-          command: |
-            echo "Setting environment variables..."
-            export CHROME_BINARY=$(which chromium-browser)
-            export CHROMEDRIVER_PATH=$(which chromedriver)
-            echo "CHROME_BINARY=$CHROME_BINARY" >> $BASH_ENV
-            echo "CHROMEDRIVER_PATH=$CHROMEDRIVER_PATH" >> $BASH_ENV
-            source $BASH_ENV
-            echo "CHROME_BINARY after setting: $CHROME_BINARY"
-            echo "CHROMEDRIVER_PATH after setting: $CHROMEDRIVER_PATH"
-      - run:
-          name: Debug Environment Variables
-          command: |
-            echo "Debugging environment variables..."
-            echo "PATH: $PATH"
-            echo "CHROME_BINARY: $CHROME_BINARY"
-            echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
-            echo "Checking if Chromium is installed..."
-            if command -v chromium-browser &> /dev/null; then
-              echo "Chromium is installed at: $(which chromium-browser)"
-            else
-              echo "Chromium is not installed"
-            fi
-            echo "Checking if Chromedriver is installed..."
-            if command -v chromedriver &> /dev/null; then
-              echo "Chromedriver is installed at: $(which chromedriver)"
-            else
-              echo "Chromedriver is not installed"
-            fi
-            if [ -z "$CHROME_BINARY" ] || [ -z "$CHROMEDRIVER_PATH" ]; then
-              echo "Переменные окружения не установлены"
-              exit 1
-            fi
-      - run:
           name: Run API Tests
           command: |
             . venv/bin/activate
-            source $BASH_ENV
-            echo "Running tests with environment variables:"
-            echo "CHROME_BINARY: $CHROME_BINARY"
-            echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
+            echo "Using built-in Chromium and Chromedriver..."
             mkdir -p test_results
             python -m pytest --alluredir=test_results/
       - store_test_results:
