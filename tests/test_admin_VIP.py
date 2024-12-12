@@ -39,67 +39,60 @@ def log_and_run(command):
         print(f"[ERROR] Command failed: {command}")
     return result
 
-def download_and_extract_chrome():
-    """Download and extract Chrome from the given URL."""
-    chrome_url = "https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chrome-linux64.zip"
-    zip_path = "chrome-linux64.zip"
-    extract_path = "chrome-linux64"
+def download_and_install_chrome():
+    """Download and install Chrome from the official .deb package."""
+    chrome_url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    deb_path = "google-chrome-stable_current_amd64.deb"
 
-    if not os.path.exists("chrome"):
-        print("[INFO] Chrome binary not found. Downloading...")
+    if not os.path.exists("/usr/bin/google-chrome"):
+        print("[INFO] Chrome not found. Downloading...")
         try:
-            urllib.request.urlretrieve(chrome_url, zip_path)
-            print(f"[INFO] Downloaded Chrome to {zip_path}")
+            # Download the .deb package
+            urllib.request.urlretrieve(chrome_url, deb_path)
+            print(f"[INFO] Downloaded Chrome .deb package to {deb_path}")
 
-            # Extract the zip file
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_path)
-                print(f"[INFO] Extracted Chrome to {extract_path}")
+            # Install the .deb package using dpkg
+            print("[INFO] Installing Chrome...")
+            subprocess.run(["sudo", "dpkg", "-i", deb_path], check=True)
+            
+            # Fix any missing dependencies
+            subprocess.run(["sudo", "apt-get", "-f", "install", "-y"], check=True)
 
-            # Debug: List contents of extract_path
-            extracted_files = os.listdir(extract_path)
-            print(f"[DEBUG] Extracted files: {extracted_files}")
-
-            # Recursively search for the Chrome binary
-            for root, dirs, files in os.walk(extract_path):
-                if "chrome" in files:
-                    chrome_binary = os.path.join(root, "chrome")
-                    os.rename(chrome_binary, "chrome")
-                    os.chmod("chrome", 0o755)
-                    print("[INFO] Chrome binary is ready.")
-                    break
+            # Verify installation
+            if os.path.exists("/usr/bin/google-chrome"):
+                print("[INFO] Chrome is successfully installed.")
             else:
-                raise FileNotFoundError("[ERROR] Chrome binary not found after extraction.")
+                raise FileNotFoundError("[ERROR] Chrome installation failed.")
+
         except Exception as e:
-            print(f"[ERROR] Failed to download or extract Chrome: {e}")
+            print(f"[ERROR] Failed to download or install Chrome: {e}")
             raise
         finally:
-            # Clean up the zip file
-            if os.path.exists(zip_path):
-                os.remove(zip_path)
+            # Clean up the .deb package
+            if os.path.exists(deb_path):
+                os.remove(deb_path)
 
 @pytest.fixture
 def driver():
-    chrome_assembled = "chrome"
     chromedriver_path = "chromedriver"  # Ensure chromedriver is in the project
 
-    # Ensure Chrome is downloaded and available
-    if not os.path.exists(chrome_assembled):
-        download_and_extract_chrome()
+    # Ensure Chrome is installed
+    if not os.path.exists("/usr/bin/google-chrome"):
+        download_and_install_chrome()
 
     if not os.path.exists(chromedriver_path):
         raise FileNotFoundError(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
 
-    log_and_run(f"ls -l {chrome_assembled}")
+    log_and_run("ls -l /usr/bin/google-chrome")
     log_and_run(f"ls -l {chromedriver_path}")
 
     # Check if Chrome is executable
-    if not os.access(chrome_assembled, os.X_OK):
-        raise PermissionError(f"[ERROR] Chrome is not executable: {chrome_assembled}")
+    if not os.access("/usr/bin/google-chrome", os.X_OK):
+        raise PermissionError("[ERROR] Google Chrome is not executable at /usr/bin/google-chrome")
 
     # Configure WebDriver
     chrome_options = Options()
-    chrome_options.binary_location = os.path.abspath(chrome_assembled)
+    chrome_options.binary_location = "/usr/bin/google-chrome"
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-extensions")
