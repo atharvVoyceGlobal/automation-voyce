@@ -80,48 +80,21 @@ def log_and_run(command):
 
 @pytest.fixture
 def driver():
-    """
-    Configure Selenium WebDriver using pre-stored Chromium and Chromedriver binaries.
-    """
-    # Define file paths inside the project
-    chrome_parts = ["chrome_part_aa", "chrome_part_ab", "chrome_part_ac"]
+    # Проверяем существование файлов
     chrome_assembled = "chrome"
     chromedriver_path = "chromedriver"
 
-    # Assemble Chrome binary if not already assembled
-    if not os.path.exists(chrome_assembled):
-        print("[INFO] Assembling Chrome binary from parts...")
-        try:
-            with open(chrome_assembled, "wb") as assembled_file:
-                for part in chrome_parts:
-                    if not os.path.exists(part):
-                        raise FileNotFoundError(f"[ERROR] Part file {part} is missing.")
-                    print(f"[DEBUG] Adding {part} to {chrome_assembled}.")
-                    with open(part, "rb") as part_file:
-                        assembled_file.write(part_file.read())
-            os.chmod(chrome_assembled, 0o755)
-            print("[INFO] Chrome binary assembled successfully.")
-        except Exception as e:
-            print(f"[ERROR] Failed to assemble Chrome binary: {e}")
-            raise
-    else:
-        print(f"[INFO] Chrome binary already assembled at: {os.path.abspath(chrome_assembled)}")
+    if not os.path.exists(chrome_assembled) or not os.path.exists(chromedriver_path):
+        raise FileNotFoundError("One of required files is missing!")
 
-    # Ensure Chromedriver exists
-    if not os.path.exists(chromedriver_path):
-        raise FileNotFoundError(f"Chromedriver not found at: {chromedriver_path}")
-    else:
-        print(f"[INFO] Chromedriver binary found at: {os.path.abspath(chromedriver_path)}")
-
-    # Check file permissions
     log_and_run(f"ls -l {chrome_assembled}")
     log_and_run(f"ls -l {chromedriver_path}")
 
-    # Check versions
-    log_and_run(f"{os.path.abspath(chrome_assembled)} --version || echo '[ERROR] Cannot fetch Chrome version'")
-    log_and_run(f"{os.path.abspath(chromedriver_path)} --version || echo '[ERROR] Cannot fetch Chromedriver version'")
+    # Проверка версий
+    log_and_run(f"{chrome_assembled} --version")
+    log_and_run(f"{chromedriver_path} --version")
 
-    # Configure WebDriver
+    # Настройка WebDriver
     chrome_options = Options()
     chrome_options.binary_location = os.path.abspath(chrome_assembled)
     chrome_options.add_argument("--disable-gpu")
@@ -129,24 +102,21 @@ def driver():
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-software-rasterizer")
-    chrome_options.add_argument("--headless")  # Enable headless mode for CI
+    chrome_options.add_argument("--remote-debugging-port=9222")
+    chrome_options.add_argument("--headless")
 
-    print("[INFO] Initializing WebDriver...")
     try:
         driver_service = ChromeService(executable_path=os.path.abspath(chromedriver_path))
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
         print("[INFO] WebDriver initialized successfully.")
     except Exception as e:
-        print(f"[ERROR] Error initializing WebDriver: {e}")
-        print("[DEBUG] Retrying with additional diagnostics...")
-        log_and_run(f"ps -ef | grep {os.path.basename(chrome_assembled)}")
+        print(f"[ERROR] Failed to initialize WebDriver: {e}")
+        log_and_run("ps -ef | grep chrome")
         raise
 
     yield driver
-
     print("[INFO] Closing WebDriver...")
     driver.quit()
-    print("[INFO] WebDriver closed successfully.")
 
 
 
