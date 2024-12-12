@@ -54,6 +54,12 @@ jobs:
           command: |
             echo 'export CHROME_BINARY=$(which chromium-browser)' >> $BASH_ENV
             echo 'export CHROMEDRIVER_PATH=$(which chromedriver)' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Verify Environment Variables
+          command: |
+            echo "CHROME_BINARY: $CHROME_BINARY"
+            echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
       - run:
           name: Run API Tests
           command: |
