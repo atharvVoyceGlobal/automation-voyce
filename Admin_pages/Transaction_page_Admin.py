@@ -2428,11 +2428,12 @@ class Transaction_page_A(Graphs, EV):
         time.sleep(10)
 
         self.input_login(self.my_accaunt)
-        self.click_next()
+        time.sleep(3)
+        self.press_return_key()
         time.sleep(3)
         self.input_password(self.my_password)
         time.sleep(3)
-        self.click_next2()
+        self.press_return_key()
 
         time.sleep(20)
         self.click_element_center()
