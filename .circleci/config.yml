@@ -15,33 +15,6 @@ jobs:
           name: Create Virtual Environment
           command: python -m venv venv
       - run:
-          name: Install Chromium
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y chromium-browser
-            if command -v chromium-browser &> /dev/null; then
-              echo "Chromium is installed at: $(which chromium-browser)"
-            else
-              echo "Chromium is not installed"
-              exit 1
-            fi
-      - run:
-          name: Install Chromedriver
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y chromium-chromedriver
-            if command -v chromedriver &> /dev/null; then
-              echo "Chromedriver is installed at: $(which chromedriver)"
-            else
-              echo "Chromedriver is not installed"
-              exit 1
-            fi
-      - run:
-          name: Verify Chromium Installation
-          command: |
-            echo "Проверяем установку Chromium..."
-            chromium-browser --version || echo "Chromium не установлен"
-      - run:
           name: Install Python Dependencies
           command: |
             . venv/bin/activate
