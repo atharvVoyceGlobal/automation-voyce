@@ -55,6 +55,13 @@ jobs:
           keys:
             - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
+          name: Debug Environment Variables
+          command: |
+            echo "Debugging environment variables..."
+            echo "PATH: $PATH"
+            echo "CHROME_BINARY before setting: $CHROME_BINARY"
+            echo "CHROMEDRIVER_PATH before setting: $CHROMEDRIVER_PATH"
+      - run:
           name: Set Environment Variables
           command: |
             . venv/bin/activate
