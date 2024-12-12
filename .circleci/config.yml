@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python-executor:
     docker:
-      - image: circleci/python:3.11-browsers
+      - image: cimg/python:3.11-browsers
     working_directory: ~/project
 
 jobs:
@@ -34,6 +34,10 @@ jobs:
           key: v1-pip-cache-{{ checksum "requirements.txt" }}
           paths:
             - ~/.cache/pip
+      - save_cache:
+          key: v1-venv-cache-{{ checksum "requirements.txt" }}
+          paths:
+            - venv
 
   run-tests:
     executor: python-executor
@@ -42,15 +46,9 @@ jobs:
       - restore_cache:
           keys:
             - v1-pip-cache-{{ checksum "requirements.txt" }}
-      - run:
-          name: Create Virtual Environment
-          command: python -m venv venv
-      - run:
-          name: Activate Virtual Environment and Install Dependencies
-          command: |
-            . venv/bin/activate
-            python -m pip install --upgrade pip
-            pip install -r requirements.txt
+      - restore_cache:
+          keys:
+            - v1-venv-cache-{{ checksum "requirements.txt" }}
       - run:
           name: Install Browser and Driver
           command: |
