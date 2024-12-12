@@ -32,17 +32,15 @@ jobs:
             rm -rf chromedriver-linux64.zip /usr/local/bin/chromedriver-linux64/
             echo "Chromedriver установлен."
       - run:
-          name: Verify Chrome and Chromedriver Installation
+          name: Debug Chrome Installation
           command: |
-            echo "Проверяем содержимое /usr/local/bin:"
+            echo "Отладка Chrome и Chromedriver:"
+            echo "Содержимое /usr/local/bin:"
             ls -l /usr/local/bin/
-            
-            echo "Проверяем содержимое /usr/local/bin/chrome-linux64:"
-            ls -l /usr/local/bin/chrome-linux64 || echo "Папка chrome-linux64 отсутствует"
-            
+            echo "Содержимое /usr/local/bin/chrome-linux64:"
+            ls -l /usr/local/bin/chrome-linux64 || echo "chrome-linux64 отсутствует"
             echo "Проверяем запуск Chrome:"
             /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не запускается"
-            
             echo "Проверяем запуск Chromedriver:"
             /usr/local/bin/chromedriver --version || echo "Chromedriver не запускается"
       - run:
@@ -78,7 +76,6 @@ jobs:
           command: |
             echo "Проверяем запуск Chrome перед тестами:"
             /usr/local/bin/chrome-linux64/chrome --version || echo "Chrome не найден"
-            
             echo "Проверяем запуск Chromedriver перед тестами:"
             /usr/local/bin/chromedriver --version || echo "Chromedriver не найден"
       - run:
@@ -92,7 +89,7 @@ jobs:
       - store_artifacts:
           path: test_results
       - run:
-          name: Debugging Logs
+          name: Debug Logs
           command: |
             mkdir -p ~/debug_logs
             ls -l /usr/local/bin/ > ~/debug_logs/bin_contents.txt
