@@ -88,7 +88,7 @@ def download_and_extract_chrome():
                 zip_ref.extractall(extract_path)
                 print(f"[INFO] Extracted Chrome to {extract_path}")
 
-            # Move the chrome binary to the current directory
+            # Locate the extracted Chrome binary
             chrome_binary = os.path.join(extract_path, "chrome")
             if os.path.exists(chrome_binary):
                 os.rename(chrome_binary, "chrome")
