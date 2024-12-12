@@ -28,13 +28,6 @@ import chromedriver_autoinstaller
 from ev import EV
 
 
-def log_and_run(command):
-    """Helper function to log and execute shell commands."""
-    print(f"[DEBUG] Running command: {command}")
-    result = os.system(command)
-    if result != 0:
-        print(f"[ERROR] Command failed: {command}")
-    return result
 
 def log_and_run(command):
     """Helper function to log and execute shell commands."""
@@ -43,24 +36,60 @@ def log_and_run(command):
     if result != 0:
         print(f"[ERROR] Command failed: {command}")
     return result
+
+def download_and_extract_chrome():
+    """Download and extract Chrome from the given URL."""
+    chrome_url = "https://storage.googleapis.com/chrome-for-testing-public/131.0.6778.108/linux64/chrome-linux64.zip"
+    zip_path = "chrome-linux64.zip"
+    extract_path = "chrome-linux64"
+
+    if not os.path.exists("chrome"):
+        print("[INFO] Chrome binary not found. Downloading...")
+        try:
+            urllib.request.urlretrieve(chrome_url, zip_path)
+            print(f"[INFO] Downloaded Chrome to {zip_path}")
+
+            # Extract the zip file
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_path)
+                print(f"[INFO] Extracted Chrome to {extract_path}")
+
+            # Move the chrome binary to the current directory
+            chrome_binary = os.path.join(extract_path, "chrome")
+            if os.path.exists(chrome_binary):
+                os.rename(chrome_binary, "chrome")
+                os.chmod("chrome", 0o755)
+                print("[INFO] Chrome binary is ready.")
+            else:
+                raise FileNotFoundError("[ERROR] Chrome binary not found after extraction.")
+        except Exception as e:
+            print(f"[ERROR] Failed to download or extract Chrome: {e}")
+            raise
+        finally:
+            # Clean up the zip file
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
 
 @pytest.fixture
 def driver():
-    # Проверяем существование файлов
     chrome_assembled = "chrome"
-    chromedriver_path = "chromedriver"
+    chromedriver_path = "chromedriver"  # Ensure chromedriver is in the project
 
-    if not os.path.exists(chrome_assembled) or not os.path.exists(chromedriver_path):
-        raise FileNotFoundError("One of required files is missing!")
+    # Ensure Chrome is downloaded and available
+    if not os.path.exists(chrome_assembled):
+        download_and_extract_chrome()
+
+    if not os.path.exists(chromedriver_path):
+        raise FileNotFoundError(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
 
     log_and_run(f"ls -l {chrome_assembled}")
     log_and_run(f"ls -l {chromedriver_path}")
 
-    # Проверка версий
-    log_and_run(f"{chrome_assembled} --version")
-    log_and_run(f"{chromedriver_path} --version")
+    # Check versions
+    log_and_run(f"{chrome_assembled} --version || echo '[ERROR] Cannot fetch Chrome version'")
+    log_and_run(f"{chromedriver_path} --version || echo '[ERROR] Cannot fetch Chromedriver version'")
 
-    # Настройка WebDriver
+    # Configure WebDriver
     chrome_options = Options()
     chrome_options.binary_location = os.path.abspath(chrome_assembled)
     chrome_options.add_argument("--disable-gpu")
@@ -81,8 +110,10 @@ def driver():
         raise
 
     yield driver
+
     print("[INFO] Closing WebDriver...")
     driver.quit()
+
 
 
 @allure.feature("Testing the administrative interface for VIP customers")
