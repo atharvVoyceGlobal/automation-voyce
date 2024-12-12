@@ -402,8 +402,16 @@ class Transaction_page_A(Graphs, EV):
         ok_button.click()
 
     def input_password(self, user_password):
-        self.get_password_field().send_keys(user_password)
-        print("input password")
+        # Копируем текст в буфер обмена
+        self.driver.execute_script("navigator.clipboard.writeText(arguments[0]);", user_password)
+        
+        # Вставляем текст с помощью комбинации клавиш Ctrl+V (или Command+V для macOS)
+        from selenium.webdriver.common.keys import Keys
+        active_element = self.driver.switch_to.active_element
+        active_element.send_keys(Keys.CONTROL, 'v')  # На Windows/Linux
+        # active_element.send_keys(Keys.COMMAND, 'v')  # Для macOS
+        
+        print("Input password via paste from clipboard")
 
     def input_password1(self, user_password):
         self.get_password_field1().send_keys(user_password)
@@ -2418,7 +2426,7 @@ class Transaction_page_A(Graphs, EV):
         # Открытие новой вкладки
         self.driver.execute_script("window.open('');")
         time.sleep(2)
-
+        
         # Переключение на новую вкладку
         new_tab_index = self.driver.window_handles[-1]
         self.driver.switch_to.window(new_tab_index)
