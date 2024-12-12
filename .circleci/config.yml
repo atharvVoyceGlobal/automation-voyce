@@ -19,11 +19,14 @@ jobs:
             echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
             sudo apt-get update && sudo apt-get install -y google-chrome-stable
 
-            # Определяем точную версию Chrome
+            # Определяем основную версию Chrome
             CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-            CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
+            CHROME_MAJOR_VERSION=$(echo $CHROME_VERSION | cut -d. -f1)
 
-            # Устанавливаем Chromedriver соответствующей версии
+            # Получаем версию Chromedriver для данной версии Chrome
+            CHROMEDRIVER_VERSION=$(curl -sS "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_MAJOR_VERSION}")
+
+            # Скачиваем Chromedriver
             wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
             sudo unzip chromedriver_linux64.zip -d /usr/bin/
             sudo chmod +x /usr/bin/chromedriver
