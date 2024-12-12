@@ -2427,20 +2427,13 @@ class Transaction_page_A(Graphs, EV):
             self.driver.get(self.url1)
             time.sleep(10)
 
-            # Проверка наличия поля для ввода логина
-            login_field = self.get_login_field()
-            if login_field:
-                self.input_login(self.my_accaunt)
-                self.click_next()
-                time.sleep(3)
-                self.input_password(self.my_password)
-                time.sleep(3)
-                self.click_next2()
-            else:
-                print("Login already performed. Skipping login steps.")
-        except Exception as e:
-            print(f"...")
-
+            self.input_login(self.my_accaunt)
+            self.click_next()
+            time.sleep(3)
+            self.input_password(self.my_password)
+            time.sleep(3)
+            self.click_next2()
+   
         finally:
             time.sleep(20)
             self.click_element_center()
