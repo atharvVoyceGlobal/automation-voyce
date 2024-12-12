@@ -61,6 +61,7 @@ def generate_random_id(length=7):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
+@staticmethod
 def install_browser_and_driver():
     print("Устанавливаем ChromeDriver...")
     chromedriver_autoinstaller.install()  # Автоматическая установка ChromeDriver
