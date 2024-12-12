@@ -2434,7 +2434,6 @@ class Transaction_page_A(Graphs, EV):
             time.sleep(3)
             self.click_next2()
    
-        finally:
             time.sleep(20)
             self.click_element_center()
             time.sleep(5)
