@@ -56,6 +56,10 @@ def download_and_extract_chrome():
                 zip_ref.extractall(extract_path)
                 print(f"[INFO] Extracted Chrome to {extract_path}")
 
+            # Debug: List contents of extract_path
+            extracted_files = os.listdir(extract_path)
+            print(f"[DEBUG] Extracted files: {extracted_files}")
+
             # Locate the extracted Chrome binary
             chrome_binary = os.path.join(extract_path, "chrome")
             if os.path.exists(chrome_binary):
@@ -63,6 +67,7 @@ def download_and_extract_chrome():
                 os.chmod("chrome", 0o755)
                 print("[INFO] Chrome binary is ready.")
             else:
+                print(f"[ERROR] Chrome binary not found in extracted files: {extracted_files}")
                 raise FileNotFoundError("[ERROR] Chrome binary not found after extraction.")
         except Exception as e:
             print(f"[ERROR] Failed to download or extract Chrome: {e}")
