@@ -12,17 +12,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Assemble Chrome Binary
-          command: |
-            echo "Assembling Chrome binary..."
-            if [ ! -f chrome ]; then
-              cat chrome_part_aa chrome_part_ab chrome_part_ac > chrome
-              chmod +x chrome
-              echo "[INFO] Chrome binary assembled successfully."
-            else
-              echo "[INFO] Chrome binary already exists."
-            fi
-      - run:
           name: Verify Binaries
           command: |
             echo "Verifying binary files..."
