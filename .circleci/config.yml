@@ -12,6 +12,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Chromium
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y chromium-browser
+      - run:
           name: Verify Chromium Installation
           command: |
             echo "Проверяем установку Chromium..."
@@ -46,6 +51,11 @@ jobs:
             . venv/bin/activate
             python -m pip install --upgrade pip
             pip install -r requirements.txt
+      - run:
+          name: Install Browser and Driver
+          command: |
+            . venv/bin/activate
+            python install_browser_and_driver.py
       - run:
           name: Run API Tests
           command: |
