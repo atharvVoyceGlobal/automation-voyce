@@ -61,6 +61,10 @@ def download_and_install_chrome():
             # Verify installation
             if os.path.exists("/usr/bin/google-chrome"):
                 print("[INFO] Chrome is successfully installed.")
+                
+                # Get and print the installed version of Chrome
+                version_output = subprocess.check_output(["google-chrome", "--version"], text=True)
+                print(f"[INFO] Installed Chrome version: {version_output.strip()}")
             else:
                 raise FileNotFoundError("[ERROR] Chrome installation failed.")
 
@@ -71,6 +75,11 @@ def download_and_install_chrome():
             # Clean up the .deb package
             if os.path.exists(deb_path):
                 os.remove(deb_path)
+    else:
+        # Chrome is already installed, print the installed version
+        version_output = subprocess.check_output(["google-chrome", "--version"], text=True)
+        print(f"[INFO] Chrome is already installed. Version: {version_output.strip()}")
+
 
 @pytest.fixture
 def driver():
