@@ -2424,6 +2424,7 @@ class Transaction_page_A(Graphs, EV):
             time.sleep(10)
 
             # Проверка наличия поля для ввода логина
+            self.screenshot()
             login_field = self.get_login_field()
             if login_field:
                 self.input_login(self.my_accaunt)
@@ -2432,6 +2433,7 @@ class Transaction_page_A(Graphs, EV):
                 self.input_password(self.my_password)
                 time.sleep(3)
                 self.press_return_key()
+                self.screenshot()
             else:
                 print("Login already performed. Skipping login steps.")
         except Exception as e:
