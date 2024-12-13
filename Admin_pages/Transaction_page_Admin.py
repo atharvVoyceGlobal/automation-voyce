@@ -238,7 +238,7 @@ class Transaction_page_A(Graphs, EV):
     status_s_f = "//input[@placeholder='Search Status']"
     status_cell = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[5]/td[9]'
     status_cell1 = '//*[@id="root"]/div/div[2]/div/div/main/div/div[2]/div/div/div/div/div/table/tbody/tr[2]/td[9]'
-    password_field = "//*[@id='password']/div[1]/div/div[1]/input"
+    password_field = "//input[@type="password" and @name="Passwd"]"
     password_field1 = "//input[@placeholder='Password']"
     password_field2 = "//*[@id='confirmPassword']"
     button_login = "//*[@id='root']/div/div[3]/div/div/div/div/div/div[2]/div/form/div[3]/div/div/div/div/div/button"
@@ -402,16 +402,8 @@ class Transaction_page_A(Graphs, EV):
         ok_button.click()
 
     def input_password(self, user_password):
-        # Копируем текст в буфер обмена
-        self.driver.execute_script("navigator.clipboard.writeText(arguments[0]);", user_password)
-        
-        # Вставляем текст с помощью комбинации клавиш Ctrl+V (или Command+V для macOS)
-        from selenium.webdriver.common.keys import Keys
-        active_element = self.driver.switch_to.active_element
-        active_element.send_keys(Keys.CONTROL, 'v')  # На Windows/Linux
-        # active_element.send_keys(Keys.COMMAND, 'v')  # Для macOS
-        
-        print("Input password via paste from clipboard")
+        self.get_password_field().send_keys(user_password)
+        print("input password")
 
     def input_password1(self, user_password):
         self.get_password_field1().send_keys(user_password)
