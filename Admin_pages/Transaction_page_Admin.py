@@ -2339,6 +2339,17 @@ class Transaction_page_A(Graphs, EV):
         actions.move_to_element_with_offset(element, element_width // 2, element_height // 2).click().perform()
         element.click()
         print("click_db_in_mail")
+    
+    def print_dom(self):
+    """Выводит исходный код DOM текущей веб-страницы."""
+    try:
+        # Получаем исходный код страницы
+        dom_content = self.driver.page_source
+        print("DOM of the current page:")
+        print(dom_content)
+    except Exception as e:
+        print(f"Error retrieving the DOM: {e}")
+
 
     def click_element_center(self):
         max_retries = 99999  # Максимальное количество попыток (чередование элементов)
@@ -2433,7 +2444,8 @@ class Transaction_page_A(Graphs, EV):
         self.press_return_key()
         time.sleep(5)
         self.screenshot()
-        # self.click_element_center()
+        self.print_dom()
+        self.click_element_center()
         time.sleep(5)
         self.click_db_in_mail()
         time.sleep(1)
