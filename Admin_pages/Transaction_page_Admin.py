@@ -50,8 +50,6 @@ class Transaction_page_A(Graphs, EV):
     JIRA_EMAIL = "nikita.barshchuk@equitihealth.com"
 
 
-    # Подключение к Jira
-
     url123 = 'https://mail.google.com/mail/u/0/#inbox'
     # Locators
     Search1 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
