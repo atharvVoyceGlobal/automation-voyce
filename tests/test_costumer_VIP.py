@@ -73,6 +73,10 @@ def log_and_run(command):
 
 def download_and_install_chrome():
     """Download and install Chrome from the official .deb package."""
+    import os
+    import urllib.request
+    import subprocess
+
     chrome_url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
     deb_path = "google-chrome-stable_current_amd64.deb"
 
@@ -86,7 +90,7 @@ def download_and_install_chrome():
             # Install the .deb package using dpkg
             print("[INFO] Installing Chrome...")
             subprocess.run(["sudo", "dpkg", "-i", deb_path], check=True)
-            
+
             # Fix any missing dependencies
             subprocess.run(["sudo", "apt-get", "-f", "install", "-y"], check=True)
 
@@ -106,6 +110,12 @@ def download_and_install_chrome():
 
 @pytest.fixture
 def driver():
+    import os
+    import pytest
+    from selenium import webdriver
+    from selenium.webdriver.chrome.service import Service as ChromeService
+    from selenium.webdriver.chrome.options import Options
+
     chromedriver_path = "chromedriver"  # Ensure chromedriver is in the project
 
     # Ensure Chrome is installed
@@ -115,8 +125,10 @@ def driver():
     if not os.path.exists(chromedriver_path):
         raise FileNotFoundError(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
 
-    log_and_run("ls -l /usr/bin/google-chrome")
-    log_and_run(f"ls -l {chromedriver_path}")
+    # Set executable permission for Chromedriver
+    if not os.access(chromedriver_path, os.X_OK):
+        print("[INFO] Setting execute permissions for Chromedriver...")
+        os.chmod(chromedriver_path, 0o755)
 
     # Check if Chrome is executable
     if not os.access("/usr/bin/google-chrome", os.X_OK):
@@ -139,7 +151,6 @@ def driver():
         print("[INFO] WebDriver initialized successfully.")
     except Exception as e:
         print(f"[ERROR] Failed to initialize WebDriver: {e}")
-        log_and_run("ps -ef | grep chrome")
         raise
 
     yield driver
