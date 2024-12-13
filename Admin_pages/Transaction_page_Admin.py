@@ -2418,11 +2418,10 @@ class Transaction_page_A(Graphs, EV):
         new_tab_index = self.driver.window_handles[-1]
         self.driver.switch_to.window(new_tab_index)
 
-        # Переход на Gmail
+        time.sleep(2)
         self.driver.get(self.url1)
         time.sleep(10)
 
-        # Проверка наличия поля для ввода логина
         self.screenshot()
         self.input_login(self.my_accaunt)
         self.press_return_key()
