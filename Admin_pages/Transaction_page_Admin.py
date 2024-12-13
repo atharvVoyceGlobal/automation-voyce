@@ -2349,7 +2349,7 @@ class Transaction_page_A(Graphs, EV):
             try:
                 # Определяем, какой элемент пробуем сейчас
                 xpath = "(//span[contains(text(), 'VIP Admin: Your Report Download Link is Ready!')])[1]" if alternate else \
-                    "(//span[contains(text(), 'VIP Admin: Your Report Download Link is Ready!')])[2]"
+                    "//span[text()='VIP Admin: Your Report Download Link is Ready!']"
                 print(f"Trying to click element: {xpath} (Attempt {retries + 1}/{max_retries})")
 
                 # Ожидание, пока текущий элемент станет кликабельным
