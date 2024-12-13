@@ -40,30 +40,34 @@ def log_and_run(command):
     return result
 
 def download_and_install_chrome():
-    """Download and install Chrome from the official .deb package."""
-    chrome_url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-    deb_path = "google-chrome-stable_current_amd64.deb"
+    """Download and install Chrome from the official .dmg package for macOS."""
+    chrome_url = "https://dl.google.com/chrome/mac/stable/GGRO/googlechrome.dmg"
+    dmg_path = "googlechrome.dmg"
 
-    if not os.path.exists("/usr/bin/google-chrome"):
+    if not os.path.exists("/Applications/Google Chrome.app"):
         print("[INFO] Chrome not found. Downloading...")
         try:
-            # Download the .deb package
-            urllib.request.urlretrieve(chrome_url, deb_path)
-            print(f"[INFO] Downloaded Chrome .deb package to {deb_path}")
+            # Download the .dmg package
+            urllib.request.urlretrieve(chrome_url, dmg_path)
+            print(f"[INFO] Downloaded Chrome .dmg package to {dmg_path}")
 
-            # Install the .deb package using dpkg
+            # Mount the .dmg file
+            print("[INFO] Mounting .dmg file...")
+            subprocess.run(["hdiutil", "attach", dmg_path], check=True)
+
+            # Copy the app to the Applications folder
             print("[INFO] Installing Chrome...")
-            subprocess.run(["sudo", "dpkg", "-i", deb_path], check=True)
-            
-            # Fix any missing dependencies
-            subprocess.run(["sudo", "apt-get", "-f", "install", "-y"], check=True)
+            subprocess.run(["cp", "-r", "/Volumes/Google Chrome/Google Chrome.app", "/Applications/"], check=True)
+
+            # Unmount the .dmg file
+            subprocess.run(["hdiutil", "detach", "/Volumes/Google Chrome"], check=True)
 
             # Verify installation
-            if os.path.exists("/usr/bin/google-chrome"):
+            if os.path.exists("/Applications/Google Chrome.app"):
                 print("[INFO] Chrome is successfully installed.")
-                
+
                 # Get and print the installed version of Chrome
-                version_output = subprocess.check_output(["google-chrome", "--version"], text=True)
+                version_output = subprocess.check_output(["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"], text=True)
                 print(f"[INFO] Installed Chrome version: {version_output.strip()}")
             else:
                 raise FileNotFoundError("[ERROR] Chrome installation failed.")
@@ -72,13 +76,14 @@ def download_and_install_chrome():
             print(f"[ERROR] Failed to download or install Chrome: {e}")
             raise
         finally:
-            # Clean up the .deb package
-            if os.path.exists(deb_path):
-                os.remove(deb_path)
+            # Clean up the .dmg package
+            if os.path.exists(dmg_path):
+                os.remove(dmg_path)
     else:
         # Chrome is already installed, print the installed version
-        version_output = subprocess.check_output(["google-chrome", "--version"], text=True)
+        version_output = subprocess.check_output(["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--version"], text=True)
         print(f"[INFO] Chrome is already installed. Version: {version_output.strip()}")
+
 
 
 @pytest.fixture
