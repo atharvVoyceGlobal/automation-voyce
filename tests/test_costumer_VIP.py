@@ -146,7 +146,6 @@ def driver():
     print("[INFO] Closing WebDriver...")
     driver.quit()
 
-
 # Добавь фикстуру в класс
 @pytest.mark.usefixtures("driver")
 @allure.feature("Testing the administrative interface for VIP customers")
