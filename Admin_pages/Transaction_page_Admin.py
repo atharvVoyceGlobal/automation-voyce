@@ -2425,21 +2425,14 @@ class Transaction_page_A(Graphs, EV):
 
             # Проверка наличия поля для ввода логина
             self.screenshot()
-            login_field = self.get_login_field()
-            if login_field:
-                self.input_login(self.my_accaunt)
-                self.press_return_key()
-                time.sleep(3)
-                self.input_password(self.my_password)
-                time.sleep(3)
-                self.press_return_key()
-                self.screenshot()
-            else:
-                print("Login already performed. Skipping login steps.")
-        except Exception as e:
-            print(f"...")
+            self.input_login(self.my_accaunt)
+            self.press_return_key()
+            time.sleep(3)
+            self.input_password(self.my_password)
+            time.sleep(3)
+            self.press_return_key()
+            self.screenshot()
 
-        finally:
             time.sleep(20)
             self.press_return_key()
             time.sleep(5)
