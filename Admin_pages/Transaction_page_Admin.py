@@ -2418,8 +2418,7 @@ class Transaction_page_A(Graphs, EV):
         new_tab_index = self.driver.window_handles[-1]
         self.driver.switch_to.window(new_tab_index)
 
-        time.sleep(2)
-        self.driver.get(self.url1)
+        self.driver.get(self.url123)
         time.sleep(10)
 
         self.screenshot()
