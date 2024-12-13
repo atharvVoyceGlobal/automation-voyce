@@ -5,7 +5,7 @@ executors:
     docker:
       - image: cimg/python:3.11-browsers
     working_directory: ~/project
-    resource_class: large  # Увеличивает ресурсы для выполнения
+    resource_class: large
 
 jobs:
   install-dependencies:
@@ -22,6 +22,12 @@ jobs:
               libpangocairo-1.0-0 libcups2 libatk1.0-0 libatspi2.0-0 libdrm2 \
               libxshmfence1 libgbm1 libglib2.0-0 libxcb-shm0 \
               libgtk-3-0 libxkbcommon0 libwayland-client0 libwayland-cursor0
+      - run:
+          name: Set permissions for chromedriver
+          command: |
+            chmod +x chromedriver
+            echo "Chromedriver permissions set."
+            ls -l chromedriver
       - run:
           name: Create Virtual Environment
           command: |
@@ -74,7 +80,7 @@ jobs:
       - store_artifacts:
           path: test_results
       - store_artifacts:
-          path: logs  # Save logs as artifacts for later review
+          path: logs
 
 workflows:
   version: 2
