@@ -2360,8 +2360,8 @@ class Transaction_page_A(Graphs, EV):
         while retries < max_retries:
             try:
                 # Определяем, какой элемент пробуем сейчас
-                xpath = "(//span[contains(text(), 'VIP Admin: Your Report Download Link is Ready!')])[1]" if alternate else \
-                    "//span[text()='VIP Admin: Your Report Download Link is Ready!']"
+                xpath = "(//span[contains(., 'VIP Admin: Your Report Download Link is Ready!')])[2]" if alternate else \
+                    "(//span[contains(., 'VIP Admin: Your Report Download Link is Ready!')])[2]"
                 print(f"Trying to click element: {xpath} (Attempt {retries + 1}/{max_retries})")
     
                 # Ожидание, пока текущий элемент станет кликабельным
