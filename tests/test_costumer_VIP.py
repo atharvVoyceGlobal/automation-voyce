@@ -72,53 +72,78 @@ def log_and_run(command):
     return result
 
 def download_and_install_chrome():
-    """Загрузка и установка Chrome из официального .deb пакета для Linux."""
+    """Download and install Chrome from the official .deb package."""
     chrome_url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
     deb_path = "google-chrome-stable_current_amd64.deb"
 
     if not os.path.exists("/usr/bin/google-chrome"):
-        print("[INFO] Chrome не найден. Загружается...")
-        urllib.request.urlretrieve(chrome_url, deb_path)
-        print(f"[INFO] Загружен пакет Chrome .deb в {deb_path}")
+        print("[INFO] Chrome not found. Downloading...")
+        try:
+            # Download the .deb package
+            urllib.request.urlretrieve(chrome_url, deb_path)
+            print(f"[INFO] Downloaded Chrome .deb package to {deb_path}")
 
-        print("[INFO] Установка Chrome...")
-        subprocess.run(["sudo", "dpkg", "-i", deb_path], check=True)
-        os.remove(deb_path)
-        print("[INFO] Chrome успешно установлен.")
-    else:
-        print("[INFO] Chrome уже установлен.")
+            # Install the .deb package using dpkg
+            print("[INFO] Installing Chrome...")
+            subprocess.run(["sudo", "dpkg", "-i", deb_path], check=True)
+            
+            # Fix any missing dependencies
+            subprocess.run(["sudo", "apt-get", "-f", "install", "-y"], check=True)
 
-def download_and_install_chromedriver():
-    """Загрузка и установка последней стабильной версии ChromeDriver."""
-    chromedriver_url = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE"
-    response = urllib.request.urlopen(chromedriver_url)
-    version_number = response.read().decode('utf-8').strip()
-    chromedriver_link = f"https://chromedriver.storage.googleapis.com/{version_number}/chromedriver_linux64.zip"
+            # Verify installation
+            if os.path.exists("/usr/bin/google-chrome"):
+                print("[INFO] Chrome is successfully installed.")
+            else:
+                raise FileNotFoundError("[ERROR] Chrome installation failed.")
 
-    chromedriver_zip = "chromedriver_linux64.zip"
-    if not os.path.exists("chromedriver"):
-        print("[INFO] ChromeDriver не найден. Загружается...")
-        urllib.request.urlretrieve(chromedriver_link, chromedriver_zip)
-
-        subprocess.run(["unzip", "-o", chromedriver_zip], check=True)
-        subprocess.run(["chmod", "+x", "chromedriver"], check=True)
-        os.remove(chromedriver_zip)
-        print("[INFO] ChromeDriver установлен и готов к использованию.")
-    else:
-        print("[INFO] ChromeDriver уже установлен.")
+        except Exception as e:
+            print(f"[ERROR] Failed to download or install Chrome: {e}")
+            raise
+        finally:
+            # Clean up the .deb package
+            if os.path.exists(deb_path):
+                os.remove(deb_path)
 
 @pytest.fixture
 def driver():
-    download_and_install_chrome()
-    download_and_install_chromedriver()
+    chromedriver_path = "chromedriver"  # Ensure chromedriver is in the project
 
+    # Ensure Chrome is installed
+    if not os.path.exists("/usr/bin/google-chrome"):
+        download_and_install_chrome()
+
+    if not os.path.exists(chromedriver_path):
+        raise FileNotFoundError(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
+
+    log_and_run("ls -l /usr/bin/google-chrome")
+    log_and_run(f"ls -l {chromedriver_path}")
+
+    # Check if Chrome is executable
+    if not os.access("/usr/bin/google-chrome", os.X_OK):
+        raise PermissionError("[ERROR] Google Chrome is not executable at /usr/bin/google-chrome")
+
+    # Configure WebDriver
     chrome_options = Options()
     chrome_options.binary_location = "/usr/bin/google-chrome"
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--remote-debugging-port=9222")
     chrome_options.add_argument("--headless")
 
-    driver_service = ChromeService(executable_path=os.path.abspath("chromedriver"))
-    driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+    try:
+        driver_service = ChromeService(executable_path=os.path.abspath(chromedriver_path))
+        driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+        print("[INFO] WebDriver initialized successfully.")
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize WebDriver: {e}")
+        log_and_run("ps -ef | grep chrome")
+        raise
+
     yield driver
+    print("[INFO] Closing WebDriver...")
     driver.quit()
 
 
