@@ -51,7 +51,7 @@ class Transaction_page_A(Graphs, EV):
 
 
     url123 = 'https://mail.google.com/mail/u/0/#inbox'
-    # Locators
+
     Search1 = '//*[@id="scrollableDiv"]/div/div/div/label[1]/span[1]/span'
     Search2 = '//*[@id="scrollableDiv"]/div/div/div/label/span[1]'
     Search3 = '//*[@id="scrollableDiv"]/div/div/div/label/span[1]/span'
