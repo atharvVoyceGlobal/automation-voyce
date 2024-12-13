@@ -126,7 +126,6 @@ def driver():
     driver.quit()
 
 
-
 @allure.feature("Testing the administrative interface for VIP customers")
 @allure.story("VIP Admin Test")
 class TestVIPAdmin24:
