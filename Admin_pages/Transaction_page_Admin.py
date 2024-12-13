@@ -421,6 +421,10 @@ class Transaction_page_A(Graphs, EV):
         self.get_reset_button2().click()
         print("CLICK reset_button")
 
+    def click_fm_gmail(self):
+        self.get_reset_button2().click()
+        print("CLICK reset_button")
+
     def click_f_m(self):
         first_company = self.get_f_m()
         self.driver.execute_script("arguments[0].click();", first_company)
@@ -2339,46 +2343,43 @@ class Transaction_page_A(Graphs, EV):
         print("click_db_in_mail")
 
     def click_element_center(self):
-        """Пытается кликнуть элемент по центру, чередуя первый и второй элементы через заданный интервал."""
         max_retries = 99999  # Максимальное количество попыток (чередование элементов)
         retries = 0
         alternate = True  # Переключатель между первым и вторым элементом
         switch_interval = 10  # Промежуток времени между сменой элементов (в секундах)
-
+    
         while retries < max_retries:
             try:
                 # Определяем, какой элемент пробуем сейчас
                 xpath = "(//span[contains(text(), 'VIP Admin: Your Report Download Link is Ready!')])[1]" if alternate else \
                     "//span[text()='VIP Admin: Your Report Download Link is Ready!']"
                 print(f"Trying to click element: {xpath} (Attempt {retries + 1}/{max_retries})")
-
+    
                 # Ожидание, пока текущий элемент станет кликабельным
                 element = WebDriverWait(self.driver, timeout=10, poll_frequency=1).until(
                     EC.element_to_be_clickable((By.XPATH, xpath))
                 )
-                element_size = element.size
-                element_width, element_height = element_size['width'], element_size['height']
-
-                # Клик по центру элемента
-                actions = ActionChains(self.driver)
-                actions.move_to_element_with_offset(element, element_width // 2, element_height // 2).click().perform()
-                print("Center clicked")
+    
+                # Простой клик по элементу
+                element.click()
+                print("Clicked successfully")
                 return  # Если клик успешен, выходим из метода
-
+    
             except (ElementNotInteractableException, TimeoutException) as e:
                 retries += 1
                 print(f"Attempt {retries}/{max_retries} failed: {e}. Retrying...")
                 time.sleep(switch_interval)  # Пауза перед переключением
                 alternate = not alternate  # Переключаемся на другой элемент
-
+    
             except Exception as e:
                 retries += 1
                 print(f"Unexpected error: {e}. Retrying...")
                 time.sleep(switch_interval)  # Пауза перед переключением
                 alternate = not alternate  # Переключаемся на другой элемент
-
+    
         # Если все попытки исчерпаны
         raise Exception("Failed to interact with the element after multiple attempts.")
+
 
     def click_more_and_delete(self):
         try:
