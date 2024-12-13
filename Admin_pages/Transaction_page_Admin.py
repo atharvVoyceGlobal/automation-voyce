@@ -2411,43 +2411,44 @@ class Transaction_page_A(Graphs, EV):
             print(f"Error performing arrow down and enter: {e}")
 
     def check_gmail(self, original_tab):
-        """
-        Проверяет Gmail, выполняя вход только если требуется.
-        """
+        try:
+            self.driver.execute_script("window.open('');")
+            time.sleep(2)
 
-        # Открытие новой вкладки
-        self.driver.execute_script("window.open('');")
-        time.sleep(2)
-        
-        # Переключение на новую вкладку
-        new_tab_index = self.driver.window_handles[-1]
-        self.driver.switch_to.window(new_tab_index)
+            # Переключение на новую вкладку
+            new_tab_index = self.driver.window_handles[-1]
+            self.driver.switch_to.window(new_tab_index)
 
-        # Переход на Gmail
-        self.driver.get(self.url123)
-        time.sleep(10)
-        
-        self.input_login(self.my_accaunt)
-        time.sleep(3)
-        self.press_return_key()
-        time.sleep(3)
-        self.screenshot()
-        self.input_password(self.my_password)
-        time.sleep(3)
-        self.press_return_key()
-        self.screenshot()
+            # Переход на Gmail
+            self.driver.get(self.url1)
+            time.sleep(10)
 
-        time.sleep(20)
-        self.screenshot()
-        # self.click_element_center()
-        # time.sleep(5)
-        self.click_db_in_mail()
-        time.sleep(1)
-        self.click_more_and_delete()
-        self.driver.close()
-        time.sleep(5)
-        self.driver.switch_to.window(original_tab)
-        time.sleep(10)
+            # Проверка наличия поля для ввода логина
+            login_field = self.get_login_field()
+            if login_field:
+                self.input_login(self.my_accaunt)
+                self.press_return_key()
+                time.sleep(3)
+                self.input_password(self.my_password)
+                time.sleep(3)
+                self.press_return_key()
+            else:
+                print("Login already performed. Skipping login steps.")
+        except Exception as e:
+            print(f"...")
+
+        finally:
+            time.sleep(20)
+            self.click_element_center()
+            time.sleep(5)
+            self.click_db_in_mail()
+            time.sleep(1)
+            self.click_more_and_delete()
+            self.driver.close()
+            time.sleep(5)
+            self.driver.switch_to.window(original_tab)
+            time.sleep(10)
+
 
     def compare_data_for_periods(self):
         with allure.step("Compare data with DB by Periods"):
