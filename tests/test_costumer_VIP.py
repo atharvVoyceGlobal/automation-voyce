@@ -109,46 +109,48 @@ def download_and_install_chrome():
         version_output = subprocess.check_output(["google-chrome", "--version"], text=True)
         print(f"[INFO] Chrome is already installed. Version: {version_output.strip()}")
 
-def download_and_install_chromedriver():
-    """Download and install the latest stable ChromeDriver."""
-    chromedriver_url = "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_103"
-    chromedriver_zip = "chromedriver_linux64.zip"
-
-    if not os.path.exists("chromedriver"):
-        print("[INFO] ChromeDriver not found. Downloading...")
-        latest_version = urllib.request.urlopen(chromedriver_url).read().decode('utf-8').strip()
-        full_download_url = f"https://chromedriver.storage.googleapis.com/{latest_version}/chromedriver_linux64.zip"
-        urllib.request.urlretrieve(full_download_url, chromedriver_zip)
-
-        # Unzip the downloaded file
-        subprocess.run(["unzip", "-o", chromedriver_zip], check=True)
-        subprocess.run(["chmod", "+x", "chromedriver"], check=True)
-        print("[INFO] ChromeDriver installed successfully.")
-    else:
-        print("[INFO] ChromeDriver is already installed.")
-
 @pytest.fixture
 def driver():
-    # Ensure Chrome and ChromeDriver are installed
-    download_and_install_chrome()
-    download_and_install_chromedriver()
+    chromedriver_path = "chromedriver"  # Ensure chromedriver is in the project
 
+    # Ensure Chrome is installed
+    if not os.path.exists("/usr/bin/google-chrome"):
+        download_and_install_chrome()
+
+    if not os.path.exists(chromedriver_path):
+        raise FileNotFoundError(f"[ERROR] Chromedriver not found at: {chromedriver_path}")
+
+    log_and_run("ls -l /usr/bin/google-chrome")
+    log_and_run(f"ls -l {chromedriver_path}")
+
+    # Check if Chrome is executable
+    if not os.access("/usr/bin/google-chrome", os.X_OK):
+        raise PermissionError("[ERROR] Google Chrome is not executable at /usr/bin/google-chrome")
+
+    # Configure WebDriver
     chrome_options = Options()
     chrome_options.binary_location = "/usr/bin/google-chrome"
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--remote-debugging-port=9222")
     chrome_options.add_argument("--headless")
-    # Configure other Chrome options as needed
 
     try:
-        driver_service = ChromeService(executable_path=os.path.abspath("chromedriver"))
+        driver_service = ChromeService(executable_path=os.path.abspath(chromedriver_path))
         driver = webdriver.Chrome(service=driver_service, options=chrome_options)
         print("[INFO] WebDriver initialized successfully.")
     except Exception as e:
         print(f"[ERROR] Failed to initialize WebDriver: {e}")
+        log_and_run("ps -ef | grep chrome")
         raise
 
     yield driver
     print("[INFO] Closing WebDriver...")
     driver.quit()
+
 
 # Добавь фикстуру в класс
 @pytest.mark.usefixtures("driver")
