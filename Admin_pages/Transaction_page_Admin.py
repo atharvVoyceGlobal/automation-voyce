@@ -2341,14 +2341,14 @@ class Transaction_page_A(Graphs, EV):
         print("click_db_in_mail")
     
     def print_dom(self):
-    """Выводит исходный код DOM текущей веб-страницы."""
-    try:
-        # Получаем исходный код страницы
-        dom_content = self.driver.page_source
-        print("DOM of the current page:")
-        print(dom_content)
-    except Exception as e:
-        print(f"Error retrieving the DOM: {e}")
+        """Выводит исходный код DOM текущей веб-страницы."""
+        try:
+            # Получаем исходный код страницы
+            dom_content = self.driver.page_source
+            print("DOM of the current page:")
+            print(dom_content)
+        except Exception as e:
+            print(f"Error retrieving the DOM: {e}")
 
 
     def click_element_center(self):
