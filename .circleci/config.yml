@@ -1,28 +1,33 @@
 version: 2.1
 
 executors:
-  macos-executor:
-    macos:
-      xcode: "14.0.0"  # Версия Xcode (указывается для выбора образа macOS)
+  python-executor:
+    docker:
+      - image: cimg/python:3.11-browsers
     working_directory: ~/project
-    resource_class: macos.medium  # Используйте нужный класс ресурсов
+    resource_class: large  # Увеличивает ресурсы для выполнения
 
 jobs:
   install-dependencies:
-    executor: macos-executor
+    executor: python-executor
     steps:
       - checkout
       - run:
-          name: Install Python 3.11
+          name: Install dependencies for Chrome
           command: |
-            brew update
-            brew install python@3.11
-            echo "Python 3.11 Installed: $(python3.11 --version)"
+            sudo apt-get update
+            sudo apt-get install -y \
+              libnss3 libnspr4 libx11-xcb1 libxcomposite1 libxcursor1 \
+              libxdamage1 libxi6 libxtst6 libxrandr2 libasound2 \
+              libpangocairo-1.0-0 libcups2 libatk1.0-0 libatspi2.0-0 libdrm2 \
+              libxshmfence1 libgbm1 libglib2.0-0 libxcb-shm0 \
+              libgtk-3-0 libxkbcommon0 libwayland-client0 libwayland-cursor0
       - run:
           name: Create Virtual Environment
           command: |
-            python3.11 -m venv venv
-            echo "Virtual environment created."
+            echo "Creating virtual environment..."
+            python -m venv venv || echo "Error creating virtual environment"
+            ls -l
       - run:
           name: Install Python Dependencies
           command: |
@@ -40,7 +45,7 @@ jobs:
             - venv
 
   run-tests:
-    executor: macos-executor
+    executor: python-executor
     steps:
       - checkout
       - restore_cache:
