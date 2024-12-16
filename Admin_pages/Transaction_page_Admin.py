@@ -2432,54 +2432,58 @@ class Transaction_page_A(Graphs, EV):
 
 
     def get_first_email_link(self, sender_email):
-        SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-        # Данные клиента из переменных окружения
-        client_config = {
-            "installed": {
-                "client_id": self.CLIENT_ID,
-                "project_id": self.PROJECT_ID,
-                "auth_uri": self.AUTH_URI,
-                "token_uri": self.TOKEN_URI,
-                "auth_provider_cert_url": self.AUTH_PROVIDER_CERT_URL,
-                "client_secret": self.CLIENT_SECRET,
-                "redirect_uris": self.REDIRECT_URI
-            }
+    SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+    # Данные клиента из переменных окружения
+    client_config = {
+        "installed": {
+            "client_id": self.CLIENT_ID,
+            "project_id": self.PROJECT_ID,
+            "auth_uri": self.AUTH_URI,
+            "token_uri": self.TOKEN_URI,
+            "auth_provider_cert_url": self.AUTH_PROVIDER_CERT_URL,
+            "client_secret": self.CLIENT_SECRET,
+            "redirect_uris": self.REDIRECT_URI
         }
-    
-        # Аутентификация
-        creds = None
-        if os.path.exists('token.json'):
-            with open('token.json', 'r') as token:
-                creds = json.load(token)
-        if not creds or not creds.get('token'):
-            flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-            creds = flow.run_local_server(port=0)
-            with open('token.json', 'w') as token:
-                json.dump({'token': creds.token}, token)
-    
-        service = build('gmail', 'v1', credentials=creds)
-    
-        # Поиск письма
-        results = service.users().messages().list(userId='me', q=f'from:{sender_email}').execute()
-        messages = results.get('messages', [])
-        if not messages:
-            print("Писем от указанного отправителя не найдено.")
-            return None
-    
-        # Получаем первое письмо
-        first_message_id = messages[0]['id']
-        message = service.users().messages().get(userId='me', id=first_message_id).execute()
-    
-        # Расшифровка и извлечение ссылки
-        payload = message['payload']
-        body = payload.get('body', {}).get('data')
-        if body:
-            decoded_body = base64.urlsafe_b64decode(body).decode('utf-8')
-            link = re.search(r'https?://\S+', decoded_body)
-            return link.group(0) if link else None
-    
-        print("Тело письма пусто или не содержит ссылок.")
+    }
+
+    # Аутентификация
+    creds = None
+    if os.path.exists('token.json'):
+        with open('token.json', 'r') as token:
+            creds = json.load(token)
+    if not creds or not creds.get('token'):
+        flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
+        # Вывод ссылки авторизации в консоль
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        print(f"Please visit this URL to authorize this application: {auth_url}")
+        
+        creds = flow.run_local_server(port=0)
+        with open('token.json', 'w') as token:
+            json.dump({'token': creds.token}, token)
+
+    service = build('gmail', 'v1', credentials=creds)
+
+    # Поиск письма
+    results = service.users().messages().list(userId='me', q=f'from:{sender_email}').execute()
+    messages = results.get('messages', [])
+    if not messages:
+        print("Писем от указанного отправителя не найдено.")
         return None
+
+    # Получаем первое письмо
+    first_message_id = messages[0]['id']
+    message = service.users().messages().get(userId='me', id=first_message_id).execute()
+
+    # Расшифровка и извлечение ссылки
+    payload = message['payload']
+    body = payload.get('body', {}).get('data')
+    if body:
+        decoded_body = base64.urlsafe_b64decode(body).decode('utf-8')
+        link = re.search(r'https?://\S+', decoded_body)
+        return link.group(0) if link else None
+
+    print("Тело письма пусто или не содержит ссылок.")
+    return None
 
     def check_gmail(self, original_tab):
         self.driver.execute_script("window.open('');")
