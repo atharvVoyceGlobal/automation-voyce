@@ -2294,7 +2294,7 @@ class Transaction_page_A(Graphs, EV):
         # original_tab = self.driver.current_window_handle
 
         # self.check_gmail(original_tab)
-        self.get_first_email_link(sender_email = "vip.admin.support@voyceglobal.com")
+        self.get_first_email_link("vip.admin.support@voyceglobal.com")
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         # Paths to the download and target folders
