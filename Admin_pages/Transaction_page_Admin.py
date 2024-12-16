@@ -2291,9 +2291,10 @@ class Transaction_page_A(Graphs, EV):
         self.click_download_b()
         time.sleep(1)
         self.click_ok_button_by_xpath()
-        original_tab = self.driver.current_window_handle
+        # original_tab = self.driver.current_window_handle
 
-        self.check_gmail(original_tab)
+        # self.check_gmail(original_tab)
+        self.get_first_email_link()
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         # Paths to the download and target folders
