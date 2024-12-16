@@ -2429,10 +2429,9 @@ class Transaction_page_A(Graphs, EV):
 
 
 
-    def get_first_email_link(sender_email):
-        """Аутентификация, поиск письма и извлечение ссылки в одном методе."""
+    def get_first_email_link():
         SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-    
+        sender_email = "vip.admin.support@voyceglobal.com"
         # Данные клиента из переменных окружения
         client_config = {
             "installed": {
