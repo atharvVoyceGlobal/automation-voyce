@@ -3479,6 +3479,7 @@ class Transaction_page_A(Graphs, EV):
             self.click_transaction_b()
             time.sleep(15)
 
+
             # try:
             # self.get_current_url()
             # time.sleep(10)
