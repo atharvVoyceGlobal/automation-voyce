@@ -2431,7 +2431,7 @@ class Transaction_page_A(Graphs, EV):
 
 
 
-    def get_first_email_link(sender_email):
+    def get_first_email_link(self, sender_email):
         SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
         # Данные клиента из переменных окружения
         client_config = {
