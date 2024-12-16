@@ -9,7 +9,15 @@ class EV:
     my_password = os.getenv('my_password')
     my_password1 = os.getenv('my_password1')
     deafult_password = os.getenv('deafult_password')
+    CLIENT_ID = os.getenv('CLIENT_ID')
+    PROJECT_ID =os.getenv('PROJECT_ID')
+    AUTH_URI = os.getenv('AUTH_URI')
+    TOKEN_URI = os.getenv('TOKEN_URI')
+    AUTH_PROVIDER_CERT_URL = os.getenv('AUTH_PROVIDER_CERT_URL')
+    CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+    REDIRECT_URI =os.getenv('REDIRECT_URI')
     my_accaunt_wd = "nikita.barshchuk"
+    
     login_qa_hud = "nikita.qa"
     wei_p = os.getenv('wei_p')
     JIRA_API_TOKEN = os.getenv('JIRA_API_TOKEN')
