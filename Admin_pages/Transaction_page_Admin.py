@@ -2294,7 +2294,9 @@ class Transaction_page_A(Graphs, EV):
         # original_tab = self.driver.current_window_handle
 
         # self.check_gmail(original_tab)
-        self.get_first_email_link("vip.admin.support@voyceglobal.com")
+        email_link = self.get_first_email_link("vip.admin.support@voyceglobal.com")
+        if email_link:
+            print("Найдена ссылка:", email_link)
         current_directory = os.path.dirname(os.path.abspath(__file__))
 
         # Paths to the download and target folders
@@ -2475,7 +2477,6 @@ class Transaction_page_A(Graphs, EV):
             decoded_body = base64.urlsafe_b64decode(body).decode('utf-8')
             link = re.search(r'https?://\S+', decoded_body)
             return link.group(0) if link else None
-            print("Найдена ссылка:", link)
     
         print("Тело письма пусто или не содержит ссылок.")
         return None
