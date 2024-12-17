@@ -2476,10 +2476,15 @@ class Transaction_page_A(Graphs, EV):
                 if link:
                     print("Найдена ссылка:", link)
 
-                    # Открываем ссылку в браузере
-                    webbrowser.open_new_tab(link)
-
-                    # Ждем файл и удаляем письмо
+                    
+                    self.driver.execute_script("window.open('');")
+                    time.sleep(2)
+                    new_tab_index = self.driver.window_handles[-1]
+                    self.driver.switch_to.window(new_tab_index)
+                    self.driver.get(link)
+                    self.driver.switch_to.window(original_tab)
+                    self.screenshot()
+                   
                     if self.wait_for_download_and_cleanup(service, first_message_id):
                         print("Файл успешно загружен и письмо удалено.")
                         return link
@@ -2510,15 +2515,21 @@ class Transaction_page_A(Graphs, EV):
     def wait_for_download_and_cleanup(self, service, message_id, wait_time=99999999, check_interval=20):
         download_folder = "/tmp/test_downloads"
     
-        # Проверяем, существует ли папка, если нет - создаем
+        # Проверка существования папки
         if not os.path.exists(download_folder):
-            os.makedirs(download_folder)
-            print(f"Создана директория для загрузок: {download_folder}")
+            raise FileNotFoundError(f"Директория {download_folder} не найдена. Убедитесь, что она существует.")
     
         start_time = time.time()
         while time.time() - start_time < wait_time:
             print("Ожидаем скачивание файла...")
-            files = [f for f in os.listdir(download_folder) if f.endswith(('.csv', '.xlsx'))]
+    
+            # Получаем текущий список файлов в папке
+            current_files = os.listdir(download_folder)
+            print(f"Текущие файлы в {download_folder}: {current_files}")
+    
+            # Фильтруем файлы по расширению .csv и .xlsx
+            files = [f for f in current_files if f.endswith(('.csv', '.xlsx'))]
+    
             if files:
                 latest_file = max([os.path.join(download_folder, f) for f in files], key=os.path.getmtime)
                 print(f"Файл загружен: {latest_file}")
@@ -2528,6 +2539,7 @@ class Transaction_page_A(Graphs, EV):
                 print("Письмо успешно удалено.")
                 return True
     
+            # Ждем перед следующей проверкой
             time.sleep(check_interval)
     
         print("Файл не появился в течение отведенного времени.")
