@@ -219,7 +219,7 @@ class Transaction_page_A(Graphs, EV):
     completed_calls = '//*[@id="root"]/section/section/main/div/div/div[3]/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[9]/a'
     this_month = "//div[contains(@class, 'ant-select-item-option-content') and text()='This Month']"
     Last_month = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last Month']"
-    Last_30_days = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last 30 Days']"
+    Last_30_days = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last 30 Day']"
     This_year = "//div[contains(@class, 'ant-select-item-option-content') and text()='This Year']"
     Last_year = "//div[contains(@class, 'ant-select-item-option-content') and text()='Last Year']"
     lang_field = '//*[@id="root"]/section/section/main/div/div/div[2]/div/div/div/div/div/div[2]/div[2]/table/tbody/tr[2]/td[1]'
