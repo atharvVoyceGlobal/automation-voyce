@@ -2452,7 +2452,7 @@ class Transaction_page_A(Graphs, EV):
         print("Новый токен получен.")
         return creds
 
-    def get_first_email_link(self, wait_time=999999999, check_interval=30):
+    def get_first_email_link(self, wait_time=60, check_interval=30):
         """
         Проверяет наличие письма, получает ссылку, открывает её и ждет загрузку файла.
         """
