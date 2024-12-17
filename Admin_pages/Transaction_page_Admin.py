@@ -2280,65 +2280,59 @@ class Transaction_page_A(Graphs, EV):
         return str(value)
 
     def select_time_period_and_wait_for_update(self, time_period):
-        now = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
+    now = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
 
-        start = now - timedelta(days=1)
-        start_str = start.strftime('%m-%d-%Y')
-        end_str = now.strftime('%m-%d-%Y')
-        file_pattern = f"Transaction_Records_{start_str}_to_{end_str}.xlsx"
+    start = now - timedelta(days=1)
+    start_str = start.strftime('%m-%d-%Y')
+    end_str = now.strftime('%m-%d-%Y')
+    file_pattern = f"Transaction_Records_{start_str}_to_{end_str}.csv"
 
-        self.click_list()
-        self.double_press_down_arrow()
-        time.sleep(10)
-        getattr(self, f"click_{time_period}")()
-        time.sleep(30)
-        self.click_download_b()
-        time.sleep(1)
-        self.click_ok_button_by_xpath()
-        # original_tab = self.driver.current_window_handle
+    self.click_list()
+    self.double_press_down_arrow()
+    time.sleep(10)
+    getattr(self, f"click_{time_period}")()
+    time.sleep(30)
+    self.click_download_b()
+    time.sleep(1)
+    self.click_ok_button_by_xpath()
 
-        # self.check_gmail(original_tab)
-        email_link = self.get_first_email_link()
-        if email_link:
-            print("Найдена ссылка:", email_link)
-        current_directory = os.path.dirname(os.path.abspath(__file__))
+    email_link = self.get_first_email_link()
+    if email_link:
+        print("Download link found:", email_link)
 
-        # Paths to the download and target folders
-        download_folder = "/tmp/test_downloads"
-        target_folder = os.path.join(current_directory, "Downloads1")
+    current_directory = os.path.dirname(os.path.abspath(__file__))
 
-        # Максимальное время ожидания (например, 5 минут) и интервал проверки (30 секунд)
-        max_wait_time = 30
-        check_interval = 30
-        start_time = time.time()
+    # Paths to the download and target folders
+    download_folder = "/tmp/test_downloads"
+    target_folder = os.path.join(current_directory, "Downloads1")
 
-        while time.time() - start_time < max_wait_time:
-            # Find the most recent downloaded file
-            list_of_files = glob.glob(f"{download_folder}/Transaction_Records_*")
-            if list_of_files:
-                latest_file = max(list_of_files, key=os.path.getmtime)  # Find the latest file by modification time
-                print(f"File found: {latest_file}")
+    # Ensure the target folder exists
+    if not os.path.exists(target_folder):
+        os.makedirs(target_folder)
+        print(f"Target directory created: {target_folder}")
 
-                # Move the file to the target folder
-                moved_file_path = os.path.join(target_folder, os.path.basename(latest_file))
-                os.rename(latest_file, moved_file_path)
-                print(f"File moved to: {moved_file_path}")
+    # Maximum wait time
+    max_wait_time = 60
+    check_interval = 5
+    start_time = time.time()
 
-                # Read and compare data from Excel and the database
-                excel_data = self.read_data(moved_file_path)
-                db_data = self.query_transactions_periods_Admin(time_period)
+    while time.time() - start_time < max_wait_time:
+        list_of_files = glob.glob(f"{download_folder}/Transaction_Records_*")
+        if list_of_files:
+            latest_file = max(list_of_files, key=os.path.getmtime)
+            print(f"File found: {latest_file}")
 
-                # Compare data from CSV and DB
-                self.compare_data_cvs_periods(db_data, excel_data, time_period)
-                return  # Завершить метод, если файл найден и обработан
+            # Move the file to the target folder
+            moved_file_path = os.path.join(target_folder, os.path.basename(latest_file))
+            os.rename(latest_file, moved_file_path)
+            print(f"File moved to: {moved_file_path}")
+            return moved_file_path
 
-            print(
-                "No file found with the 'Transaction_Records' pattern in the Downloads folder. Retrying in 30 seconds...")
-            time.sleep(check_interval)
+        print(f"File not found. Retrying in {check_interval} seconds...")
+        time.sleep(check_interval)
 
-        # Если файл не найден в течение максимального времени ожидания
-        print("File not found within the maximum wait time.")
-        return None
+    print("File did not appear within the allotted time.")
+    return None
 
     def click_db_in_mail(self):
         driver = self.driver
