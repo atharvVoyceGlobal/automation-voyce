@@ -2476,7 +2476,7 @@ class Transaction_page_A(Graphs, EV):
                 if link:
                     print("Найдена ссылка:", link)
 
-                    
+                    original_tab = self.driver.current_window_handle
                     self.driver.execute_script("window.open('');")
                     time.sleep(2)
                     new_tab_index = self.driver.window_handles[-1]
