@@ -2317,6 +2317,7 @@ class Transaction_page_A(Graphs, EV):
         start_time = time.time()
     
         while time.time() - start_time < max_wait_time:
+            # Find the most recent downloaded file
             list_of_files = glob.glob(f"{download_folder}/Transaction_Records_*")
             if list_of_files:
                 latest_file = max(list_of_files, key=os.path.getmtime)
@@ -2326,12 +2327,29 @@ class Transaction_page_A(Graphs, EV):
                 moved_file_path = os.path.join(target_folder, os.path.basename(latest_file))
                 os.rename(latest_file, moved_file_path)
                 print(f"File moved to: {moved_file_path}")
-                return moved_file_path
+    
+                # Read and compare data from Excel and the database
+                try:
+                    print("Reading data from the downloaded file...")
+                    excel_data = self.read_data(moved_file_path)
+    
+                    print("Querying data from the database...")
+                    db_data = self.query_transactions_periods_Admin(time_period)
+    
+                    print("Comparing CSV data with database data...")
+                    self.compare_data_cvs_periods(db_data, excel_data, time_period)
+                    print("Data comparison successful.")
+                    return  # Exit the method if file is found and processed
+    
+                except Exception as e:
+                    print(f"Error while processing file or comparing data: {e}")
+                    return None
     
             print(f"File not found. Retrying in {check_interval} seconds...")
             time.sleep(check_interval)
     
-        print("File did not appear within the allotted time.")
+        # If file is not found within the maximum wait time
+        print("File not found within the maximum wait time.")
         return None
 
     def click_db_in_mail(self):
@@ -2439,7 +2457,7 @@ class Transaction_page_A(Graphs, EV):
             token_uri=self.TOKEN_URI,
             client_id=self.CLIENT_ID,
             client_secret=self.CLIENT_SECRET,
-            scopes=["https://www.googleapis.com/auth/gmail.readonly"],
+            scopes=["https://www.googleapis.com/auth/gmail.modify"],
         )
         print("Обновляем токен с использованием refresh_token...")
         creds.refresh(Request())
