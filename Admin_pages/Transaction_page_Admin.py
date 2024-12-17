@@ -2294,7 +2294,7 @@ class Transaction_page_A(Graphs, EV):
         # original_tab = self.driver.current_window_handle
 
         # self.check_gmail(original_tab)
-        email_link = self.get_first_email_link("vip.admin.support@voyceglobal.com")
+        email_link = self.get_first_email_link()
         if email_link:
             print("Найдена ссылка:", email_link)
         current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -2448,7 +2448,7 @@ class Transaction_page_A(Graphs, EV):
         print("Новый токен получен.")
         return creds
 
-    def get_first_email_link(self, wait_time=600, check_interval=15):
+    def get_first_email_link(self, wait_time=999999999, check_interval=30):
         """
         Проверяет наличие письма, получает ссылку, открывает её и ждет загрузку файла.
         """
@@ -2503,7 +2503,7 @@ class Transaction_page_A(Graphs, EV):
                         return href
         return None
 
-    def wait_for_download_and_cleanup(self, service, message_id, wait_time=300, check_interval=10):
+    def wait_for_download_and_cleanup(self, service, message_id, wait_time=99999999, check_interval=20):
         """
         Ожидает появления файла в папке Downloads1 и удаляет письмо.
         """
