@@ -2463,13 +2463,13 @@ class Transaction_page_A(Graphs, EV):
         """
         # Собираем данные из значений класса EV
         token_data = {
-            "token": self.token,
-            "refresh_token": self.refresh_token,
-            "token_uri": self.token_uri,
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "scopes": self.scopes,
-            "expiry": self.expiry
+            "token": self.TOKEN,
+            "refresh_token": self.REFRESH_TOKEN,
+            "token_uri": self.TOKEN_URI,
+            "client_id": self.CLIENT_ID,
+            "client_secret": self.CLIENT_SECRET,
+            "scopes": self.SCOPES,
+            "expiry": self.EXPIRY
         }
 
         # Создаём объект Credentials
