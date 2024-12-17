@@ -2429,61 +2429,109 @@ class Transaction_page_A(Graphs, EV):
         except Exception as e:
             print(f"Error performing arrow down and enter: {e}")
 
+    
 
-
-    def get_first_email_link(self, sender_email):
-        SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-        # Данные клиента из переменных окружения
-        client_config = {
-            "installed": {
-                "client_id": self.CLIENT_ID,
-                "project_id": self.PROJECT_ID,
-                "auth_uri": self.AUTH_URI,
-                "token_uri": self.TOKEN_URI,
-                "auth_provider_cert_url": self.AUTH_PROVIDER_CERT_URL,
-                "client_secret": self.CLIENT_SECRET,
-                "redirect_uris": self.REDIRECT_URI
-            }
+    def get_credentials(self):
+        """
+        Получает учетные данные из значений класса EV.
+        """
+        # Собираем данные из значений класса EV
+        token_data = {
+            "token": self.token,
+            "refresh_token": self.refresh_token,
+            "token_uri": self.token_uri,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "scopes": self.scopes,
+            "expiry": self.expiry
         }
+
+        # Создаём объект Credentials
+        creds = Credentials.from_authorized_user_info(token_data, self.scopes)
+
+        # Обновляем токен, если он истёк
+        if creds.expired and creds.refresh_token:
+            print("Обновляем токен...")
+            creds.refresh(Request())
+
+        return creds
+
     
-        # Аутентификация
-        creds = None
-        if os.path.exists('token.json'):
-            with open('token.json', 'r') as token:
-                creds = json.load(token)
-        if not creds or not creds.get('token'):
-            flow = InstalledAppFlow.from_client_config(client_config, SCOPES)
-            # Вывод ссылки авторизации в консоль
-            auth_url, _ = flow.authorization_url(prompt='consent')
-            print(f"Please visit this URL to authorize this application: {auth_url}")
-            
-            creds = flow.run_local_server(port=0)
-            with open('token.json', 'w') as token:
-                json.dump({'token': creds.token}, token)
-    
+    def get_credentials(self):
+        """
+        Получает учетные данные из значений класса EV.
+        """
+        # Собираем данные из значений класса EV
+        token_data = {
+            "token": self.token,
+            "refresh_token": self.refresh_token,
+            "token_uri": self.token_uri,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "scopes": self.scopes,
+            "expiry": self.expiry
+        }
+
+        # Создаём объект Credentials
+        creds = Credentials.from_authorized_user_info(token_data, self.scopes)
+
+        # Обновляем токен, если он истёк
+        if creds.expired and creds.refresh_token:
+            print("Обновляем токен...")
+            creds.refresh(Request())
+
+        return creds
+
+    def get_first_email_link(self, wait_time=600, check_interval=15):
+        """
+        Получает ссылку из письма и открывает её в браузере.
+        """
+        SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+        sender_email = "vip.admin.support@voyceglobal.com"
+
+        # Получаем учетные данные
+        creds = self.get_credentials(SCOPES)
+
+        # Подключаемся к Gmail API
         service = build('gmail', 'v1', credentials=creds)
-    
-        # Поиск письма
-        results = service.users().messages().list(userId='me', q=f'from:{sender_email}').execute()
-        messages = results.get('messages', [])
-        if not messages:
-            print("Писем от указанного отправителя не найдено.")
-            return None
-    
-        # Получаем первое письмо
-        first_message_id = messages[0]['id']
-        message = service.users().messages().get(userId='me', id=first_message_id).execute()
-    
-        # Расшифровка и извлечение ссылки
-        payload = message['payload']
-        body = payload.get('body', {}).get('data')
-        if body:
-            decoded_body = base64.urlsafe_b64decode(body).decode('utf-8')
-            link = re.search(r'https?://\S+', decoded_body)
-            return link.group(0) if link else None
-    
-        print("Тело письма пусто или не содержит ссылок.")
+
+        start_time = time.time()
+        while time.time() - start_time < wait_time:
+            print("Проверяем наличие письма...")
+            results = service.users().messages().list(userId='me', q=f'from:{sender_email}').execute()
+            messages = results.get('messages', [])
+
+            if messages:
+                print("Письмо найдено!")
+                first_message_id = messages[0]['id']
+                message = service.users().messages().get(userId='me', id=first_message_id).execute()
+
+                for part in message['payload']['parts']:
+                    if part['mimeType'] == 'text/html':
+                        html_body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
+                        soup = BeautifulSoup(html_body, 'html.parser')
+                        links = soup.find_all('a', href=True)
+                        for link in links:
+                            href = link['href']
+                            if href.startswith("https://databricks-workspace"):
+                                print("Найдена ссылка:", href)
+                                
+                                # Открываем ссылку в браузере
+                                webbrowser.open_new_tab(href)
+
+                                # Ждем появления файла и удаляем письмо
+                                if self.wait_for_download_and_cleanup(service, first_message_id):
+                                    print("Файл загружен и письмо удалено.")
+                                    return href
+                                else:
+                                    print("Файл не появился в указанной директории.")
+                                    return None
+            print(f"Письмо не найдено. Повторная проверка через {check_interval} секунд...")
+            time.sleep(check_interval)
+
+        print("Время ожидания истекло. Письмо не найдено.")
         return None
+
 
     def check_gmail(self, original_tab):
         self.driver.execute_script("window.open('');")
