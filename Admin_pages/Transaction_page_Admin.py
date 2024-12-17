@@ -41,6 +41,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from customer_pages.Graph_c import Graphs
 from ev import EV
 
+
 def is_equivalent_service_minutes(db_value, web_value):
     if (db_value in [None, '-', 0] and web_value in ['', '-', '0']) or str(db_value) == web_value:
         return True
