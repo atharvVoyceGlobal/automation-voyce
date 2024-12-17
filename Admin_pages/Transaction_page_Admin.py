@@ -2481,7 +2481,9 @@ class Transaction_page_A(Graphs, EV):
                     time.sleep(2)
                     new_tab_index = self.driver.window_handles[-1]
                     self.driver.switch_to.window(new_tab_index)
+                    self.screenshot()
                     self.driver.get(link)
+                    self.screenshot()
                     self.driver.switch_to.window(original_tab)
                     self.screenshot()
                    
@@ -2512,7 +2514,7 @@ class Transaction_page_A(Graphs, EV):
                         return href
         return None
 
-    def wait_for_download_and_cleanup(self, service, message_id, wait_time=99999999, check_interval=20):
+    def wait_for_download_and_cleanup(self, service, message_id, wait_time=60, check_interval=20):
         download_folder = "/tmp/test_downloads"
     
         # Проверка существования папки
