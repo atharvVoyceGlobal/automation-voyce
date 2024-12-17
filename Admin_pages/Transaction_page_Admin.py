@@ -3532,6 +3532,7 @@ class Transaction_page_A(Graphs, EV):
             Logger.add_start_step(method='transaction_page_test')
             self.driver.maximize_window()
             time.sleep(15)
+            self.screenshot()
             self.click_transaction_b()
             time.sleep(15)
 
