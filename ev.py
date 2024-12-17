@@ -16,13 +16,9 @@ class EV:
     AUTH_PROVIDER_CERT_URL = os.getenv('AUTH_PROVIDER_CERT_URL')
     CLIENT_SECRET = os.getenv('CLIENT_SECRET')
     REDIRECT_URI =os.getenv('REDIRECT_URI')
-    TOKEN = os.getenv('TOKEN')
     REFRESH_TOKEN = os.getenv('REFRESH_TOKEN')
-    TOKEN_URI = os.getenv('TOKEN_URI')
-    CLIENT_ID = os.getenv('CLIENT_ID')
-    CLIENT_SECRET = os.getenv('CLIENT_SECRET')
     SCOPES = os.getenv('SCOPES')
-    EXPIRY = os.getenv('EXPIRY')
+
     
     
 
