@@ -2429,32 +2429,6 @@ class Transaction_page_A(Graphs, EV):
         except Exception as e:
             print(f"Error performing arrow down and enter: {e}")
 
-    
-
-    def get_credentials(self):
-        """
-        Получает учетные данные из значений класса EV.
-        """
-        # Собираем данные из значений класса EV
-        token_data = {
-            "token": self.token,
-            "refresh_token": self.refresh_token,
-            "token_uri": self.token_uri,
-            "client_id": self.client_id,
-            "client_secret": self.client_secret,
-            "scopes": self.scopes,
-            "expiry": self.expiry
-        }
-
-        # Создаём объект Credentials
-        creds = Credentials.from_authorized_user_info(token_data, self.scopes)
-
-        # Обновляем токен, если он истёк
-        if creds.expired and creds.refresh_token:
-            print("Обновляем токен...")
-            creds.refresh(Request())
-
-        return creds
 
     
     def get_credentials(self):
