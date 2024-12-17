@@ -2308,7 +2308,7 @@ class Transaction_page_A(Graphs, EV):
         target_folder = os.path.join(current_directory, "Downloads1")
 
         # Максимальное время ожидания (например, 5 минут) и интервал проверки (30 секунд)
-        max_wait_time = 300000
+        max_wait_time = 30
         check_interval = 30
         start_time = time.time()
 
