@@ -2442,7 +2442,7 @@ class Transaction_page_A(Graphs, EV):
             token_uri=self.TOKEN_URI,
             client_id=self.CLIENT_ID,
             client_secret=self.CLIENT_SECRET,
-            scopes=self.SCOPES,
+            scopes=["https://www.googleapis.com/auth/gmail.readonly"],
         )
         print("Обновляем токен с использованием refresh_token...")
         creds.refresh(Request())
