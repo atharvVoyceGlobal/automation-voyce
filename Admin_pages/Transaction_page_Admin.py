@@ -2508,16 +2508,13 @@ class Transaction_page_A(Graphs, EV):
         return None
 
     def wait_for_download_and_cleanup(self, service, message_id, wait_time=99999999, check_interval=20):
-        """
-        Ожидает появления файла в папке Downloads1 и удаляет письмо.
-        """
-        current_directory = os.path.dirname(os.path.abspath(__file__))
         download_folder = "/tmp/test_downloads"
-        target_folder = os.path.join(current_directory, "Downloads1")
-
-        if not os.path.exists(target_folder):
-            os.makedirs(target_folder)
-
+    
+        # Проверяем, существует ли папка, если нет - создаем
+        if not os.path.exists(download_folder):
+            os.makedirs(download_folder)
+            print(f"Создана директория для загрузок: {download_folder}")
+    
         start_time = time.time()
         while time.time() - start_time < wait_time:
             print("Ожидаем скачивание файла...")
@@ -2525,17 +2522,14 @@ class Transaction_page_A(Graphs, EV):
             if files:
                 latest_file = max([os.path.join(download_folder, f) for f in files], key=os.path.getmtime)
                 print(f"Файл загружен: {latest_file}")
-
-                # Перемещаем файл
-                shutil.move(latest_file, os.path.join(target_folder, os.path.basename(latest_file)))
-                print(f"Файл перемещен в {target_folder}")
-
+    
                 # Удаляем письмо
                 service.users().messages().delete(userId='me', id=message_id).execute()
                 print("Письмо успешно удалено.")
                 return True
+    
             time.sleep(check_interval)
-
+    
         print("Файл не появился в течение отведенного времени.")
         return False
 
