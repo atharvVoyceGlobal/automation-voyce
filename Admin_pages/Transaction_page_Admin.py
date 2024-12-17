@@ -1,6 +1,7 @@
 import shutil
 import time
 import re
+from bs4 import BeautifulSoup
 from collections import Counter
 import pytz
 from jira import JIRA
