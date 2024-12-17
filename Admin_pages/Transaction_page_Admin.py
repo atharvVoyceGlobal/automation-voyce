@@ -2433,40 +2433,27 @@ class Transaction_page_A(Graphs, EV):
     
     def get_credentials(self):
         """
-        Получает учетные данные из значений класса EV.
+        Генерирует и возвращает учетные данные с новым токеном на основе refresh_token.
         """
-        # Собираем данные из значений класса EV
-        token_data = {
-            "token": self.TOKEN,
-            "refresh_token": self.REFRESH_TOKEN,
-            "token_uri": self.TOKEN_URI,
-            "client_id": self.CLIENT_ID,
-            "client_secret": self.CLIENT_SECRET,
-            "scopes": self.SCOPES,
-            "expiry": self.EXPIRY
-        }
-
-        # Создаём объект Credentials
-        creds = Credentials.from_authorized_user_info(token_data, self.scopes)
-
-        # Обновляем токен, если он истёк
-        if creds.expired and creds.refresh_token:
-            print("Обновляем токен...")
-            creds.refresh(Request())
-
+        creds = Credentials(
+            token=None,
+            refresh_token=self.REFRESH_TOKEN,
+            token_uri=self.TOKEN_URI,
+            client_id=self.CLIENT_ID,
+            client_secret=self.CLIENT_SECRET,
+            scopes=self.SCOPES,
+        )
+        print("Обновляем токен с использованием refresh_token...")
+        creds.refresh(Request())
+        print("Новый токен получен.")
         return creds
 
     def get_first_email_link(self, wait_time=600, check_interval=15):
         """
-        Получает ссылку из письма и открывает её в браузере.
+        Проверяет наличие письма, получает ссылку, открывает её и ждет загрузку файла.
         """
-        SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
         sender_email = "vip.admin.support@voyceglobal.com"
-
-        # Получаем учетные данные
-        creds = self.get_credentials(SCOPES)
-
-        # Подключаемся к Gmail API
+        creds = self.get_credentials()
         service = build('gmail', 'v1', credentials=creds)
 
         start_time = time.time()
@@ -2480,31 +2467,73 @@ class Transaction_page_A(Graphs, EV):
                 first_message_id = messages[0]['id']
                 message = service.users().messages().get(userId='me', id=first_message_id).execute()
 
-                for part in message['payload']['parts']:
-                    if part['mimeType'] == 'text/html':
-                        html_body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
-                        soup = BeautifulSoup(html_body, 'html.parser')
-                        links = soup.find_all('a', href=True)
-                        for link in links:
-                            href = link['href']
-                            if href.startswith("https://databricks-workspace"):
-                                print("Найдена ссылка:", href)
-                                
-                                # Открываем ссылку в браузере
-                                webbrowser.open_new_tab(href)
+                # Извлечение HTML и получение ссылки
+                link = self.extract_link_from_message(message)
+                if link:
+                    print("Найдена ссылка:", link)
 
-                                # Ждем появления файла и удаляем письмо
-                                if self.wait_for_download_and_cleanup(service, first_message_id):
-                                    print("Файл загружен и письмо удалено.")
-                                    return href
-                                else:
-                                    print("Файл не появился в указанной директории.")
-                                    return None
+                    # Открываем ссылку в браузере
+                    webbrowser.open_new_tab(link)
+
+                    # Ждем файл и удаляем письмо
+                    if self.wait_for_download_and_cleanup(service, first_message_id):
+                        print("Файл успешно загружен и письмо удалено.")
+                        return link
+                    else:
+                        print("Файл не появился в указанной директории.")
+                        return None
             print(f"Письмо не найдено. Повторная проверка через {check_interval} секунд...")
             time.sleep(check_interval)
 
         print("Время ожидания истекло. Письмо не найдено.")
         return None
+
+    def extract_link_from_message(self, message):
+        """
+        Извлекает ссылку из HTML-контента письма.
+        """
+        for part in message['payload']['parts']:
+            if part['mimeType'] == 'text/html':
+                html_body = base64.urlsafe_b64decode(part['body']['data']).decode('utf-8')
+                soup = BeautifulSoup(html_body, 'html.parser')
+                links = soup.find_all('a', href=True)
+                for link in links:
+                    href = link['href']
+                    if href.startswith("https://databricks-workspace"):
+                        return href
+        return None
+
+    def wait_for_download_and_cleanup(self, service, message_id, wait_time=300, check_interval=10):
+        """
+        Ожидает появления файла в папке Downloads1 и удаляет письмо.
+        """
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        download_folder = "/tmp/test_downloads"
+        target_folder = os.path.join(current_directory, "Downloads1")
+
+        if not os.path.exists(target_folder):
+            os.makedirs(target_folder)
+
+        start_time = time.time()
+        while time.time() - start_time < wait_time:
+            print("Ожидаем скачивание файла...")
+            files = [f for f in os.listdir(download_folder) if f.endswith(('.csv', '.xlsx'))]
+            if files:
+                latest_file = max([os.path.join(download_folder, f) for f in files], key=os.path.getmtime)
+                print(f"Файл загружен: {latest_file}")
+
+                # Перемещаем файл
+                shutil.move(latest_file, os.path.join(target_folder, os.path.basename(latest_file)))
+                print(f"Файл перемещен в {target_folder}")
+
+                # Удаляем письмо
+                service.users().messages().delete(userId='me', id=message_id).execute()
+                print("Письмо успешно удалено.")
+                return True
+            time.sleep(check_interval)
+
+        print("Файл не появился в течение отведенного времени.")
+        return False
 
 
     def check_gmail(self, original_tab):
