@@ -27,7 +27,6 @@ from selenium.common import StaleElementReferenceException, NoSuchElementExcepti
     ElementNotInteractableException
 from selenium.webdriver.common.keys import Keys
 from utilities.logger import Logger
-
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
