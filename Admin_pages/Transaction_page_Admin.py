@@ -2586,7 +2586,7 @@ class Transaction_page_A(Graphs, EV):
 
     def compare_data_for_periods(self):
         with allure.step("Compare data with DB by Periods"):
-            time_periods = ['last_30_days', 'yesterday', 'this_week', 'this_month', 'last_week', 'last_month',
+            time_periods = ['yesterday', 'last_30_days', 'this_week', 'this_month', 'last_week', 'last_month',
                             'this_year', 'last_year']
             for period in time_periods:
                 self.take_data_for_period_and_compare(period)
