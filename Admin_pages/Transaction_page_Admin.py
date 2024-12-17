@@ -2453,49 +2453,59 @@ class Transaction_page_A(Graphs, EV):
         return creds
 
     def get_first_email_link(self, wait_time=60, check_interval=30):
-        """
-        Проверяет наличие письма, получает ссылку, открывает её и ждет загрузку файла.
-        """
         sender_email = "vip.admin.support@voyceglobal.com"
+        download_folder = "/tmp/test_downloads"
         creds = self.get_credentials()
         service = build('gmail', 'v1', credentials=creds)
-
+    
+        # Создаем директорию, если она не существует
+        if not os.path.exists(download_folder):
+            os.makedirs(download_folder)
+            print(f"Создана директория для загрузок: {download_folder}")
+    
         start_time = time.time()
         while time.time() - start_time < wait_time:
             print("Проверяем наличие письма...")
             results = service.users().messages().list(userId='me', q=f'from:{sender_email}').execute()
             messages = results.get('messages', [])
-
+    
             if messages:
                 print("Письмо найдено!")
                 first_message_id = messages[0]['id']
                 message = service.users().messages().get(userId='me', id=first_message_id).execute()
-
+    
                 # Извлечение HTML и получение ссылки
                 link = self.extract_link_from_message(message)
                 if link:
                     print("Найдена ссылка:", link)
-
-                    original_tab = self.driver.current_window_handle
-                    self.driver.execute_script("window.open('');")
-                    time.sleep(2)
-                    new_tab_index = self.driver.window_handles[-1]
-                    self.driver.switch_to.window(new_tab_index)
-                    self.screenshot()
-                    self.driver.get(link)
-                    self.screenshot()
-                    self.driver.switch_to.window(original_tab)
-                    self.screenshot()
-                   
-                    if self.wait_for_download_and_cleanup(service, first_message_id):
-                        print("Файл успешно загружен и письмо удалено.")
-                        return link
-                    else:
-                        print("Файл не появился в указанной директории.")
+    
+                    # Скачиваем файл по ссылке
+                    file_name = os.path.basename(link.split("?")[0])  # Извлекаем имя файла из URL
+                    file_path = os.path.join(download_folder, file_name)
+                    try:
+                        print("Скачиваем файл...")
+                        response = requests.get(link, stream=True)
+                        response.raise_for_status()  # Проверяем статус ответа
+    
+                        with open(file_path, "wb") as file:
+                            for chunk in response.iter_content(chunk_size=1024):
+                                if chunk:
+                                    file.write(chunk)
+    
+                        print(f"Файл успешно загружен: {file_path}")
+    
+                        # Удаляем письмо
+                        service.users().messages().delete(userId='me', id=first_message_id).execute()
+                        print("Письмо успешно удалено.")
+                        return file_path
+    
+                    except Exception as e:
+                        print(f"Ошибка при скачивании файла: {e}")
                         return None
+    
             print(f"Письмо не найдено. Повторная проверка через {check_interval} секунд...")
             time.sleep(check_interval)
-
+    
         print("Время ожидания истекло. Письмо не найдено.")
         return None
 
