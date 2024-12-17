@@ -6,6 +6,7 @@ import pytz
 from jira import JIRA
 import os
 import traceback
+from google.auth.transport.requests import Request
 import glob
 from google.oauth2.credentials import Credentials
 import csv
