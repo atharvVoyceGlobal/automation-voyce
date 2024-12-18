@@ -49,7 +49,6 @@ def is_equivalent_service_minutes(db_value, web_value):
         return True
     return False
 
-
 class Transaction_page_A(Graphs, EV):
 
     def __init__(self, driver):
