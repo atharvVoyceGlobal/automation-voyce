@@ -20,34 +20,103 @@ def ensure_dependencies():
         print(f"Ошибка при установке зависимостей: {e}")
         raise
 
+def wait_for_real_visibility(driver, element, timeout=10):
+    """Ждет реальной видимости элемента"""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if element.is_displayed() and element.is_enabled():
+            rect = driver.execute_script("""
+                const rect = arguments[0].getBoundingClientRect();
+                return {
+                    top: rect.top,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height
+                };
+            """, element)
+            if rect['width'] > 0 and rect['height'] > 0:
+                return True
+        time.sleep(0.5)
+    return False
+
+def remove_overlays(driver):
+    """Удаляет перекрывающие элементы"""
+    driver.execute_script("""
+        const overlays = document.querySelectorAll('div[class*="overlay"], div[class*="modal"], div[class*="popup"]');
+        overlays.forEach(overlay => {
+            if (overlay.style.display !== 'none') {
+                overlay.style.display = 'none';
+            }
+        });
+        document.documentElement.style.pointerEvents = 'auto';
+        document.documentElement.style.zIndex = 'auto';
+    """)
+
 def safe_click(driver, element, name="element"):
-    """Безопасный клик по элементу с обходом перехвата кликов"""
+    """Улучшенная версия безопасного клика"""
     try:
-        # Исправляем HTML элемент
-        driver.execute_script("document.documentElement.style.pointerEvents = 'auto';")
+        # Ждем реальной видимости элемента
+        if not wait_for_real_visibility(driver, element):
+            print(f"Element {name} is not truly visible")
+            return False
+            
+        # Удаляем перекрывающие элементы
+        remove_overlays(driver)
         
-        # Пробуем разные методы клика
+        # Прокручиваем к элементу и делаем его видимым
+        driver.execute_script("""
+            arguments[0].scrollIntoView({behavior: 'instant', block: 'center'});
+            arguments[0].style.opacity = '1';
+            arguments[0].style.visibility = 'visible';
+            arguments[0].style.display = 'block';
+        """, element)
+        
+        time.sleep(1)  # Даем время на прокрутку
+        
+        # Пробуем клик через JavaScript с принудительным фокусом
         try:
-            element.click()
+            driver.execute_script("""
+                arguments[0].focus();
+                arguments[0].click();
+            """, element)
             return True
         except:
+            # Если не получилось, пробуем через ActionChains с разными смещениями
             try:
-                driver.execute_script("""
-                    arguments[0].style.zIndex = '999999';
-                    document.elementsFromPoint(arguments[1], arguments[2])
-                        .forEach(el => el !== arguments[0] && (el.style.pointerEvents = 'none'));
-                    arguments[0].click();
-                """, element, element.location['x'], element.location['y'])
+                actions = ActionChains(driver)
+                actions.move_to_element(element)
+                actions.pause(0.5)  # Пауза для стабильности
+                actions.click()
+                actions.perform()
                 return True
             except:
+                # Последняя попытка - эмуляция клика мышью
                 try:
-                    ActionChains(driver).move_to_element_with_offset(element, 1, 1).click().perform()
+                    driver.execute_script("""
+                        function simulateClick(element) {
+                            const rect = element.getBoundingClientRect();
+                            const x = rect.left + rect.width / 2;
+                            const y = rect.top + rect.height / 2;
+                            
+                            ['mousedown', 'mouseup', 'click'].forEach(eventType => {
+                                const event = new MouseEvent(eventType, {
+                                    view: window,
+                                    bubbles: true,
+                                    cancelable: true,
+                                    clientX: x,
+                                    clientY: y
+                                });
+                                element.dispatchEvent(event);
+                            });
+                        }
+                        simulateClick(arguments[0]);
+                    """, element)
                     return True
-                except:
-                    driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('click', {bubbles: true}))", element)
-                    return True
+                except Exception as e:
+                    print(f"All click attempts failed for {name}: {e}")
+                    return False
     except Exception as e:
-        print(f"Failed to click {name}: {e}")
+        print(f"Error in safe_click for {name}: {e}")
         return False
 
 # Вызываем функцию для проверки и установки зависимостей
