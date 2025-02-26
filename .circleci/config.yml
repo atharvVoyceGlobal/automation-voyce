@@ -6,56 +6,100 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/python:3.9-browsers
-    environment:
-      DISPLAY: ':99'
+      - image: cimg/python:3.11-browsers
+        environment:
+          PYTHONPATH: /home/circleci/project
     steps:
       - checkout
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       
-      # Установка системных зависимостей
+      # Кэширование зависимостей
+      - restore_cache:
+          keys:
+            - v1-deps-{{ .Branch }}-{{ checksum "requirements.txt" }}
+            - v1-deps-{{ .Branch }}
+            - v1-deps
+      
       - run:
-          name: Установка системных зависимостей
+          name: Create and Activate Virtual Environment
           command: |
-            sudo apt-get update
-            sudo apt-get install -y xvfb ffmpeg libgconf-2-4 python3-xvfbwrapper
+            python -m venv venv
+            echo 'source venv/bin/activate' >> $BASH_ENV
+            source $BASH_ENV
       
-      # Установка Python зависимостей
       - run:
-          name: Установка Python зависимостей
+          name: Install Dependencies
           command: |
             python -m pip install --upgrade pip
-            pip install pytest selenium allure-pytest requests pyvirtualdisplay
+            pip install -r requirements.txt
+            npm install -g @puppeteer/browsers
+            # Устанавливаем ffmpeg для записи видео
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg xvfb
       
-      # Создание директорий для результатов
-      - run:
-          name: Создание директорий для результатов
-          command: |
-            mkdir -p test-results/pytest
-            mkdir -p test-videos
-            mkdir -p test-screenshots
+      # Сохраняем кэш зависимостей
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-deps-{{ .Branch }}-{{ checksum "requirements.txt" }}
       
-      # Запуск тестов с записью видео
       - run:
-          name: Запуск тестов
+          name: Create Directories
           command: |
-            # Запускаем Xvfb
-            Xvfb :99 -screen 0 1920x1080x24 &
-            sleep 2
+            mkdir -p allure-results
+            mkdir -p test_results
+            mkdir -p chrome_installation
+            mkdir -p test_videos
+      
+      - run:
+          name: Download Test Video
+          command: |
+            python -c "
+            import requests, os
+            video_url = 'https://drive.usercontent.google.com/u/0/uc?id=1Rv3Qitap2wANEx0I-7NLvSp1cEQlE6_K&export=download'
+            video_path = os.path.join(os.getcwd(), 'output.y4m')
+            if not os.path.exists(video_path):
+                print('Downloading video...')
+                response = requests.get(video_url, stream=True)
+                response.raise_for_status()
+                with open(video_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                print('Video downloaded successfully')
+            else:
+                print('Video file already exists')"
+
+      - run:
+          name: Run Tests with Screen Recording
+          command: |
+            # Запускаем Xvfb для виртуального дисплея
+            Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+            export DISPLAY=:99
             
-            # Запускаем тесты с переменной CI=true
-            CI=true pytest sqs_kafka_listener.py -v
+            # Запускаем тесты
+            pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
       
-      # Сохранение результатов тестов
       - store_test_results:
-          path: test-results
+          path: test_results
       
-      # Сохранение артефактов (видео, скриншоты)
       - store_artifacts:
-          path: test-videos
-          destination: test-videos
+          path: allure-results
+          destination: allure-results
+      
       - store_artifacts:
-          path: test-screenshots
-          destination: test-screenshots
+          path: test_results
+          destination: test_results
+      
+      # Сохраняем видео как артефакт
+      - store_artifacts:
+          path: output.y4m
+          destination: test-video
+      
+      # Сохраняем записи экрана как артефакты
+      - store_artifacts:
+          path: test_videos
+          destination: screen-recordings
 
 workflows:
   version: 2
