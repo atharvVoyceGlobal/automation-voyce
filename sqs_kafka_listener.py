@@ -20,6 +20,95 @@ def ensure_dependencies():
         print(f"Ошибка при установке зависимостей: {e}")
         raise
 
+def safe_click(driver, element, name="element"):
+    """Безопасный клик по элементу с несколькими попытками"""
+    try:
+        # Сначала пробуем прокрутить к элементу
+        driver.execute_script("arguments[0].scrollIntoView(true);", element)
+        time.sleep(1)
+        
+        # Сохраняем скриншот до попытки клика
+        driver.save_screenshot(f"before_{name}_click.png")
+        
+        # Получаем информацию о перекрывающих элементах
+        element_info = driver.execute_script("""
+            const element = arguments[0];
+            const rect = element.getBoundingClientRect();
+            const x = rect.left + rect.width/2;
+            const y = rect.top + rect.height/2;
+            const elements = document.elementsFromPoint(x, y);
+            return {
+                target: {
+                    tag: element.tagName,
+                    class: element.className,
+                    visible: element.offsetParent !== null,
+                    rect: rect.toJSON()
+                },
+                covering: elements.slice(0, 5).map(el => ({
+                    tag: el.tagName,
+                    class: el.className,
+                    id: el.id,
+                    zIndex: window.getComputedStyle(el).zIndex
+                }))
+            };
+        """, element)
+        print(f"{name} click diagnostics:", element_info)
+        
+        # Пробуем удалить перекрывающие элементы
+        driver.execute_script("""
+            const element = arguments[0];
+            const rect = element.getBoundingClientRect();
+            const elements = document.elementsFromPoint(
+                rect.left + rect.width/2,
+                rect.top + rect.height/2
+            );
+            for (const el of elements) {
+                if (el !== element && el.style) {
+                    el.style.pointerEvents = 'none';
+                    el.style.zIndex = '-1';
+                }
+            }
+        """, element)
+        
+        # Пробуем разные способы клика
+        try:
+            print(f"Attempting standard click on {name}...")
+            element.click()
+            return True
+        except Exception as e:
+            print(f"Standard click failed on {name}: {e}")
+            try:
+                print(f"Attempting JavaScript click on {name}...")
+                driver.execute_script("arguments[0].click();", element)
+                return True
+            except Exception as js_e:
+                print(f"JavaScript click failed on {name}: {js_e}")
+                try:
+                    print(f"Attempting Actions click on {name}...")
+                    ActionChains(driver).move_to_element(element).click().perform()
+                    return True
+                except Exception as action_e:
+                    print(f"Actions click failed on {name}: {action_e}")
+                    # Последняя попытка - эмуляция клика через dispatchEvent
+                    try:
+                        print(f"Attempting event dispatch on {name}...")
+                        driver.execute_script("""
+                            const element = arguments[0];
+                            const event = new MouseEvent('click', {
+                                view: window,
+                                bubbles: true,
+                                cancelable: true
+                            });
+                            element.dispatchEvent(event);
+                        """, element)
+                        return True
+                    except Exception as dispatch_e:
+                        print(f"Event dispatch failed on {name}: {dispatch_e}")
+                        return False
+    except Exception as e:
+        print(f"Error during safe click on {name}: {e}")
+        return False
+
 # Вызываем функцию для проверки и установки зависимостей
 ensure_dependencies()
 
@@ -1302,6 +1391,19 @@ def test_video_call_activation(driver):
         status_select = WebDriverWait(fifth_agent_driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//select[@data-testid='status']"))
         )
+        if not safe_click(fifth_agent_driver, status_select, "status select"):
+            # Если все способы клика не сработали, пробуем альтернативный подход
+            fifth_agent_driver.execute_script("""
+                const select = document.querySelector('select[data-testid="status"]');
+                const event = new MouseEvent('mousedown', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                select.dispatchEvent(event);
+            """)
+        time.sleep(2)
+        
         # Сохраняем скриншот и HTML до клика
         fifth_agent_driver.save_screenshot("before_status_click.png")
         with open("before_status_click.html", "w", encoding="utf-8") as f:
@@ -1684,163 +1786,31 @@ def test_video_call_activation(driver):
         leave_call_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, '//*[contains(@class, "_LKm8iHTwJx1Jox10NmL") and @data-testid="testid-call-end-btn"]'))
         )
-        # Сохраняем состояние до клика
-        driver.save_screenshot("before_leave_call_click.png")
-        with open("before_leave_call_html.html", "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        
-        # Проверяем перекрывающие элементы
-        element_info = driver.execute_script("""
-            const el = document.querySelector('[data-testid="testid-call-end-btn"]');
-            if (!el) return 'Element not found';
-            const rect = el.getBoundingClientRect();
-            const x = rect.left + rect.width/2;
-            const y = rect.top + rect.height/2;
-            const covering = document.elementFromPoint(x, y);
-            return {
-                target: { 
-                    tag: el.tagName, 
-                    class: el.className,
-                    visible: el.offsetParent !== null,
-                    style: window.getComputedStyle(el)
-                },
-                covering: covering ? { 
-                    tag: covering.tagName, 
-                    class: covering.className,
-                    style: window.getComputedStyle(covering)
-                } : null,
-                coordinates: {x, y}
-            };
-        """)
-        print("Leave Call button info:", element_info)
-        
-        # Пробуем разные способы клика
-        try:
-            print("Attempting standard click...")
-            leave_call_button.click()
-        except Exception as e:
-            print(f"Standard click failed: {e}")
-            try:
-                print("Attempting JavaScript click...")
-                driver.execute_script("arguments[0].click();", leave_call_button)
-            except Exception as js_e:
-                print(f"JavaScript click failed: {js_e}")
-                print("Attempting Actions click...")
-                ActionChains(driver).move_to_element(leave_call_button).click().perform()
-        
-        print("1Leave Call button is clickable. Clicking on it...")
-        time.sleep(2)
+        if not safe_click(driver, leave_call_button, "leave call button"):
+            print("Failed to click leave call button after all attempts")
+            driver.save_screenshot("failed_leave_call_click.png")
     except Exception as e:
-        print("Error clicking the Leave Call button1:", e)
-        driver.save_screenshot("error_leave_call_click.png")
+        print("Error with leave call button:", e)
 
     try:
         skip_button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//button[text()='Skip']"))
         )
-        # Сохраняем состояние до клика
-        driver.save_screenshot("before_skip_click.png")
-        with open("before_skip_html.html", "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        
-        # Проверяем перекрывающие элементы
-        element_info = driver.execute_script("""
-            const el = document.querySelector('button:contains("Skip")');
-            if (!el) return 'Element not found';
-            const rect = el.getBoundingClientRect();
-            const x = rect.left + rect.width/2;
-            const y = rect.top + rect.height/2;
-            const covering = document.elementFromPoint(x, y);
-            return {
-                target: { 
-                    tag: el.tagName, 
-                    class: el.className,
-                    visible: el.offsetParent !== null,
-                    style: window.getComputedStyle(el)
-                },
-                covering: covering ? { 
-                    tag: covering.tagName, 
-                    class: covering.className,
-                    style: window.getComputedStyle(covering)
-                } : null,
-                coordinates: {x, y}
-            };
-        """)
-        print("Skip button info:", element_info)
-        
-        # Пробуем разные способы клика
-        try:
-            print("Attempting standard click...")
-            skip_button.click()
-        except Exception as e:
-            print(f"Standard click failed: {e}")
-            try:
-                print("Attempting JavaScript click...")
-                driver.execute_script("arguments[0].click();", skip_button)
-            except Exception as js_e:
-                print(f"JavaScript click failed: {js_e}")
-                print("Attempting Actions click...")
-                ActionChains(driver).move_to_element(skip_button).click().perform()
-        
-        print("Skip button clicked successfully")
-        time.sleep(2)
+        if not safe_click(driver, skip_button, "skip button"):
+            print("Failed to click skip button after all attempts")
+            driver.save_screenshot("failed_skip_click.png")
     except Exception as e:
-        print("Error clicking Skip button:", e)
-        driver.save_screenshot("error_skip_click.png")
+        print("Error with skip button:", e)
 
     try:
         operator_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, '//button[span[text()="Operator"]]'))
         )
-        # Сохраняем состояние до клика
-        driver.save_screenshot("before_operator_click.png")
-        with open("before_operator_html.html", "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        
-        # Проверяем перекрывающие элементы
-        element_info = driver.execute_script("""
-            const el = document.querySelector('button:has(span:contains("Operator"))');
-            if (!el) return 'Element not found';
-            const rect = el.getBoundingClientRect();
-            const x = rect.left + rect.width/2;
-            const y = rect.top + rect.height/2;
-            const covering = document.elementFromPoint(x, y);
-            return {
-                target: { 
-                    tag: el.tagName, 
-                    class: el.className,
-                    visible: el.offsetParent !== null,
-                    style: window.getComputedStyle(el)
-                },
-                covering: covering ? { 
-                    tag: covering.tagName, 
-                    class: covering.className,
-                    style: window.getComputedStyle(covering)
-                } : null,
-                coordinates: {x, y}
-            };
-        """)
-        print("Operator button info:", element_info)
-        
-        # Пробуем разные способы клика
-        try:
-            print("Attempting standard click...")
-            operator_button.click()
-        except Exception as e:
-            print(f"Standard click failed: {e}")
-            try:
-                print("Attempting JavaScript click...")
-                driver.execute_script("arguments[0].click();", operator_button)
-            except Exception as js_e:
-                print(f"JavaScript click failed: {js_e}")
-                print("Attempting Actions click...")
-                ActionChains(driver).move_to_element(operator_button).click().perform()
-        
-        print("Operator button clicked successfully")
-        time.sleep(2)
+        if not safe_click(driver, operator_button, "operator button"):
+            print("Failed to click operator button after all attempts")
+            driver.save_screenshot("failed_operator_click.png")
     except Exception as e:
-        print("Error clicking the Operator button1:", e)
-        driver.save_screenshot("error_operator_click.png")
+        print("Error with operator button:", e)
 
 
 
