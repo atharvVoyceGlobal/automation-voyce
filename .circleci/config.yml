@@ -95,15 +95,38 @@ jobs:
             echo "Проверяем версию ffmpeg..."
             ffmpeg -version
             
-            echo "Проверяем версию Xvfb..."
-            Xvfb -version
+            echo "Проверяем Xvfb..."
+            which Xvfb || (echo "Xvfb не установлен" && exit 1)
+            
+      - run:
+          name: Setup Virtual Display
+          command: |
+            # Убеждаемся, что нет других процессов Xvfb
+            pkill Xvfb || true
+            
+            # Запускаем Xvfb с расширенными параметрами
+            Xvfb :99 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset >/dev/null 2>&1 &
+            
+            # Ждем инициализации Xvfb
+            sleep 3
+            
+            # Проверяем, что Xvfb запущен
+            if ! ps aux | grep -v grep | grep Xvfb > /dev/null; then
+                echo "Ошибка: Xvfb не запущен"
+                exit 1
+            fi
+            
+            # Устанавливаем переменную DISPLAY
+            echo "export DISPLAY=:99" >> $BASH_ENV
+            source $BASH_ENV
+            
+            echo "Виртуальный дисплей настроен успешно"
 
       - run:
           name: Run Tests with Screen Recording
           command: |
-            # Запускаем Xvfb для виртуального дисплея
-            Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
-            export DISPLAY=:99
+            # Проверяем переменную DISPLAY
+            echo "Используется DISPLAY=$DISPLAY"
             
             # Запускаем тесты
             pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
