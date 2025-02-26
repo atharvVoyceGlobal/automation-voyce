@@ -31,12 +31,28 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
+            # Обновляем систему и устанавливаем базовые зависимости
+            sudo apt-get update || true  # игнорируем ошибки обновления индексов
+            sudo apt-get install -y ffmpeg xvfb wget gnupg
+
+            # Устанавливаем Python зависимости
             python -m pip install --upgrade pip
             pip install -r requirements.txt
+
+            # Устанавливаем Node.js зависимости
             npm install -g @puppeteer/browsers
-            # Устанавливаем ffmpeg для записи видео
+
+            # Очищаем кэш apt и обновляем ключи Google
+            sudo rm -rf /var/lib/apt/lists/*
+            sudo apt-get clean
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            
+            # Добавляем репозиторий Chrome заново
+            sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
+            
+            # Обновляем и устанавливаем Chrome
             sudo apt-get update
-            sudo apt-get install -y ffmpeg xvfb
+            sudo apt-get install -y google-chrome-stable
       
       # Сохраняем кэш зависимостей
       - save_cache:
@@ -69,6 +85,18 @@ jobs:
                 print('Video downloaded successfully')
             else:
                 print('Video file already exists')"
+
+      - run:
+          name: Verify Installations
+          command: |
+            echo "Проверяем версию Chrome..."
+            google-chrome --version
+            
+            echo "Проверяем версию ffmpeg..."
+            ffmpeg -version
+            
+            echo "Проверяем версию Xvfb..."
+            Xvfb -version
 
       - run:
           name: Run Tests with Screen Recording
