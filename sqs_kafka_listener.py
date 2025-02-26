@@ -4,7 +4,7 @@ def ensure_dependencies():
     """
     try:
         import pkg_resources
-        required = {'selenium', 'pytest', 'allure-pytest', 'requests'}
+        required = {'selenium', 'pytest', 'allure-pytest', 'requests', 'pyvirtualdisplay'}
         installed = {pkg.key for pkg in pkg_resources.working_set}
         missing = required - installed
         
@@ -30,6 +30,8 @@ import os
 import allure
 import threading
 import requests
+import signal
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -39,43 +41,84 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from env import EV
+from pyvirtualdisplay import Display
 
-def download_video():
+def setup_virtual_display():
     """
-    Скачивает тестовое видео для использования в тестах.
+    Настраивает виртуальный дисплей для запуска в CI окружении
     """
-    video_url = "https://drive.usercontent.google.com/u/0/uc?id=1Rv3Qitap2wANEx0I-7NLvSp1cEQlE6_K&export=download"
-    video_path = os.path.join(os.getcwd(), "output.y4m")
-    
-    if os.path.exists(video_path):
-        print("Видео файл уже существует, пропускаем скачивание.")
-        return video_path
-        
-    print("Начинаем скачивание тестового видео...")
     try:
-        response = requests.get(video_url, stream=True)
-        response.raise_for_status()
+        # Проверяем, запущен ли тест в CI окружении
+        is_ci = os.environ.get('CI', False)
         
-        total_size = int(response.headers.get('content-length', 0))
-        block_size = 8192
-        downloaded = 0
-        
-        with open(video_path, 'wb') as file:
-            for data in response.iter_content(block_size):
-                downloaded += len(data)
-                file.write(data)
-                progress = int((downloaded / total_size) * 100)
-                print(f"\rПрогресс скачивания: {progress}%", end='')
-                
-        print("\nВидео успешно скачано!")
-        return video_path
+        if is_ci:
+            print("Запуск в CI окружении, настраиваем виртуальный дисплей...")
+            display = Display(visible=0, size=(1920, 1080))
+            display.start()
+            return display
+        else:
+            print("Запуск в локальном окружении, виртуальный дисплей не требуется")
+            return None
     except Exception as e:
-        print(f"Ошибка при скачивании видео: {e}")
+        print(f"Ошибка при настройке виртуального дисплея: {e}")
         raise
+
+def start_screen_recording():
+    """
+    Начинает запись экрана с помощью ffmpeg
+    """
+    try:
+        is_ci = os.environ.get('CI', False)
+        if not is_ci:
+            print("Локальное окружение, пропускаем запись видео")
+            return None
+            
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        video_path = f"test-videos/test_recording_{timestamp}.mp4"
+        os.makedirs("test-videos", exist_ok=True)
+        
+        # Запускаем ffmpeg для записи экрана
+        cmd = [
+            "ffmpeg",
+            "-f", "x11grab",
+            "-video_size", "1920x1080",
+            "-framerate", "30",
+            "-i", os.environ.get('DISPLAY', ':99'),
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-y",
+            video_path
+        ]
+        
+        process = subprocess.Popen(cmd)
+        print(f"Начата запись видео в файл: {video_path}")
+        return process
+    except Exception as e:
+        print(f"Ошибка при запуске записи видео: {e}")
+        return None
+
+def stop_screen_recording(process):
+    """
+    Останавливает запись экрана
+    """
+    if process:
+        try:
+            # Отправляем сигнал SIGTERM для корректного завершения ffmpeg
+            process.send_signal(signal.SIGTERM)
+            process.wait(timeout=5)
+            print("Запись видео успешно остановлена")
+        except Exception as e:
+            print(f"Ошибка при остановке записи видео: {e}")
+            # Если не удалось остановить корректно, принудительно завершаем
+            try:
+                process.kill()
+            except:
+                pass
 
 def install_browser_and_driver():
     installation_path = os.path.join(os.getcwd(), "chrome_installation")
     os.makedirs(installation_path, exist_ok=True)
+
     try:
         print("Installing Chrome...")
         result = subprocess.run(
@@ -98,78 +141,95 @@ def install_browser_and_driver():
         import platform
         system = platform.system().lower()
         
-        if system == "darwin":
-            # Mac OS X path
-            chrome_binary_path = os.path.join(
-                installation_path, "chrome", f"mac_arm-{chrome_version}",
-                "chrome-mac-arm64", "Google Chrome for Testing.app", 
-                "Contents", "MacOS", "Google Chrome for Testing"
-            )
-        elif system == "linux":
-            # Linux path
-            chrome_binary_path = os.path.join(
-                installation_path, "chrome", f"linux-{chrome_version}",
-                "chrome-linux64", "chrome"
-            )
-        else:
-            raise OSError(f"Unsupported operating system: {system}")
-
-        if not os.path.exists(chrome_binary_path):
-            raise FileNotFoundError(f"Chrome binary not found at {chrome_binary_path}")
-        print(f"Chrome binary found at: {chrome_binary_path}")
-
-        print("Fetching Chrome version...")
-        version_output = subprocess.run([chrome_binary_path, "--version"], capture_output=True, text=True, check=True)
-        chrome_version = version_output.stdout.strip().split(" ")[-1]
-        print(f"Installed Chrome version: {chrome_version}")
-        print(f"Installing ChromeDriver for version {chrome_version}...")
-        subprocess.run(
-            ["npx", "@puppeteer/browsers", "install", f"chromedriver@{chrome_version}", "--path", installation_path],
-            check=True
-        )
-        print("ChromeDriver installed successfully!")
-
-        if system == "darwin":
-            chromedriver_path = os.path.join(
-                installation_path, "chromedriver", f"mac_arm-{chrome_version}",
-                "chromedriver-mac-arm64", "chromedriver"
-            )
-        elif system == "linux":
-            chromedriver_path = os.path.join(
-                installation_path, "chromedriver", f"linux-{chrome_version}",
-                "chromedriver-linux64", "chromedriver"
-            )
-
-        if not os.path.exists(chromedriver_path):
-            raise FileNotFoundError(f"ChromeDriver not found at {chromedriver_path}")
-        return chrome_binary_path, chromedriver_path
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred during installation: {e}")
+        # Формируем пути к исполняемым файлам Chrome и ChromeDriver
+        if system == "darwin":  # macOS
+            chrome_binary = os.path.join(installation_path, "chrome", "chrome-mac-arm64", "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing")
+            chromedriver = os.path.join(installation_path, "chromedriver", f"chromedriver-{system}-arm64", "chromedriver")
+        else:  # linux
+            chrome_binary = os.path.join(installation_path, "chrome", "chrome-linux64", "chrome")
+            chromedriver = os.path.join(installation_path, "chromedriver", f"chromedriver-{system}-64", "chromedriver")
+        
+        # Устанавливаем права на выполнение
+        os.chmod(chrome_binary, 0o755)
+        os.chmod(chromedriver, 0o755)
+        
+        return chrome_binary, chromedriver
+    except Exception as e:
+        print(f"Error installing Chrome and ChromeDriver: {e}")
         raise
 
 @pytest.fixture(scope="function")
 def driver():
+    """
+    Фикстура для создания и настройки драйвера Chrome.
+    Включает поддержку виртуального дисплея и записи видео для CI.
+    """
+    # Настраиваем виртуальный дисплей для CI
+    display = setup_virtual_display()
+    
+    # Начинаем запись экрана
+    recording_process = start_screen_recording()
+    
+    # Устанавливаем браузер и драйвер
     chrome_path, chromedriver_path = install_browser_and_driver()
     chrome_options = Options()
     chrome_options.binary_location = chrome_path
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    # Настройки для виртуальной камеры и live‑трансляции
+    
+    # Настройки для CI окружения
+    if os.environ.get('CI', False):
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--headless=new')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--window-size=1920,1080')
+        chrome_options.add_argument('--start-maximized')
+        chrome_options.add_argument('--disable-infobars')
+        chrome_options.add_argument('--disable-extensions')
+        chrome_options.add_argument('--disable-notifications')
+    
+    # Общие настройки для всех окружений
     chrome_options.add_argument("--use-fake-device-for-media-stream")
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
+    chrome_options.add_argument("--use-fake-codec-for-peer-connection")
+    chrome_options.add_argument("--enable-media-stream")
+    chrome_options.add_argument("--auto-select-desktop-capture-source=Entire screen")
+    
+    # Настройка видео для эмуляции камеры
     video_path = os.path.join(os.getcwd(), "output.y4m")
     print(f"Using video file for fake camera: {video_path}")
     chrome_options.add_argument(f"--use-file-for-fake-video-capture={video_path}")
+    
+    # Дополнительные экспериментальные опции
     chrome_options.add_experimental_option("prefs", {
         "profile.default_content_setting_values.media_stream_camera": 1,
-        "profile.default_content_setting_values.media_stream_mic": 1
+        "profile.default_content_setting_values.media_stream_mic": 1,
+        "profile.default_content_setting_values.notifications": 1,
+        "profile.default_content_setting_values.geolocation": 1,
+        "credentials_enable_service": False
     })
+    
+    # Создаем и настраиваем драйвер
     driver_service = ChromeService(executable_path=chromedriver_path)
     driver = webdriver.Chrome(service=driver_service, options=chrome_options)
+    
+    # Увеличиваем таймауты для стабильности
+    driver.implicitly_wait(30)
+    driver.set_page_load_timeout(40)
+    
     yield driver
-    driver.quit()
+    
+    # Останавливаем запись видео
+    stop_screen_recording(recording_process)
+    
+    # Закрываем браузер
+    try:
+        driver.quit()
+    except Exception as e:
+        print(f"Ошибка при закрытии браузера: {e}")
+    
+    # Останавливаем виртуальный дисплей
+    if display:
+        display.stop()
 
 @allure.feature("Video Call Testing")
 @allure.story("Checking video call activation via UI with virtual camera, camera & microphone toggle")
