@@ -99,7 +99,12 @@ jobs:
       # Сохраняем записи экрана как артефакты
       - store_artifacts:
           path: test_videos
-          destination: screen-recordings
+          destination: test-recordings
+      
+      # Сохраняем отчеты Allure
+      - store_artifacts:
+          path: allure-results
+          destination: allure-results
 
 workflows:
   version: 2

@@ -54,36 +54,33 @@ def ensure_dependencies():
 
 def start_screen_recording(output_path):
     """
-    Начинает запись экрана с помощью ffmpeg.
+    Запускает запись экрана с помощью ffmpeg
     """
     if sys.platform == "darwin":  # MacOS
-        command = [
-            'ffmpeg',
-            '-f', 'avfoundation',
-            '-i', '1:none',  # Захват экрана без звука
-            '-r', '30',  # Частота кадров
-            '-preset', 'ultrafast',
-            '-y',  # Перезаписывать файл если существует
-            output_path
+        cmd = [
+            "ffmpeg", "-f", "avfoundation",
+            "-i", "1:none",  # захват экрана без звука
+            "-vcodec", "libx264",
+            "-preset", "ultrafast",
+            "-pix_fmt", "yuv420p",  # для совместимости с большинством плееров
+            "-y",  # перезаписывать файл если существует
+            f"{output_path}.mp4"
         ]
-    else:  # Linux (включая CI окружение)
-        display = os.environ.get('DISPLAY', ':0.0')
-        command = [
-            'ffmpeg',
-            '-f', 'x11grab',
-            '-video_size', '1920x1080',
-            '-i', display,
-            '-r', '30',
-            '-preset', 'ultrafast',
-            '-y',
-            output_path
+    else:  # Linux
+        display = os.getenv("DISPLAY", ":0.0")
+        cmd = [
+            "ffmpeg", "-f", "x11grab",
+            "-video_size", "1920x1080",
+            "-i", display,
+            "-vcodec", "libx264",
+            "-preset", "ultrafast",
+            "-pix_fmt", "yuv420p",
+            "-y",
+            f"{output_path}.mp4"
         ]
     
-    # Добавляем информацию о записи
-    print(f"\nНачинаем запись экрана в файл: {output_path}")
-    print(f"Используемая команда: {' '.join(command)}")
-    
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print(f"Запуск записи экрана. Команда: {' '.join(cmd)}")
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return process
 
 def stop_screen_recording(process):
@@ -109,18 +106,17 @@ def stop_screen_recording(process):
 @pytest.fixture(scope="function")
 def screen_recorder(request):
     """
-    Фикстура для автоматической записи экрана во время теста.
+    Фикстура для записи видео теста
     """
-    # Создаем директорию для видео если её нет
-    video_dir = os.path.join(os.getcwd(), "test_videos")
-    os.makedirs(video_dir, exist_ok=True)
+    # Создаем директорию если не существует
+    os.makedirs("test_videos", exist_ok=True)
     
-    # Генерируем имя файла на основе имени теста и времени
+    # Генерируем имя файла на основе имени теста
     test_name = request.node.name
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    video_path = os.path.join(video_dir, f"{test_name}_{timestamp}.mp4")
+    video_path = os.path.join("test_videos", f"{test_name}_{timestamp}")
     
-    # Начинаем запись
+    # Запускаем запись
     recording_process = start_screen_recording(video_path)
     
     yield
@@ -128,13 +124,17 @@ def screen_recorder(request):
     # Останавливаем запись
     stop_screen_recording(recording_process)
     
-    # Прикрепляем видео к отчету Allure
-    if os.path.exists(video_path):
+    # Проверяем, что файл создан
+    video_file = f"{video_path}.mp4"
+    if os.path.exists(video_file):
+        print(f"Видео записано успешно: {video_file}")
         allure.attach.file(
-            video_path,
-            name=f"screen_recording_{test_name}",
+            video_file,
+            name=f"{test_name}_recording.mp4",
             attachment_type=allure.attachment_type.MP4
         )
+    else:
+        print(f"Ошибка: видео не было создано: {video_file}")
 
 def download_video():
     """
