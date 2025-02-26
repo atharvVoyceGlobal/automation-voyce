@@ -6,86 +6,56 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/python:3.11-browsers
-        environment:
-          PYTHONPATH: /home/circleci/project
+      - image: cimg/python:3.9-browsers
+    environment:
+      DISPLAY: ':99'
     steps:
       - checkout
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
       
-      # Кэширование зависимостей
-      - restore_cache:
-          keys:
-            - v1-deps-{{ .Branch }}-{{ checksum "requirements.txt" }}
-            - v1-deps-{{ .Branch }}
-            - v1-deps
-      
+      # Установка системных зависимостей
       - run:
-          name: Create and Activate Virtual Environment
+          name: Установка системных зависимостей
           command: |
-            python -m venv venv
-            echo 'source venv/bin/activate' >> $BASH_ENV
-            source $BASH_ENV
+            sudo apt-get update
+            sudo apt-get install -y xvfb ffmpeg libgconf-2-4 python3-xvfbwrapper
       
+      # Установка Python зависимостей
       - run:
-          name: Install Dependencies
+          name: Установка Python зависимостей
           command: |
             python -m pip install --upgrade pip
-            pip install -r requirements.txt
-            npm install -g @puppeteer/browsers
+            pip install pytest selenium allure-pytest requests pyvirtualdisplay
       
-      # Сохраняем кэш зависимостей
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-deps-{{ .Branch }}-{{ checksum "requirements.txt" }}
-      
+      # Создание директорий для результатов
       - run:
-          name: Create Directories
+          name: Создание директорий для результатов
           command: |
-            mkdir -p allure-results
-            mkdir -p test_results
-            mkdir -p chrome_installation
+            mkdir -p test-results/pytest
+            mkdir -p test-videos
+            mkdir -p test-screenshots
       
+      # Запуск тестов с записью видео
       - run:
-          name: Download Test Video
+          name: Запуск тестов
           command: |
-            python -c "
-            import requests, os
-            video_url = 'https://drive.usercontent.google.com/u/0/uc?id=1Rv3Qitap2wANEx0I-7NLvSp1cEQlE6_K&export=download'
-            video_path = os.path.join(os.getcwd(), 'output.y4m')
-            if not os.path.exists(video_path):
-                print('Downloading video...')
-                response = requests.get(video_url, stream=True)
-                response.raise_for_status()
-                with open(video_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                print('Video downloaded successfully')
-            else:
-                print('Video file already exists')"
-
-      - run:
-          name: Run Tests
-          command: |
-            pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
+            # Запускаем Xvfb
+            Xvfb :99 -screen 0 1920x1080x24 &
+            sleep 2
+            
+            # Запускаем тесты с переменной CI=true
+            CI=true pytest sqs_kafka_listener.py -v
       
+      # Сохранение результатов тестов
       - store_test_results:
-          path: test_results
+          path: test-results
       
+      # Сохранение артефактов (видео, скриншоты)
       - store_artifacts:
-          path: allure-results
-          destination: allure-results
-      
+          path: test-videos
+          destination: test-videos
       - store_artifacts:
-          path: test_results
-          destination: test_results
-      
-      # Сохраняем видео как артефакт
-      - store_artifacts:
-          path: output.y4m
-          destination: test-video
+          path: test-screenshots
+          destination: test-screenshots
 
 workflows:
   version: 2
