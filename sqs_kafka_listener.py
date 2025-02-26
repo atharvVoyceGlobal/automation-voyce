@@ -20,105 +20,6 @@ def ensure_dependencies():
         print(f"Ошибка при установке зависимостей: {e}")
         raise
 
-def wait_for_real_visibility(driver, element, timeout=10):
-    """Ждет реальной видимости элемента"""
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if element.is_displayed() and element.is_enabled():
-            rect = driver.execute_script("""
-                const rect = arguments[0].getBoundingClientRect();
-                return {
-                    top: rect.top,
-                    left: rect.left,
-                    width: rect.width,
-                    height: rect.height
-                };
-            """, element)
-            if rect['width'] > 0 and rect['height'] > 0:
-                return True
-        time.sleep(0.5)
-    return False
-
-def remove_overlays(driver):
-    """Удаляет перекрывающие элементы"""
-    driver.execute_script("""
-        const overlays = document.querySelectorAll('div[class*="overlay"], div[class*="modal"], div[class*="popup"]');
-        overlays.forEach(overlay => {
-            if (overlay.style.display !== 'none') {
-                overlay.style.display = 'none';
-            }
-        });
-        document.documentElement.style.pointerEvents = 'auto';
-        document.documentElement.style.zIndex = 'auto';
-    """)
-
-def safe_click(driver, element, name="element"):
-    """Улучшенная версия безопасного клика"""
-    try:
-        # Ждем реальной видимости элемента
-        if not wait_for_real_visibility(driver, element):
-            print(f"Element {name} is not truly visible")
-            return False
-            
-        # Удаляем перекрывающие элементы
-        remove_overlays(driver)
-        
-        # Прокручиваем к элементу и делаем его видимым
-        driver.execute_script("""
-            arguments[0].scrollIntoView({behavior: 'instant', block: 'center'});
-            arguments[0].style.opacity = '1';
-            arguments[0].style.visibility = 'visible';
-            arguments[0].style.display = 'block';
-        """, element)
-        
-        time.sleep(1)  # Даем время на прокрутку
-        
-        # Пробуем клик через JavaScript с принудительным фокусом
-        try:
-            driver.execute_script("""
-                arguments[0].focus();
-                arguments[0].click();
-            """, element)
-            return True
-        except:
-            # Если не получилось, пробуем через ActionChains с разными смещениями
-            try:
-                actions = ActionChains(driver)
-                actions.move_to_element(element)
-                actions.pause(0.5)  # Пауза для стабильности
-                actions.click()
-                actions.perform()
-                return True
-            except:
-                # Последняя попытка - эмуляция клика мышью
-                try:
-                    driver.execute_script("""
-                        function simulateClick(element) {
-                            const rect = element.getBoundingClientRect();
-                            const x = rect.left + rect.width / 2;
-                            const y = rect.top + rect.height / 2;
-                            
-                            ['mousedown', 'mouseup', 'click'].forEach(eventType => {
-                                const event = new MouseEvent(eventType, {
-                                    view: window,
-                                    bubbles: true,
-                                    cancelable: true,
-                                    clientX: x,
-                                    clientY: y
-                                });
-                                element.dispatchEvent(event);
-                            });
-                        }
-                        simulateClick(arguments[0]);
-                    """, element)
-                    return True
-                except Exception as e:
-                    print(f"All click attempts failed for {name}: {e}")
-                    return False
-    except Exception as e:
-        print(f"Error in safe_click for {name}: {e}")
-        return False
-
 # Вызываем функцию для проверки и установки зависимостей
 ensure_dependencies()
 
@@ -1401,40 +1302,6 @@ def test_video_call_activation(driver):
         status_select = WebDriverWait(fifth_agent_driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//select[@data-testid='status']"))
         )
-        if not safe_click(fifth_agent_driver, status_select, "status select"):
-            # Если все способы клика не сработали, пробуем альтернативный подход
-            fifth_agent_driver.execute_script("""
-                const select = document.querySelector('select[data-testid="status"]');
-                const event = new MouseEvent('mousedown', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                });
-                select.dispatchEvent(event);
-            """)
-        time.sleep(2)
-        
-        # Сохраняем скриншот и HTML до клика
-        fifth_agent_driver.save_screenshot("before_status_click.png")
-        with open("before_status_click.html", "w", encoding="utf-8") as f:
-            f.write(fifth_agent_driver.page_source)
-        print("Saved diagnostic files before status click")
-        
-        # Проверяем перекрывающие элементы
-        element_info = fifth_agent_driver.execute_script("""
-            const el = document.querySelector('select[data-testid="status"]');
-            if (!el) return 'Element not found';
-            const rect = el.getBoundingClientRect();
-            const x = rect.left + rect.width/2;
-            const y = rect.top + rect.height/2;
-            const covering = document.elementFromPoint(x, y);
-            return {
-                target: { tag: el.tagName, class: el.className },
-                covering: covering ? { tag: covering.tagName, class: covering.className } : null
-            };
-        """)
-        print("Element info:", element_info)
-        
         status_select.click()
         time.sleep(2)
         print("Status select opened")
@@ -1664,53 +1531,28 @@ def test_video_call_activation(driver):
         attempt += 1
         print(f"\nAttempt {attempt} of {max_attempts}")
         try:
-            # Сохраняем скриншот и HTML до поиска элемента
-            screenshot_path = f"video_check_attempt_{attempt}.png"
-            driver.save_screenshot(screenshot_path)
-            print(f"Screenshot saved: {screenshot_path}")
-            
-            # Сохраняем HTML код страницы
-            html_path = f"page_source_attempt_{attempt}.html"
-            with open(html_path, "w", encoding="utf-8") as f:
-                f.write(driver.page_source)
-            print(f"Page source saved: {html_path}")
-            
-            # Выводим текущий URL
-            print(f"Current URL: {driver.current_url}")
-            
             user_id_element = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located(
                     (By.XPATH, "//div[contains(@class, 'HS2uzLU4rZSTbb8ktGRx')]//span[contains(text(), '8944PA00006')]")
                 )
             )
             print(f"User ID found: {user_id_element.text}")
-            
-            # Добавляем подробную информацию о состоянии видео
-            video_state = driver.execute_script("""
+            video_active = driver.execute_script("""
                 const video = document.querySelector('video');
                 if (!video) {
-                    return {
-                        found: false,
-                        error: 'Video element not found'
-                    };
+                    console.log('Video element not found');
+                    return false;
                 }
-                return {
-                    found: true,
+                console.log('Video state:', {
                     paused: video.paused,
                     ended: video.ended,
                     readyState: video.readyState,
                     currentTime: video.currentTime,
                     videoWidth: video.videoWidth,
-                    videoHeight: video.videoHeight,
-                    networkState: video.networkState,
-                    error: video.error ? video.error.code : null,
-                    srcObject: video.srcObject ? 'present' : 'absent'
-                };
+                    videoHeight: video.videoHeight
+                });
+                return !video.paused && !video.ended && video.readyState >= 2;
             """)
-            print("Video state:", video_state)
-            
-            video_active = video_state.get('found', False) and not video_state.get('paused', True) and not video_state.get('ended', True) and video_state.get('readyState', 0) >= 2
-            
             if video_active:
                 print("✅ Video successfully activated!")
                 break
@@ -1719,7 +1561,6 @@ def test_video_call_activation(driver):
                 time.sleep(5)
         except Exception as e:
             print(f"Error during check: {str(e)}")
-            print("Stack trace:", e.__traceback__)
             time.sleep(5)
 
     time.sleep(5)
@@ -1796,31 +1637,23 @@ def test_video_call_activation(driver):
         leave_call_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, '//*[contains(@class, "_LKm8iHTwJx1Jox10NmL") and @data-testid="testid-call-end-btn"]'))
         )
-        if not safe_click(driver, leave_call_button, "leave call button"):
-            print("Failed to click leave call button after all attempts")
-            driver.save_screenshot("failed_leave_call_click.png")
+        print("1Leave Call button is clickable. Clicking on it...")
+        ActionChains(driver).move_to_element(leave_call_button).click().perform()
+        time.sleep(2)
     except Exception as e:
-        print("Error with leave call button:", e)
+        print("Error clicking the Leave Call button1:", e)
 
     try:
-        skip_button = WebDriverWait(driver, 20).until(
+        leave_call_button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//button[text()='Skip']"))
         )
-        if not safe_click(driver, skip_button, "skip button"):
-            print("Failed to click skip button after all attempts")
-            driver.save_screenshot("failed_skip_click.png")
+        print("Operator button is clickable. Clicking on it...")
+        ActionChains(driver).move_to_element(leave_call_button).click().perform()
+        time.sleep(2)
     except Exception as e:
-        print("Error with skip button:", e)
+        print("Error Skip button:", e)
 
-    try:
-        operator_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, '//button[span[text()="Operator"]]'))
-        )
-        if not safe_click(driver, operator_button, "operator button"):
-            print("Failed to click operator button after all attempts")
-            driver.save_screenshot("failed_operator_click.png")
-    except Exception as e:
-        print("Error with operator button:", e)
+    time.sleep(60)
 
 
 
