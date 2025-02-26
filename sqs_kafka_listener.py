@@ -94,10 +94,26 @@ def install_browser_and_driver():
             raise Exception("Could not determine Chrome version from installation output")
         chrome_version = version_match.group(1)
 
-        chrome_binary_path = os.path.join(
-            installation_path, "chrome", f"mac_arm-{chrome_version}",
-            "chrome-mac-arm64", "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing"
-        )
+        # Определяем операционную систему
+        import platform
+        system = platform.system().lower()
+        
+        if system == "darwin":
+            # Mac OS X path
+            chrome_binary_path = os.path.join(
+                installation_path, "chrome", f"mac_arm-{chrome_version}",
+                "chrome-mac-arm64", "Google Chrome for Testing.app", 
+                "Contents", "MacOS", "Google Chrome for Testing"
+            )
+        elif system == "linux":
+            # Linux path
+            chrome_binary_path = os.path.join(
+                installation_path, "chrome", f"linux-{chrome_version}",
+                "chrome-linux64", "chrome"
+            )
+        else:
+            raise OSError(f"Unsupported operating system: {system}")
+
         if not os.path.exists(chrome_binary_path):
             raise FileNotFoundError(f"Chrome binary not found at {chrome_binary_path}")
         print(f"Chrome binary found at: {chrome_binary_path}")
@@ -112,8 +128,18 @@ def install_browser_and_driver():
             check=True
         )
         print("ChromeDriver installed successfully!")
-        chromedriver_path = os.path.join(installation_path, "chromedriver", f"mac_arm-{chrome_version}",
-                                          "chromedriver-mac-arm64", "chromedriver")
+
+        if system == "darwin":
+            chromedriver_path = os.path.join(
+                installation_path, "chromedriver", f"mac_arm-{chrome_version}",
+                "chromedriver-mac-arm64", "chromedriver"
+            )
+        elif system == "linux":
+            chromedriver_path = os.path.join(
+                installation_path, "chromedriver", f"linux-{chrome_version}",
+                "chromedriver-linux64", "chromedriver"
+            )
+
         if not os.path.exists(chromedriver_path):
             raise FileNotFoundError(f"ChromeDriver not found at {chromedriver_path}")
         return chrome_binary_path, chromedriver_path
