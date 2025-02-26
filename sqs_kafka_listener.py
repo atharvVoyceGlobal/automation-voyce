@@ -21,92 +21,33 @@ def ensure_dependencies():
         raise
 
 def safe_click(driver, element, name="element"):
-    """Безопасный клик по элементу с несколькими попытками"""
+    """Безопасный клик по элементу с обходом перехвата кликов"""
     try:
-        # Сначала пробуем прокрутить к элементу
-        driver.execute_script("arguments[0].scrollIntoView(true);", element)
-        time.sleep(1)
+        # Исправляем HTML элемент
+        driver.execute_script("document.documentElement.style.pointerEvents = 'auto';")
         
-        # Сохраняем скриншот до попытки клика
-        driver.save_screenshot(f"before_{name}_click.png")
-        
-        # Получаем информацию о перекрывающих элементах
-        element_info = driver.execute_script("""
-            const element = arguments[0];
-            const rect = element.getBoundingClientRect();
-            const x = rect.left + rect.width/2;
-            const y = rect.top + rect.height/2;
-            const elements = document.elementsFromPoint(x, y);
-            return {
-                target: {
-                    tag: element.tagName,
-                    class: element.className,
-                    visible: element.offsetParent !== null,
-                    rect: rect.toJSON()
-                },
-                covering: elements.slice(0, 5).map(el => ({
-                    tag: el.tagName,
-                    class: el.className,
-                    id: el.id,
-                    zIndex: window.getComputedStyle(el).zIndex
-                }))
-            };
-        """, element)
-        print(f"{name} click diagnostics:", element_info)
-        
-        # Пробуем удалить перекрывающие элементы
-        driver.execute_script("""
-            const element = arguments[0];
-            const rect = element.getBoundingClientRect();
-            const elements = document.elementsFromPoint(
-                rect.left + rect.width/2,
-                rect.top + rect.height/2
-            );
-            for (const el of elements) {
-                if (el !== element && el.style) {
-                    el.style.pointerEvents = 'none';
-                    el.style.zIndex = '-1';
-                }
-            }
-        """, element)
-        
-        # Пробуем разные способы клика
+        # Пробуем разные методы клика
         try:
-            print(f"Attempting standard click on {name}...")
             element.click()
             return True
-        except Exception as e:
-            print(f"Standard click failed on {name}: {e}")
+        except:
             try:
-                print(f"Attempting JavaScript click on {name}...")
-                driver.execute_script("arguments[0].click();", element)
+                driver.execute_script("""
+                    arguments[0].style.zIndex = '999999';
+                    document.elementsFromPoint(arguments[1], arguments[2])
+                        .forEach(el => el !== arguments[0] && (el.style.pointerEvents = 'none'));
+                    arguments[0].click();
+                """, element, element.location['x'], element.location['y'])
                 return True
-            except Exception as js_e:
-                print(f"JavaScript click failed on {name}: {js_e}")
+            except:
                 try:
-                    print(f"Attempting Actions click on {name}...")
-                    ActionChains(driver).move_to_element(element).click().perform()
+                    ActionChains(driver).move_to_element_with_offset(element, 1, 1).click().perform()
                     return True
-                except Exception as action_e:
-                    print(f"Actions click failed on {name}: {action_e}")
-                    # Последняя попытка - эмуляция клика через dispatchEvent
-                    try:
-                        print(f"Attempting event dispatch on {name}...")
-                        driver.execute_script("""
-                            const element = arguments[0];
-                            const event = new MouseEvent('click', {
-                                view: window,
-                                bubbles: true,
-                                cancelable: true
-                            });
-                            element.dispatchEvent(event);
-                        """, element)
-                        return True
-                    except Exception as dispatch_e:
-                        print(f"Event dispatch failed on {name}: {dispatch_e}")
-                        return False
+                except:
+                    driver.execute_script("arguments[0].dispatchEvent(new MouseEvent('click', {bubbles: true}))", element)
+                    return True
     except Exception as e:
-        print(f"Error during safe click on {name}: {e}")
+        print(f"Failed to click {name}: {e}")
         return False
 
 # Вызываем функцию для проверки и установки зависимостей
