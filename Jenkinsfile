@@ -33,6 +33,16 @@ pipeline {
                         # Добавляем brew в PATH если его там нет
                         eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
                         
+                        # Устанавливаем Node.js и npm
+                        brew list node || brew install node
+                        
+                        # Проверяем установку Node.js и npm
+                        node --version
+                        npm --version
+                        
+                        # Устанавливаем глобально npx если его нет
+                        npm install -g npx
+                        
                         # Устанавливаем Python и другие зависимости
                         brew list python@3.11 || brew install python@3.11
                         brew list ffmpeg || brew install ffmpeg
@@ -65,9 +75,10 @@ pipeline {
                             mkdir -p test_videos
                         '''
 
-                        // Запускаем тесты
+                        // Запускаем тесты с экспортом всех необходимых переменных окружения
                         sh """
                             export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
+                            export NODE_PATH="/opt/homebrew/lib/node_modules"
                             source ${VENV_PATH}/bin/activate
                             pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
                         """
