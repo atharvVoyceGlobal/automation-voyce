@@ -1,18 +1,13 @@
 version: 2.1
 
-orbs:
-  browser-tools: circleci/browser-tools@1.4.6
-
 jobs:
   test:
     docker:
-      - image: cimg/python:3.11-browsers
+      - image: cimg/python:3.11
         environment:
           PYTHONPATH: /home/circleci/project
     steps:
       - checkout
-      - browser-tools/install-chrome
-      - browser-tools/install-chromedriver
       
       # Кэширование зависимостей
       - restore_cache:
@@ -32,31 +27,13 @@ jobs:
           name: Install Dependencies
           command: |
             # Обновляем систему и устанавливаем базовые зависимости
-            sudo rm -rf /var/lib/apt/lists/*
-            sudo apt-get clean
             sudo apt-get update -y
-            sudo apt-get install -y ffmpeg xvfb wget gnupg curl
-
-            # Добавляем актуальный ключ Google Chrome
-            curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
-            
-            # Добавляем репозиторий Chrome с использованием нового формата
-            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-            
-            # Обновляем индексы и устанавливаем Chrome
-            sudo apt-get update -y
-            sudo apt-get install -y google-chrome-stable
+            sudo apt-get install -y ffmpeg xvfb wget
 
             # Устанавливаем Python зависимости
             python -m pip install --upgrade pip
             pip install -r requirements.txt
 
-            # Устанавливаем Node.js зависимости
-            npm install -g @puppeteer/browsers
-
-            # Проверяем установку Chrome
-            google-chrome --version || echo "Chrome не установлен"
-            
             # Проверяем установку ffmpeg
             ffmpeg -version || echo "ffmpeg не установлен"
             
@@ -74,7 +51,6 @@ jobs:
           command: |
             mkdir -p allure-results
             mkdir -p test_results
-            mkdir -p chrome_installation
             mkdir -p test_videos
       
       - run:
@@ -100,16 +76,9 @@ jobs:
           command: |
             echo "=== Проверка установленных компонентов ==="
             
-            echo -e "\n=== Chrome ==="
-            if google-chrome --version; then
-              echo "Chrome установлен успешно"
-            else
-              echo "ОШИБКА: Chrome не установлен"
-              exit 1
-            fi
-            
             echo -e "\n=== ffmpeg ==="
-            if ffmpeg -version; then
+            if command -v ffmpeg >/dev/null 2>&1; then
+              ffmpeg -version | head -n 1
               echo "ffmpeg установлен успешно"
             else
               echo "ОШИБКА: ffmpeg не установлен"
@@ -117,9 +86,8 @@ jobs:
             fi
             
             echo -e "\n=== Xvfb ==="
-            if which Xvfb; then
+            if command -v Xvfb >/dev/null 2>&1; then
               echo "Xvfb установлен успешно"
-              # Проверяем возможность запуска Xvfb
               Xvfb -help >/dev/null 2>&1 && echo "Xvfb работает корректно"
             else
               echo "ОШИБКА: Xvfb не установлен"
