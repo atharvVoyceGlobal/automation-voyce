@@ -107,7 +107,7 @@ pipeline {
                         sh '''
                             export PATH=/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
                             export NODE_PATH=/opt/homebrew/lib/node_modules
-                            export PYTHONPATH=$PYTHONPATH:${WORKSPACE}
+                            export PYTHONPATH="${WORKSPACE}:${PYTHONPATH:-}"
                             source venv/bin/activate
                             
                             echo "=== Python Test Environment ==="
@@ -115,10 +115,12 @@ pipeline {
                             echo "Python version: $(python --version)"
                             echo "PYTHONPATH: $PYTHONPATH"
                             echo "Working directory: $(pwd)"
+                            echo "Directory contents:"
+                            ls -la
                             
                             npm install -g @puppeteer/browsers
                             python -c "import sys; print('Python sys.path:', sys.path)"
-                            pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
+                            PYTHONPATH="${WORKSPACE}" pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
                         '''
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
