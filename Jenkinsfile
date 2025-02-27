@@ -36,6 +36,25 @@ pipeline {
             }
         }
 
+        stage('Create env.py') {
+            steps {
+                script {
+                    writeFile file: 'env.py', text: """import os
+
+class EV:
+    AGENT_URL = os.environ.get('AGENT_URL', '')
+    CUSTOMER_URL = os.environ.get('CUSTOMER_URL', '')
+    AGENT_LOGIN = os.environ.get('AGENT_LOGIN', '')
+    AGENT_PASSWORD = os.environ.get('AGENT_PASSWORD', '')
+    AGENT_ALT_LOGIN = os.environ.get('AGENT_ALT_LOGIN', '')
+    OPERATOR_LOGIN = os.environ.get('OPERATOR_LOGIN', '')
+    AGENT_ALT_PASSWORD = os.environ.get('AGENT_ALT_PASSWORD', '')
+    OPERATOR_PASSWORD = os.environ.get('OPERATOR_PASSWORD', '')
+    CUSTOMER_LOGIN = os.environ.get('CUSTOMER_LOGIN', '')"""
+                }
+            }
+        }
+
         stage('Setup Environment') {
             steps {
                 script {
