@@ -5,103 +5,68 @@ pipeline {
         PYTHON_VERSION = '3.11'
         DISPLAY = ':0'
         HOME = "${env.WORKSPACE}"
+        CHROME_VERSION = '122.0.6261.69'  // Последняя стабильная версия Chrome
+        WORKSPACE_DIR = "${env.WORKSPACE}"
     }
     
     stages {
         stage('Проверка файлов') {
             steps {
-                sh '''
-                    echo "Текущая директория:"
-                    pwd
-                    echo "Содержимое директории:"
-                    ls -la
-                    
-                    # Создаем requirements.txt если его нет
-                    if [ ! -f requirements.txt ]; then
-                        echo "Создаем requirements.txt"
-                        cat > requirements.txt << EOL
-selenium==4.18.1
-pytest==8.0.0
-pytest-html==4.1.1
-allure-pytest==2.13.2
-requests==2.31.0
-allure-python-commons==2.13.2
-pytest-xdist==3.5.0
-pytest-timeout==2.2.0
-pytest-rerunfailures==13.0
-opencv-python==4.9.0.80
-pillow==10.2.0
-psutil==5.9.8
-webdriver-manager==4.0.1
-pytest-selenium==4.1.0
-EOL
-                    fi
-                '''
+                echo "Проверка наличия необходимых файлов..."
+                sh 'ls -la'
             }
         }
         
         stage('Подготовка окружения') {
             steps {
-                sh '''
-                    # Установка nvm
-                    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-                    
-                    # Загружаем nvm
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
-                    
-                    # Устанавливаем Node.js
-                    . "$NVM_DIR/nvm.sh" && nvm install node
-                    . "$NVM_DIR/nvm.sh" && nvm use node
-                    
-                    # Проверяем версии
-                    node --version || true
-                    npm --version || true
-                    
-                    # Установка Python и создание виртуального окружения
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    
-                    # Установка Python зависимостей
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
-                '''
+                script {
+                    // Создаем директорию для Chrome и ChromeDriver
+                    sh '''
+                        mkdir -p chrome_installation
+                        cd chrome_installation
+                        
+                        # Скачиваем Chrome для Mac ARM
+                        echo "Downloading Chrome..."
+                        curl -o chrome.dmg https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg
+                        
+                        # Монтируем DMG и копируем приложение
+                        hdiutil attach chrome.dmg
+                        cp -R "/Volumes/Google Chrome/Google Chrome.app" .
+                        hdiutil detach "/Volumes/Google Chrome"
+                        
+                        # Скачиваем ChromeDriver
+                        echo "Downloading ChromeDriver..."
+                        curl -LO "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROME_VERSION}/mac-arm64/chromedriver-mac-arm64.zip"
+                        unzip chromedriver-mac-arm64.zip
+                        
+                        # Создаем файл с путями
+                        echo "CHROME_PATH=${WORKSPACE_DIR}/chrome_installation/Google Chrome.app/Contents/MacOS/Google Chrome" > ../chrome_paths.txt
+                        echo "CHROMEDRIVER_PATH=${WORKSPACE_DIR}/chrome_installation/chromedriver-mac-arm64/chromedriver" >> ../chrome_paths.txt
+                        
+                        # Делаем ChromeDriver исполняемым
+                        chmod +x "chromedriver-mac-arm64/chromedriver"
+                    '''
+                }
             }
         }
         
         stage('Скачивание тестового видео') {
             steps {
+                echo "Скачивание тестового видео..."
                 sh '''
-                    . venv/bin/activate
-                    python -c "
-import requests, os
-video_url = 'https://drive.usercontent.google.com/u/0/uc?id=1Rv3Qitap2wANEx0I-7NLvSp1cEQlE6_K&export=download'
-video_path = os.path.join(os.getcwd(), 'output.y4m')
-if not os.path.exists(video_path):
-    print('Downloading video...')
-    response = requests.get(video_url, stream=True)
-    response.raise_for_status()
-    with open(video_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
-    print('Video downloaded successfully')
-else:
-    print('Video file already exists')"
+                    mkdir -p test_files
+                    cd test_files
+                    curl -L -o test_video.mp4 "https://www.dropbox.com/scl/fi/2unbqg3cpqd1yvpom76ir/test_video.mp4?rlkey=v8c9round5f4xtb5aqwcq5qqv7&dl=1"
                 '''
             }
         }
         
         stage('Запуск тестов') {
             steps {
+                echo "Запуск тестов..."
                 sh '''
-                    . venv/bin/activate
-                    
-                    # Создаем директории для результатов
-                    mkdir -p allure-results test_results test_videos
-                    
-                    # Запускаем тесты в headless режиме
-                    pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
+                    python3 -m pip install -r requirements.txt
+                    python3 -m pytest test_sqs_kafka_listener.py -v
                 '''
             }
         }
@@ -109,6 +74,9 @@ else:
     
     post {
         always {
+            echo "Очистка..."
+            cleanWs()
+            
             // Сохраняем результаты тестов и видео
             archiveArtifacts artifacts: 'test_videos/**, allure-results/**, test_results/**', allowEmptyArchive: true
             
