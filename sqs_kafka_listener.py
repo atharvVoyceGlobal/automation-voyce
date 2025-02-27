@@ -181,28 +181,85 @@ def download_video():
         raise
 
 def install_browser_and_driver():
-    """Устанавливает Chrome и ChromeDriver."""
-    print("Installing Chrome...")
-    
-    # Читаем пути из файла
-    with open('chrome_paths.txt', 'r') as f:
-        paths = dict(line.strip().split('=') for line in f)
-    
-    chrome_path = paths['CHROME_PATH']
-    chromedriver_path = paths['CHROMEDRIVER_PATH']
-    
-    if not os.path.exists(chrome_path):
-        raise FileNotFoundError(f"Chrome not found at {chrome_path}")
-    if not os.path.exists(chromedriver_path):
-        raise FileNotFoundError(f"ChromeDriver not found at {chromedriver_path}")
-    
-    return chrome_path, chromedriver_path
+    installation_path = os.path.join(os.getcwd(), "chrome_installation")
+    os.makedirs(installation_path, exist_ok=True)
+    try:
+        print("Installing Chrome...")
+        result = subprocess.run(
+            ["npx", "@puppeteer/browsers", "install", "chrome@stable", "--path", installation_path],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        print(result.stdout)
+        print("Chrome installed successfully!")
+        
+        # Извлекаем версию Chrome из вывода команды
+        import re
+        version_match = re.search(r'chrome@(\d+\.\d+\.\d+\.\d+)', result.stdout)
+        if not version_match:
+            raise Exception("Could not determine Chrome version from installation output")
+        chrome_version = version_match.group(1)
+
+        # Определяем операционную систему
+        import platform
+        system = platform.system().lower()
+        
+        if system == "darwin":
+            # Mac OS X path
+            chrome_binary_path = os.path.join(
+                installation_path, "chrome", f"mac_arm-{chrome_version}",
+                "chrome-mac-arm64", "Google Chrome for Testing.app", 
+                "Contents", "MacOS", "Google Chrome for Testing"
+            )
+        elif system == "linux":
+            # Linux path
+            chrome_binary_path = os.path.join(
+                installation_path, "chrome", f"linux-{chrome_version}",
+                "chrome-linux64", "chrome"
+            )
+        else:
+            raise OSError(f"Unsupported operating system: {system}")
+
+        if not os.path.exists(chrome_binary_path):
+            raise FileNotFoundError(f"Chrome binary not found at {chrome_binary_path}")
+        print(f"Chrome binary found at: {chrome_binary_path}")
+
+        print("Fetching Chrome version...")
+        version_output = subprocess.run([chrome_binary_path, "--version"], capture_output=True, text=True, check=True)
+        chrome_version = version_output.stdout.strip().split(" ")[-1]
+        print(f"Installed Chrome version: {chrome_version}")
+        print(f"Installing ChromeDriver for version {chrome_version}...")
+        subprocess.run(
+            ["npx", "@puppeteer/browsers", "install", f"chromedriver@{chrome_version}", "--path", installation_path],
+            check=True
+        )
+        print("ChromeDriver installed successfully!")
+
+        if system == "darwin":
+            chromedriver_path = os.path.join(
+                installation_path, "chromedriver", f"mac_arm-{chrome_version}",
+                "chromedriver-mac-arm64", "chromedriver"
+            )
+        elif system == "linux":
+            chromedriver_path = os.path.join(
+                installation_path, "chromedriver", f"linux-{chrome_version}",
+                "chromedriver-linux64", "chromedriver"
+            )
+
+        if not os.path.exists(chromedriver_path):
+            raise FileNotFoundError(f"ChromeDriver not found at {chromedriver_path}")
+        return chrome_binary_path, chromedriver_path
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred during installation: {e}")
+        raise
 
 @pytest.fixture(scope="function")
 def driver():
     chrome_path, chromedriver_path = install_browser_and_driver()
     chrome_options = Options()
     chrome_options.binary_location = chrome_path
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
@@ -247,6 +304,7 @@ def test_video_call_activation(driver, screen_recorder):
             chrome_path, chromedriver_path = install_browser_and_driver()
             options = Options()
             options.binary_location = chrome_path
+            options.add_argument("--disable-gpu")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-dev-shm-usage")
@@ -744,6 +802,7 @@ def test_video_call_activation(driver, screen_recorder):
             chrome_path, chromedriver_path = install_browser_and_driver()
             options = Options()
             options.binary_location = chrome_path
+            options.add_argument("--disable-gpu")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-dev-shm-usage")
@@ -1053,6 +1112,7 @@ def test_video_call_activation(driver, screen_recorder):
             chrome_path, chromedriver_path = install_browser_and_driver()
             options = Options()
             options.binary_location = chrome_path
+            options.add_argument("--disable-gpu")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-dev-shm-usage")
@@ -1327,6 +1387,7 @@ def test_video_call_activation(driver, screen_recorder):
             chrome_path, chromedriver_path = install_browser_and_driver()
             options = Options()
             options.binary_location = chrome_path
+            options.add_argument("--disable-gpu")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-dev-shm-usage")
@@ -1466,6 +1527,7 @@ def test_video_call_activation(driver, screen_recorder):
             chrome_path, chromedriver_path = install_browser_and_driver()
             options = Options()
             options.binary_location = chrome_path
+            options.add_argument("--disable-gpu")
             options.add_argument("--no-sandbox")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-dev-shm-usage")
