@@ -50,7 +50,26 @@ jobs:
           command: |
             # Обновляем систему и устанавливаем базовые зависимости
             sudo apt-get update -y
-            sudo apt-get install -y ffmpeg xvfb wget
+            
+            # Устанавливаем зависимости для Chrome
+            sudo apt-get install -y \
+              ffmpeg \
+              xvfb \
+              wget \
+              libatk1.0-0 \
+              libatk-bridge2.0-0 \
+              libcups2 \
+              libdrm2 \
+              libxkbcommon0 \
+              libxcomposite1 \
+              libxdamage1 \
+              libxfixes3 \
+              libxrandr2 \
+              libgbm1 \
+              libasound2 \
+              libpango-1.0-0 \
+              libcairo2 \
+              libatspi2.0-0
 
             # Устанавливаем Python зависимости
             python -m pip install --upgrade pip
