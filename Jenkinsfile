@@ -36,12 +36,10 @@ pipeline {
                         # Устанавливаем Node.js и npm
                         brew list node || brew install node
                         
-                        # Проверяем установку Node.js и npm
-                        node --version
-                        npm --version
-                        
-                        # Устанавливаем глобально npx если его нет
-                        npm install -g npx
+                        # Проверяем установку Node.js, npm и npx
+                        echo "Node.js version: $(node --version)"
+                        echo "npm version: $(npm --version)"
+                        echo "npx version: $(npx --version)"
                         
                         # Устанавливаем Python и другие зависимости
                         brew list python@3.11 || brew install python@3.11
@@ -80,6 +78,10 @@ pipeline {
                             export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
                             export NODE_PATH="/opt/homebrew/lib/node_modules"
                             source ${VENV_PATH}/bin/activate
+                            
+                            # Устанавливаем @puppeteer/browsers глобально
+                            npm install -g @puppeteer/browsers
+                            
                             pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
                         """
                     } catch (Exception e) {
