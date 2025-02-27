@@ -7,20 +7,19 @@ def ensure_dependencies():
         required = {'selenium', 'pytest', 'allure-pytest', 'requests'}
         installed = {pkg.key for pkg in pkg_resources.working_set}
         missing = required - installed
-        
+
         if missing:
-            print("Обнаружены отсутствующие зависимости:", missing)
-            print("Установка недостающих зависимостей...")
+            print("Missing dependencies found:", missing)
+            print("Installing missing dependencies...")
             import subprocess
             subprocess.check_call(["pip", "install"] + list(missing))
-            print("Зависимости успешно установлены!")
+            print("Dependencies installed successfully!")
         else:
-            print("Все необходимые Python-зависимости уже установлены!")
+            print("All required Python dependencies are already installed!")
     except Exception as e:
-        print(f"Ошибка при установке зависимостей: {e}")
+        print(f"Error installing dependencies: {e}")
         raise
 
-# Вызываем функцию для проверки и установки зависимостей
 ensure_dependencies()
 
 import time
@@ -42,16 +41,16 @@ from env import EV
 
 def download_video():
     """
-    Скачивает тестовое видео для использования в тестах.
+    Downloads test video for use in tests.
     """
     video_url = "https://drive.usercontent.google.com/u/0/uc?id=1Rv3Qitap2wANEx0I-7NLvSp1cEQlE6_K&export=download"
     video_path = os.path.join(os.getcwd(), "output.y4m")
     
     if os.path.exists(video_path):
-        print("Видео файл уже существует, пропускаем скачивание.")
+        print("Video file already exists, skipping download.")
         return video_path
         
-    print("Начинаем скачивание тестового видео...")
+    print("Starting test video download...")
     try:
         response = requests.get(video_url, stream=True)
         response.raise_for_status()
@@ -65,12 +64,12 @@ def download_video():
                 downloaded += len(data)
                 file.write(data)
                 progress = int((downloaded / total_size) * 100)
-                print(f"\rПрогресс скачивания: {progress}%", end='')
+                print(f"\rDownload progress: {progress}%", end='')
                 
-        print("\nВидео успешно скачано!")
+        print("\nVideo downloaded successfully!")
         return video_path
     except Exception as e:
-        print(f"Ошибка при скачивании видео: {e}")
+        print(f"Error downloading video: {e}")
         raise
 
 def install_browser_and_driver():
@@ -86,14 +85,11 @@ def install_browser_and_driver():
         )
         print(result.stdout)
         print("Chrome installed successfully!")
-        
-        # Извлекаем версию Chrome из вывода команды
         import re
         version_match = re.search(r'chrome@(\d+\.\d+\.\d+\.\d+)', result.stdout)
         if not version_match:
             raise Exception("Could not determine Chrome version from installation output")
         chrome_version = version_match.group(1)
-
         chrome_binary_path = os.path.join(
             installation_path, "chrome", f"mac_arm-{chrome_version}",
             "chrome-mac-arm64", "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing"
@@ -101,7 +97,6 @@ def install_browser_and_driver():
         if not os.path.exists(chrome_binary_path):
             raise FileNotFoundError(f"Chrome binary not found at {chrome_binary_path}")
         print(f"Chrome binary found at: {chrome_binary_path}")
-
         print("Fetching Chrome version...")
         version_output = subprocess.run([chrome_binary_path, "--version"], capture_output=True, text=True, check=True)
         chrome_version = version_output.stdout.strip().split(" ")[-1]
@@ -130,7 +125,6 @@ def driver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    # Настройки для виртуальной камеры и live‑трансляции
     chrome_options.add_argument("--use-fake-device-for-media-stream")
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
     video_path = os.path.join(os.getcwd(), "output.y4m")
@@ -148,9 +142,8 @@ def driver():
 @allure.feature("Video Call Testing")
 @allure.story("Checking video call activation via UI with virtual camera, camera & microphone toggle")
 def test_video_call_activation(driver):
-    # Скачиваем видео перед началом теста
     video_path = download_video()
-    print(f"Используем видео файл: {video_path}")
+    print(f"Using video file: {video_path}")
 
     def open_agent_browser():
         from selenium.webdriver.chrome.options import Options
@@ -168,7 +161,7 @@ def test_video_call_activation(driver):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--use-fake-device-for-media-stream")
         options.add_argument("--use-fake-ui-for-media-stream")
-        video_path = download_video()  # Используем скачанное видео
+        video_path = download_video()
         print(f"Using video file for fake camera: {video_path}")
         options.add_argument(f"--use-file-for-fake-video-capture={video_path}")
         options.add_experimental_option("prefs", {
@@ -177,8 +170,6 @@ def test_video_call_activation(driver):
         })
 
         agent_driver = webdriver.Chrome(service=ChromeService(executable_path=chromedriver_path), options=options)
-        
-        # Логин в агентском браузере
         agent_driver.get(EV.AGENT_URL)
         print("Agent browser opened login page")
         email_field = WebDriverWait(agent_driver, 10).until(
@@ -200,7 +191,6 @@ def test_video_call_activation(driver):
         print("Sign in button clicked")
         time.sleep(2)
 
-        # Выбор статуса "Available"
         status_select = WebDriverWait(agent_driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//select[@data-testid='status']"))
         )
@@ -213,16 +203,12 @@ def test_video_call_activation(driver):
         available_option.click()
         time.sleep(1)
         
-        # Клик по зелёному кружку
         green_icon = WebDriverWait(agent_driver, 30).until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "div.flex.justify-center.items-center.rounded-full.mx-auto.ring-2.h-14.w-14.ring-green-500.group-hover\\:bg-green-200.group-focus\\:bg-green-200")
-            )
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.flex.justify-center.items-center.rounded-full.mx-auto.ring-2.h-14.w-14.ring-green-500.group-hover\\:bg-green-200.group-focus\\:bg-green-200"))
         )
         ActionChains(agent_driver).move_to_element(green_icon).click().perform()
         print("Green circle element clicked!")
         
-
         try:
             video_count = agent_driver.execute_script("return document.querySelectorAll('video').length;")
             print("Number of <video> elements on page:", video_count)
@@ -262,8 +248,6 @@ def test_video_call_activation(driver):
         except Exception as e:
             print(f"Error checking video recording: {e}")
 
-        # --- Камера: Toggle camera button (выключение/включение видео) ---
-
         try:
             camera_button = WebDriverWait(agent_driver, 90).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='video-mute-btn']"))
@@ -272,7 +256,6 @@ def test_video_call_activation(driver):
             ActionChains(agent_driver).move_to_element(camera_button).click().perform()
             time.sleep(3)
             
-            # Проверяем текст кнопки после клика: если камера выключена, кнопка должна отображать "Unpause Video"
             button_text_off = camera_button.find_element(By.XPATH, ".//span").text.strip()
             if "Unpause Video" in button_text_off:
                 print("✅ Camera is off. Button shows:", button_text_off)
@@ -283,7 +266,6 @@ def test_video_call_activation(driver):
             ActionChains(agent_driver).move_to_element(camera_button).click().perform()
             time.sleep(3)
             
-            # Проверяем текст кнопки после повторного клика: если камера включена, кнопка должна отображать "Pause Video"
             button_text_on = camera_button.find_element(By.XPATH, ".//span").text.strip()
             if "Pause Video" in button_text_on:
                 print("✅ Camera is on. Button shows:", button_text_on)
@@ -292,22 +274,17 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error during camera toggle test:", e)
 
-
-        # --- Микрофон: Toggle microphone button and check sound state ---
         try:
             mic_button = WebDriverWait(agent_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='audio-mute-btn']"))
             )
-            # Считываем текущее состояние кнопки микрофона
             mic_state_before = mic_button.find_element(By.XPATH, ".//span").text
             print("Current microphone state text:", mic_state_before)
             
-            # Нажимаем кнопку для переключения состояния микрофона
             print("Clicking microphone toggle button to change state.")
             ActionChains(agent_driver).move_to_element(mic_button).click().perform()
             time.sleep(3)
             
-            # Считываем новое состояние кнопки микрофона
             mic_state_after = mic_button.find_element(By.XPATH, ".//span").text
             print("Microphone state text after click:", mic_state_after)
             
@@ -318,7 +295,6 @@ def test_video_call_activation(driver):
             else:
                 print("❌ Microphone state did not change as expected after first click.")
             
-            # Нажимаем кнопку ещё раз, чтобы вернуть исходное состояние
             print("Clicking microphone toggle button again to revert state.")
             ActionChains(agent_driver).move_to_element(mic_button).click().perform()
             time.sleep(3)
@@ -332,14 +308,10 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error during microphone toggle test:", e)
 
-
-
         try:
-            # Находим кнопку звука по заданному XPath
             sound_button = WebDriverWait(agent_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Mute volume']"))
             )
-            # Считываем исходное состояние кнопки по атрибуту class
             initial_class = sound_button.get_attribute("class")
             if "volume-control_muted__cVWPM" in initial_class:
                 print("Sound is initially OFF.")
@@ -348,27 +320,22 @@ def test_video_call_activation(driver):
                 print("Sound is initially ON.")
                 initial_state = "on"
             
-            # Нажимаем кнопку, чтобы переключить состояние звука
             print("Clicking sound toggle button to change state.")
             ActionChains(agent_driver).move_to_element(sound_button).click().perform()
             time.sleep(3)
             
-            # Считываем класс кнопки после клика
             toggled_class = sound_button.get_attribute("class")
             if initial_state == "on":
-                # Если звук был включён, то теперь должен быть выключен (должен появиться класс muted)
                 if "volume-control_muted__cVWPM" in toggled_class:
                     print("✅ Sound is muted after toggle.")
                 else:
                     print("❌ Sound did not mute as expected.")
             else:
-                # Если звук был выключен, то теперь должен быть включён (класс muted отсутствует)
                 if "volume-control_muted__cVWPM" not in toggled_class:
                     print("✅ Sound is unmuted after toggle.")
                 else:
                     print("❌ Sound did not unmute as expected.")
             
-            # Переключаем обратно – возвращаем исходное состояние
             print("Clicking sound toggle button again to revert state.")
             ActionChains(agent_driver).move_to_element(sound_button).click().perform()
             time.sleep(3)
@@ -380,108 +347,93 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error during sound toggle test:", e)
 
-        
         try:
-            print("\n=== Начинаем процесс добавления переводчика ===")
-            print(f"Текущий URL агента: {agent_driver.current_url}")
+            print("\n=== Starting interpreter addition process ===")
+            print(f"Current agent URL: {agent_driver.current_url}")
             
-            # Проверяем все доступные элементы на странице
-            print("\nПроверяем все доступные элементы с data-testid:")
+            print("\nChecking all available elements with data-testid:")
             elements_with_testid = agent_driver.find_elements(By.CSS_SELECTOR, "[data-testid]")
             for elem in elements_with_testid:
-                print(f"Найден элемент с data-testid: {elem.get_attribute('data-testid')}")
+                print(f"Found element with data-testid: {elem.get_attribute('data-testid')}")
             
-            # Шаг 1: Поиск кнопки "Interpreter" с расширенным поиском
-            print("\nИщем кнопку Interpreter...")
-            # Пробуем разные селекторы
+            print("\nSearching for Interpreter button...")
             interpreter_buttons = agent_driver.find_elements(By.XPATH, "//button[contains(@data-testid, 'Interpreter')]")
-            print(f"Найдено кнопок по частичному data-testid: {len(interpreter_buttons)}")
+            print(f"Found {len(interpreter_buttons)} buttons by partial data-testid.")
             
             interpreter_buttons_alt = agent_driver.find_elements(By.XPATH, "//button[contains(., 'Interpreter')]")
-            print(f"Найдено кнопок по тексту: {len(interpreter_buttons_alt)}")
+            print(f"Found {len(interpreter_buttons_alt)} buttons by text.")
             
-
-            
-            # Пытаемся найти кнопку с увеличенным таймаутом
             try:
                 interpreter_button = WebDriverWait(agent_driver, 20).until(
                     EC.presence_of_element_located((By.XPATH, "//button[@data-testid='button-card-header-Interpreter']"))
                 )
-                print("✅ Кнопка Interpreter найдена")
-                print(f"Атрибуты кнопки: {interpreter_button.get_attribute('outerHTML')}")
+                print("✅ Interpreter button found")
+                print(f"Button attributes: {interpreter_button.get_attribute('outerHTML')}")
                 
-                # Проверяем видимость и кликабельность
                 if interpreter_button.is_displayed():
-                    print("Кнопка видима на странице")
+                    print("Button is visible on the page")
                     if interpreter_button.is_enabled():
-                        print("Кнопка активна")
+                        print("Button is active")
                     else:
-                        print("❌ Кнопка неактивна")
+                        print("❌ Button is not active")
                 else:
-                    print("❌ Кнопка НЕ видима на странице")
+                    print("❌ Button is NOT visible on the page")
                 
-                # Пробуем разные способы клика
                 try:
-                    print("Пытаемся кликнуть через стандартный клик...")
+                    print("Trying standard click...")
                     interpreter_button.click()
                 except Exception as click_error:
-                    print(f"Стандартный клик не сработал: {click_error}")
+                    print(f"Standard click failed: {click_error}")
                     try:
-                        print("Пытаемся кликнуть через JavaScript...")
+                        print("Trying JavaScript click...")
                         agent_driver.execute_script("arguments[0].click();", interpreter_button)
                     except Exception as js_error:
-                        print(f"JavaScript клик не сработал: {js_error}")
-                        print("Пытаемся кликнуть через ActionChains...")
+                        print(f"JavaScript click failed: {js_error}")
+                        print("Trying ActionChains click...")
                         ActionChains(agent_driver).move_to_element(interpreter_button).click().perform()
                 
             except Exception as e:
-                print(f"❌ Не удалось найти кнопку Interpreter после 20 секунд ожидания: {e}")
-                print("Пробуем альтернативный поиск...")
+                print(f"❌ Failed to find Interpreter button after 20 seconds: {e}")
+                print("Trying alternative search...")
                 
-                # Пробуем найти по частичному совпадению
                 buttons = agent_driver.find_elements(By.TAG_NAME, "button")
                 for button in buttons:
                     try:
                         if "interpreter" in button.text.lower():
-                            print(f"Найдена кнопка с текстом: {button.text}")
+                            print(f"Found button with text: {button.text}")
                             button.click()
                             break
                     except:
                         continue
             
-            print("Ждем 3 секунды после клика...")
+            print("Waiting 3 seconds after click...")
             time.sleep(3)
 
-            # Шаг 2: Поиск поля ввода языка
-            print("\nИщем поле ввода языка...")
+            print("\nSearching for language input field...")
             input_elements = agent_driver.find_elements(By.XPATH, "(//input[@data-testid='autocomplete-input-languages'])[2]")
-            print(f"Найдено полей ввода языка: {len(input_elements)}")
+            print(f"Found {len(input_elements)} language input fields.")
             
             input_element = WebDriverWait(agent_driver, 15).until(
                 EC.presence_of_element_located((By.XPATH, "(//input[@data-testid='autocomplete-input-languages'])[2]"))
             )
-            print("✅ Поле ввода языка найдено")
+            print("✅ Language input field found")
             
-            # Проверяем видимость и кликабельность
             if input_element.is_displayed():
-                print("Поле ввода видимо на странице")
+                print("Language input field is visible on the page")
             else:
-                print("❌ Поле ввода НЕ видимо на странице")
+                print("❌ Language input field is NOT visible on the page")
             
-            print("Кликаем по полю ввода...")
+            print("Clicking on the input field...")
             ActionChains(agent_driver).move_to_element(input_element).click().perform()
-            print("Ждем 2 секунды после клика...")
+            print("Waiting 2 seconds after click...")
             time.sleep(2)
 
-            # Очистка поля ввода несколькими способами
-            print("\nНачинаем очистку поля ввода...")
+            print("\nStarting input field clearance...")
             current_value = input_element.get_attribute('value')
-            print(f"Текущее значение поля: '{current_value}'")
+            print(f"Current field value: '{current_value}'")
 
-            # Метод 1: Стандартная очистка
             input_element.clear()
             
-            # Метод 2: Очистка через CTRL+A и Delete
             ActionChains(agent_driver).click(input_element)\
                 .key_down(Keys.COMMAND)\
                 .send_keys('a')\
@@ -489,69 +441,60 @@ def test_video_call_activation(driver):
                 .send_keys(Keys.DELETE)\
                 .perform()
             
-            # Метод 3: Посимвольное удаление
             current_value = input_element.get_attribute('value')
             if current_value:
                 for _ in range(len(current_value)):
                     input_element.send_keys(Keys.BACKSPACE)
             
-            # Проверяем результат очистки
             final_value = input_element.get_attribute('value')
-            print(f"Значение поля после очистки: '{final_value}'")
+            print(f"Field value after clearing: '{final_value}'")
             
             if not final_value:
-                print("✅ Поле успешно очищено")
+                print("✅ Field cleared successfully")
             else:
-                print(f"❌ Не удалось полностью очистить поле, осталось: '{final_value}'")
+                print(f"❌ Field not completely cleared, remaining: '{final_value}'")
 
-            # Шаг 3: Ввод текста
-            print("\nВводим текст 'Uzbek'...")
+            print("\nTyping text 'Uzbek'...")
             input_element.send_keys("Uzbek")
-            print("✅ Текст введен")
-            print("Ждем 2 секунды после ввода...")
+            print("✅ Text entered")
+            print("Waiting 2 seconds after typing...")
             time.sleep(2)
             input_element = WebDriverWait(agent_driver, 15).until(
                 EC.presence_of_element_located((By.XPATH, "//div[contains(text(),'Uzbek')]"))
             )
             ActionChains(agent_driver).move_to_element(input_element).click().perform()
 
-            # Шаг 4: Поиск кнопки добавления
-            print("\nИщем кнопку Add Interpreter to call...")
+            print("\nSearching for 'Add Interpreter to call' button...")
             add_buttons = agent_driver.find_elements(By.XPATH, "(//button[@data-testid='button-add-to-call'])[2]")
-            print(f"Найдено кнопок добавления: {len(add_buttons)}")
+            print(f"Found {len(add_buttons)} add buttons.")
             
             add_interpreter_button = WebDriverWait(agent_driver, 15).until(
                 EC.element_to_be_clickable((By.XPATH, "(//button[@data-testid='button-add-to-call'])[2]"))
             )
-            print("✅ Кнопка Add Interpreter найдена и кликабельна")
+            print("✅ 'Add Interpreter' button found and clickable")
             
-            # Пробуем разные способы клика
             try:
-                print("Пытаемся кликнуть через ActionChains...")
+                print("Trying click via ActionChains...")
                 ActionChains(agent_driver).move_to_element(add_interpreter_button).click().perform()
             except Exception as action_error:
-                print(f"ActionChains клик не сработал: {action_error}")
+                print(f"ActionChains click failed: {action_error}")
                 try:
-                    print("Пытаемся кликнуть через JavaScript...")
+                    print("Trying JavaScript click...")
                     agent_driver.execute_script("arguments[0].click();", add_interpreter_button)
                 except Exception as js_error:
-                    print(f"JavaScript клик не сработал: {js_error}")
-                    print("Пытаемся кликнуть через стандартный клик...")
+                    print(f"JavaScript click failed: {js_error}")
+                    print("Trying standard click...")
                     add_interpreter_button.click()
             
-            print("✅ Процесс добавления переводчика завершен")
+            print("✅ Interpreter addition process completed")
             
         except Exception as e:
-            print("\n❌ Ошибка при выполнении шагов:")
-            print(f"Тип ошибки: {type(e).__name__}")
-            print(f"Текст ошибки: {str(e)}")
-            print("\nТекущий URL:", agent_driver.current_url)
-            print("\nИсточник страницы:")
+            print("\n❌ Error during execution of steps:")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error message: {str(e)}")
+            print("\nCurrent URL:", agent_driver.current_url)
+            print("\nPage source snippet:")
             print(agent_driver.page_source[:500] + "...")
-
-
-
-
         try:
             hold_button_2 = WebDriverWait(agent_driver, 90).until(
                 EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Reconnect Call')]"))
@@ -570,35 +513,30 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error clicking hold button 2:", e)
 
-        
         input_elements = agent_driver.find_elements(By.XPATH, "(//input[@type='text' and @data-testid='autocomplete-input-languages'])[1]")
-        print(f"Найдено полей ввода языка: {len(input_elements)}")
+        print(f"Found {len(input_elements)} language input fields.")
         
         input_element = WebDriverWait(agent_driver, 15).until(
             EC.presence_of_element_located((By.XPATH, "(//input[@type='text' and @data-testid='autocomplete-input-languages'])[1]"))
         )
-        print("✅ Поле ввода языка найдено")
+        print("✅ Language input field found")
         
-        # Проверяем видимость и кликабельность
         if input_element.is_displayed():
-            print("Поле ввода видимо на странице")
+            print("Language input field is visible on the page")
         else:
-            print("❌ Поле ввода НЕ видимо на странице")
+            print("❌ Language input field is NOT visible on the page")
         
-        print("Кликаем по полю ввода...")
+        print("Clicking on the input field...")
         ActionChains(agent_driver).move_to_element(input_element).click().perform()
-        print("Ждем 2 секунды после клика...")
+        print("Waiting 2 seconds after click...")
         time.sleep(2)
 
-        # Очистка поля ввода несколькими способами
-        print("\nНачинаем очистку поля ввода...")
+        print("\nStarting input field clearance...")
         current_value = input_element.get_attribute('value')
-        print(f"Текущее значение поля: '{current_value}'")
+        print(f"Current field value: '{current_value}'")
 
-        # Метод 1: Стандартная очистка
         input_element.clear()
         
-        # Метод 2: Очистка через CTRL+A и Delete
         ActionChains(agent_driver).click(input_element)\
             .key_down(Keys.COMMAND)\
             .send_keys('a')\
@@ -606,31 +544,27 @@ def test_video_call_activation(driver):
             .send_keys(Keys.DELETE)\
             .perform()
         
-        # Метод 3: Посимвольное удаление
         current_value = input_element.get_attribute('value')
         if current_value:
             for _ in range(len(current_value)):
                 input_element.send_keys(Keys.BACKSPACE)
         
-        # Проверяем результат очистки
         final_value = input_element.get_attribute('value')
-        print(f"Значение поля после очистки: '{final_value}'")
+        print(f"Field value after clearing: '{final_value}'")
         
         if not final_value:
-            print("✅ Поле успешно очищено")
+            print("✅ Field cleared successfully")
         else:
-            print(f"❌ Не удалось полностью очистить поле, осталось: '{final_value}'")
+            print(f"❌ Field not completely cleared, remaining: '{final_value}'")
 
-        # Шаг 3: Ввод текста
-        print("\nВводим текст 'Operator'...")
+        print("\nTyping text 'Operator'...")
         input_element.send_keys("Operator")
-        print("✅ Текст введен")
+        print("✅ Text entered")
         input_element = WebDriverWait(agent_driver, 15).until(
             EC.presence_of_element_located((By.XPATH, "//div[contains(text(),'OPERATOR')]"))
         )
         ActionChains(agent_driver).move_to_element(input_element).click().perform()
 
-        
         try:
             hold_button_2 = WebDriverWait(agent_driver, 90).until(
                 EC.element_to_be_clickable((By.XPATH, "(//*[contains(text(), 'Transfer')])[1]"))
@@ -640,12 +574,7 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error clicking hold button 2:", e)
 
-
-
         time.sleep(30)
-       
-
-    
 
     def open_agent_browser_alt():
         from selenium.webdriver.chrome.options import Options
@@ -663,7 +592,7 @@ def test_video_call_activation(driver):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--use-fake-device-for-media-stream")
         options.add_argument("--use-fake-ui-for-media-stream")
-        video_path = download_video()  # Используем скачанное видео
+        video_path = download_video()
         print(f"Using video file for fake camera in alt agent: {video_path}")
         options.add_argument(f"--use-file-for-fake-video-capture={video_path}")
         options.add_experimental_option("prefs", {
@@ -705,28 +634,22 @@ def test_video_call_activation(driver):
         available_option.click()
         time.sleep(1)
         
-        # Клик по зелёному кружку
         green_icon = WebDriverWait(agent_alt_driver, 30).until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "div.flex.justify-center.items-center.rounded-full.mx-auto.ring-2.h-14.w-14.ring-green-500.group-hover\\:bg-green-200.group-focus\\:bg-green-200")
-            )
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.flex.justify-center.items-center.rounded-full.mx-auto.ring-2.h-14.w-14.ring-green-500.group-hover\\:bg-green-200.group-focus\\:bg-green-200"))
         )
         ActionChains(agent_alt_driver).move_to_element(green_icon).click().perform()
         print("Green circle element clicked!")
         
-
         try:
             video_count = agent_alt_driver.execute_script("return document.querySelectorAll('video.remote-videos_landscapeVideoElement__KIUeU').length;")
             print("Number of <video> elements on page:", video_count)
         except Exception as e:
             print("Error getting video elements count:", e)
         try:
-            # Получаем верхний видеоэлемент из списка
             remote_video_elem = WebDriverWait(agent_alt_driver, 100).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "video.remote-videos_landscapeVideoElement__KIUeU"))
             )
             print("Video element found:", remote_video_elem)
-            
             video_props = agent_alt_driver.execute_script("""
                 var videos = document.querySelectorAll("video.remote-videos_landscapeVideoElement__KIUeU");
                 if (!videos || videos.length === 0) {
@@ -748,7 +671,6 @@ def test_video_call_activation(driver):
                 };
             """)
             print("Video element properties:", video_props)
-            
             video_active = agent_alt_driver.execute_script("""
                 var videos = document.querySelectorAll("video.remote-videos_landscapeVideoElement__KIUeU");
                 if (!videos || videos.length === 0) {
@@ -769,11 +691,6 @@ def test_video_call_activation(driver):
         except Exception as e:
             print(f"Error checking video recording (agent_alt_driver): {e}")
 
-
-
-
-        # --- Камера: Toggle camera button (выключение/включение видео) ---
-
         try:
             camera_button = WebDriverWait(agent_alt_driver, 60).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='video-mute-btn']"))
@@ -782,7 +699,6 @@ def test_video_call_activation(driver):
             ActionChains(agent_alt_driver).move_to_element(camera_button).click().perform()
             time.sleep(3)
             
-            # Проверяем текст кнопки после клика: если камера выключена, кнопка должна отображать "Unpause Video"
             button_text_off = camera_button.find_element(By.XPATH, ".//span").text.strip()
             if "Unpause Video" in button_text_off:
                 print("✅ Camera is off. Button shows:", button_text_off)
@@ -793,7 +709,6 @@ def test_video_call_activation(driver):
             ActionChains(agent_alt_driver).move_to_element(camera_button).click().perform()
             time.sleep(3)
             
-            # Проверяем текст кнопки после повторного клика: если камера включена, кнопка должна отображать "Pause Video"
             button_text_on = camera_button.find_element(By.XPATH, ".//span").text.strip()
             if "Pause Video" in button_text_on:
                 print("✅ Camera is on. Button shows:", button_text_on)
@@ -802,22 +717,17 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error during camera toggle test:", e)
 
-
-        # --- Микрофон: Toggle microphone button and check sound state ---
         try:
             mic_button = WebDriverWait(agent_alt_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='audio-mute-btn']"))
             )
-            # Считываем текущее состояние кнопки микрофона
             mic_state_before = mic_button.find_element(By.XPATH, ".//span").text
             print("Current microphone state text:", mic_state_before)
             
-            # Нажимаем кнопку для переключения состояния микрофона
             print("Clicking microphone toggle button to change state.")
             ActionChains(agent_alt_driver).move_to_element(mic_button).click().perform()
             time.sleep(3)
             
-            # Считываем новое состояние кнопки микрофона
             mic_state_after = mic_button.find_element(By.XPATH, ".//span").text
             print("Microphone state text after click:", mic_state_after)
             
@@ -828,7 +738,6 @@ def test_video_call_activation(driver):
             else:
                 print("❌ Microphone state did not change as expected after first click.")
             
-            # Нажимаем кнопку ещё раз, чтобы вернуть исходное состояние
             print("Clicking microphone toggle button again to revert state.")
             ActionChains(agent_alt_driver).move_to_element(mic_button).click().perform()
             time.sleep(3)
@@ -842,14 +751,10 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error during microphone toggle test:", e)
 
-
-
         try:
-            # Находим кнопку звука по заданному XPath
             sound_button = WebDriverWait(agent_alt_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Mute volume']"))
             )
-            # Считываем исходное состояние кнопки по атрибуту class
             initial_class = sound_button.get_attribute("class")
             if "volume-control_muted__cVWPM" in initial_class:
                 print("Sound is initially OFF.")
@@ -858,27 +763,22 @@ def test_video_call_activation(driver):
                 print("Sound is initially ON.")
                 initial_state = "on"
             
-            # Нажимаем кнопку, чтобы переключить состояние звука
             print("Clicking sound toggle button to change state.")
             ActionChains(agent_alt_driver).move_to_element(sound_button).click().perform()
             time.sleep(3)
             
-            # Считываем класс кнопки после клика
             toggled_class = sound_button.get_attribute("class")
             if initial_state == "on":
-                # Если звук был включён, то теперь должен быть выключен (должен появиться класс muted)
                 if "volume-control_muted__cVWPM" in toggled_class:
                     print("✅ Sound is muted after toggle.")
                 else:
                     print("❌ Sound did not mute as expected.")
             else:
-                # Если звук был выключен, то теперь должен быть включён (класс muted отсутствует)
                 if "volume-control_muted__cVWPM" not in toggled_class:
                     print("✅ Sound is unmuted after toggle.")
                 else:
                     print("❌ Sound did not unmute as expected.")
             
-            # Переключаем обратно – возвращаем исходное состояние
             print("Clicking sound toggle button again to revert state.")
             ActionChains(agent_alt_driver).move_to_element(sound_button).click().perform()
             time.sleep(3)
@@ -889,8 +789,7 @@ def test_video_call_activation(driver):
                 print("❌ Sound state did not revert as expected.")
         except Exception as e:
             print("Error during sound toggle test:", e)
-
-
+        
         try:
             Participants_button_1 = WebDriverWait(agent_alt_driver, 90).until(
                 EC.element_to_be_clickable((By.XPATH, "(//button[.//span[text()='Participants']])[1]"))
@@ -938,7 +837,6 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error clicking hold button 2:", e)
 
-
         time.sleep(20)
         try:
             hold_button_2 = WebDriverWait(agent_alt_driver, 90).until(
@@ -949,11 +847,12 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error clicking hold button 2:", e)
 
-  
-
+        time.sleep(10)
+        agent_alt_driver.quit()
+        
     def delayed_alt_agent():
         print("Waiting 40 seconds before starting alt agent...")
-        time.sleep(20)  # Ждем 40 секунд перед запуском второго агента
+        time.sleep(20)
         open_agent_browser_alt()
         print("Alt agent started after delay")
 
@@ -973,7 +872,7 @@ def test_video_call_activation(driver):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--use-fake-device-for-media-stream")
         options.add_argument("--use-fake-ui-for-media-stream")
-        video_path = download_video()  # Используем скачанное видео
+        video_path = download_video()
         print(f"Using video file for fake camera in fourth agent: {video_path}")
         options.add_argument(f"--use-file-for-fake-video-capture={video_path}")
         options.add_experimental_option("prefs", {
@@ -1015,31 +914,22 @@ def test_video_call_activation(driver):
         available_option.click()
         time.sleep(1)
         
-        # Клик по зелёному кружку
         green_icon = WebDriverWait(fourth_agent_driver, 999).until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "div.flex.justify-center.items-center.rounded-full.mx-auto.ring-2.h-14.w-14.ring-green-500.group-hover\\:bg-green-200.group-focus\\:bg-green-200")
-            )
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.flex.justify-center.items-center.rounded-full.mx-auto.ring-2.h-14.w-14.ring-green-500.group-hover\\:bg-green-200.group-focus\\:bg-green-200"))
         )
         ActionChains(fourth_agent_driver).move_to_element(green_icon).click().perform()
         print("Green circle element clicked in fourth agent!")
-
         try:
-            # Count all matching video elements on the page
             video_count = fourth_agent_driver.execute_script(
                 "return document.querySelectorAll('video.remote-videos_landscapeVideoElement__KIUeU').length;"
             )
             print("Number of <video> elements on page:", video_count)
         except Exception as e:
             print("Error getting video elements count:", e)
-
         try:
-            # Wait until at least one video element is present
             WebDriverWait(fourth_agent_driver, 100).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "video.remote-videos_landscapeVideoElement__KIUeU"))
             )
-            
-            # Use JavaScript to loop through all matching videos, pick the topmost one, and return its properties
             video_props = fourth_agent_driver.execute_script("""
                 var videos = document.querySelectorAll("video.remote-videos_landscapeVideoElement__KIUeU");
                 if (!videos || videos.length === 0) {
@@ -1064,8 +954,6 @@ def test_video_call_activation(driver):
                 };
             """)
             print("Video element properties:", video_props)
-            
-            # Check if the topmost video element is active
             video_active = fourth_agent_driver.execute_script("""
                 var videos = document.querySelectorAll("video.remote-videos_landscapeVideoElement__KIUeU");
                 if (!videos || videos.length === 0) {
@@ -1090,9 +978,6 @@ def test_video_call_activation(driver):
                 
         except Exception as e:
             print(f"Error checking video recording (agent_alt_driver): {e}")
-
-        # --- Камера: Toggle camera button (выключение/включение видео) ---
-
         try:
             camera_button = WebDriverWait(fourth_agent_driver, 60).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='video-mute-btn']"))
@@ -1100,19 +985,14 @@ def test_video_call_activation(driver):
             print("Camera toggle button found. Clicking to turn off camera.")
             ActionChains(fourth_agent_driver).move_to_element(camera_button).click().perform()
             time.sleep(3)
-            
-            # Проверяем текст кнопки после клика: если камера выключена, кнопка должна отображать "Unpause Video"
             button_text_off = camera_button.find_element(By.XPATH, ".//span").text.strip()
             if "Unpause Video" in button_text_off:
                 print("✅ Camera is off. Button shows:", button_text_off)
             else:
                 print("❌ Camera is still on. Button shows:", button_text_off)
-            
             print("Clicking camera toggle button again to turn on camera.")
             ActionChains(fourth_agent_driver).move_to_element(camera_button).click().perform()
             time.sleep(3)
-            
-            # Проверяем текст кнопки после повторного клика: если камера включена, кнопка должна отображать "Pause Video"
             button_text_on = camera_button.find_element(By.XPATH, ".//span").text.strip()
             if "Pause Video" in button_text_on:
                 print("✅ Camera is on. Button shows:", button_text_on)
@@ -1120,55 +1000,38 @@ def test_video_call_activation(driver):
                 print("❌ Camera is not active. Button shows:", button_text_on)
         except Exception as e:
             print("Error during camera toggle test:", e)
-
-
-        # --- Микрофон: Toggle microphone button and check sound state ---
         try:
             mic_button = WebDriverWait(fourth_agent_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='audio-mute-btn']"))
             )
-            # Считываем текущее состояние кнопки микрофона
             mic_state_before = mic_button.find_element(By.XPATH, ".//span").text
             print("Current microphone state text:", mic_state_before)
-            
-            # Нажимаем кнопку для переключения состояния микрофона
             print("Clicking microphone toggle button to change state.")
             ActionChains(fourth_agent_driver).move_to_element(mic_button).click().perform()
             time.sleep(3)
-            
-            # Считываем новое состояние кнопки микрофона
             mic_state_after = mic_button.find_element(By.XPATH, ".//span").text
             print("Microphone state text after click:", mic_state_after)
-            
             if mic_state_before.strip().lower() == "mute audio" and "unmute" in mic_state_after.lower():
                 print("✅ Microphone is muted.")
             elif mic_state_before.strip().lower() == "unmute audio" and "mute" in mic_state_after.lower():
                 print("✅ Microphone is unmuted.")
             else:
                 print("❌ Microphone state did not change as expected after first click.")
-            
-            # Нажимаем кнопку ещё раз, чтобы вернуть исходное состояние
             print("Clicking microphone toggle button again to revert state.")
             ActionChains(fourth_agent_driver).move_to_element(mic_button).click().perform()
             time.sleep(3)
             mic_state_reverted = mic_button.find_element(By.XPATH, ".//span").text
             print("Microphone state text after second click:", mic_state_reverted)
-            
             if mic_state_reverted.strip().lower() == mic_state_before.strip().lower():
                 print("✅ Microphone state reverted successfully.")
             else:
                 print("❌ Microphone state did not revert as expected.")
         except Exception as e:
             print("Error during microphone toggle test:", e)
-
-
-
         try:
-            # Находим кнопку звука по заданному XPath
             sound_button = WebDriverWait(fourth_agent_driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Mute volume']"))
             )
-            # Считываем исходное состояние кнопки по атрибуту class
             initial_class = sound_button.get_attribute("class")
             if "volume-control_muted__cVWPM" in initial_class:
                 print("Sound is initially OFF.")
@@ -1176,28 +1039,20 @@ def test_video_call_activation(driver):
             else:
                 print("Sound is initially ON.")
                 initial_state = "on"
-            
-            # Нажимаем кнопку, чтобы переключить состояние звука
             print("Clicking sound toggle button to change state.")
             ActionChains(fourth_agent_driver).move_to_element(sound_button).click().perform()
             time.sleep(3)
-            
-            # Считываем класс кнопки после клика
             toggled_class = sound_button.get_attribute("class")
             if initial_state == "on":
-                # Если звук был включён, то теперь должен быть выключен (должен появиться класс muted)
                 if "volume-control_muted__cVWPM" in toggled_class:
                     print("✅ Sound is muted after toggle.")
                 else:
                     print("❌ Sound did not mute as expected.")
             else:
-                # Если звук был выключен, то теперь должен быть включён (класс muted отсутствует)
                 if "volume-control_muted__cVWPM" not in toggled_class:
                     print("✅ Sound is unmuted after toggle.")
                 else:
                     print("❌ Sound did not unmute as expected.")
-            
-            # Переключаем обратно – возвращаем исходное состояние
             print("Clicking sound toggle button again to revert state.")
             ActionChains(fourth_agent_driver).move_to_element(sound_button).click().perform()
             time.sleep(5)
@@ -1208,7 +1063,6 @@ def test_video_call_activation(driver):
                 print("❌ Sound state did not revert as expected.")
         except Exception as e:
             print("Error during sound toggle test:", e)
-        
         try:
             hold_button_2 = WebDriverWait(fourth_agent_driver, 100).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Close Sheet')]"))
@@ -1217,18 +1071,12 @@ def test_video_call_activation(driver):
             hold_button_2.click()
         except Exception as e:
             print("Error clicking hold button 2:", e)
-
-
         time.sleep(10)
-
         fourth_agent_driver.quit()
         
-        
-
-
     def delayed_fourth_agent():
-        print("Waiting 25 seconds before starting fourth agent...") 
-        time.sleep(25)  # Ждем 25 секунд перед запуском четвертого агента
+        print("Waiting 25 seconds before starting fourth agent...")
+        time.sleep(25)
         open_agent_browser_fourth()
         print("Fourth agent started after delay")
 
@@ -1285,7 +1133,6 @@ def test_video_call_activation(driver):
         available_option.click()
         time.sleep(1)
         
-
         try:
             fifth_agent_driver.execute_cdp_cmd("Browser.setPermission", {
                 "origin": "https://martti-agent.qa.cloudbreak.us",
@@ -1297,8 +1144,6 @@ def test_video_call_activation(driver):
             print("Error disabling camera usage:", e)
 
         time.sleep(10)
-
-        # Проверяем состояние разрешения камеры через Permissions API
         try:
             camera_permission = fifth_agent_driver.execute_async_script("""
                 const callback = arguments[arguments.length - 1];
@@ -1308,7 +1153,6 @@ def test_video_call_activation(driver):
             """)
             if camera_permission == "denied":
                 print("Camera permission is confirmed as denied.")
-                # Если разрешение отклонено, останавливаем все треки видео, чтобы поток не передавался
                 fifth_agent_driver.execute_script("""
                     var video = document.querySelector("video.remote-videos_landscapeVideoElement__KIUeU");
                     if (video && video.srcObject) {
@@ -1323,15 +1167,11 @@ def test_video_call_activation(driver):
 
         time.sleep(10)
         green_icon = WebDriverWait(fifth_agent_driver, 999).until(
-            EC.element_to_be_clickable(
-                (By.XPATH, "//*[contains(text(), 'ANSWER')]")
-            )
+            EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'ANSWER')]"))
         )
         ActionChains(fifth_agent_driver).move_to_element(green_icon).click().perform()
         print("Green circle element clicked in fourth agent!")
-
         
-
         try:
             error_message = WebDriverWait(fifth_agent_driver, 40).until(
                 EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Error accessing your camera or microphone')]"))
@@ -1339,7 +1179,6 @@ def test_video_call_activation(driver):
             print("Error message found:", error_message.text)
         except Exception as e:
             print("Error: The message 'Error accessing your camera or microphone' was not found within 40 seconds:", e)
-
 
         try:
             WebDriverWait(fifth_agent_driver, 30).until(EC.url_contains("https://martti-agent.qa.cloudbreak.us/"))
@@ -1357,18 +1196,15 @@ def test_video_call_activation(driver):
         except Exception as e:
             print("Error re-enabling camera usage:", e)
 
-
         available_option = WebDriverWait(fifth_agent_driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//select[@data-testid='status']/option[@value='Available']"))
         )
         available_option.click()
-
-
         time.sleep(60)
 
     def delayed_fifth_agent():
-        print("Waiting 30 seconds before starting fifth agent...") 
-        time.sleep(220)  # Ждем 30 секунд перед запуском пятого агента
+        print("Waiting 30 seconds before starting fifth agent...")
+        time.sleep(220)
         open_agent_browser_fifth()
         print("Fifth agent started after delay")
 
@@ -1392,8 +1228,6 @@ def test_video_call_activation(driver):
         })
 
         client_driver = webdriver.Chrome(service=ChromeService(executable_path=chromedriver_path), options=options)
-
-        # Логика для клиента
         from LOGIN import Login_page
         login_page = Login_page(client_driver)
         login_page.login_to_cloudbreak_customer()
@@ -1450,10 +1284,9 @@ def test_video_call_activation(driver):
             WebDriverWait(client_driver, 999).until(
                 EC.url_contains("https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error")
             )
-            print("URL успешно обновлен на https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error")
+            print("URL successfully updated to https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error")
         except Exception as e:
-            print("Ошибка: URL не изменился на ожидаемый: https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error",
-                  e)
+            print("Error: URL did not change to expected: https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error", e)
 
         time.sleep(20)
 
@@ -1463,27 +1296,21 @@ def test_video_call_activation(driver):
         open_client_browser()
         print("Second client started after delay")
 
-    # Запускаем первый поток агента
     agent_thread = threading.Thread(target=open_agent_browser)
     agent_thread.start()
     
-    # Ждём, пока первый агент начнет работу
     time.sleep(15)
 
-    # Основная логика для клиента
     from LOGIN import Login_page
     login_page = Login_page(driver)
     login_page.login_to_cloudbreak_customer()
 
-    # Запускаем второй поток с задержкой
     agent_alt_thread = threading.Thread(target=delayed_alt_agent)
     agent_alt_thread.start()
 
-    # Запускаем четвертый поток с задержкой
     fourth_agent_thread = threading.Thread(target=delayed_fourth_agent)
     fourth_agent_thread.start()
 
-    # Запускаем пятый поток с задержкой
     fifth_agent_thread = threading.Thread(target=delayed_fifth_agent)
     fifth_agent_thread.start()
 
@@ -1491,9 +1318,7 @@ def test_video_call_activation(driver):
     client_thread.start()
     
     language_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable(
-            (By.XPATH, "//button[contains(@class, 'language-tile') and contains(@class, 'frequent-language-tile-orange-background')]//span[text()='Pусский']")
-        )
+        EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'language-tile') and contains(@class, 'frequent-language-tile-orange-background')]//span[text()='Pусский']"))
     )
     driver.execute_script("arguments[0].click();", language_button)
     time.sleep(5)
@@ -1506,9 +1331,7 @@ def test_video_call_activation(driver):
         print(f"\nAttempt {attempt} of {max_attempts}")
         try:
             user_id_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, "//div[contains(@class, 'HS2uzLU4rZSTbb8ktGRx')]//span[contains(text(), '8944PA00006')]")
-                )
+                EC.presence_of_element_located((By.XPATH, "//div[contains(@class, 'HS2uzLU4rZSTbb8ktGRx')]//span[contains(text(), '8944PA00006')]"))
             )
             print(f"User ID found: {user_id_element.text}")
             video_active = driver.execute_script("""
@@ -1539,32 +1362,22 @@ def test_video_call_activation(driver):
 
     time.sleep(5)
     
-
-
-# --- Переключение камеры ---
     try:
         camera_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='video-mute-btn']"))
         )
-        # Получаем начальное состояние
         camera_text_initial = camera_button.find_element(By.XPATH, ".//span").text.strip()
         print("Initial camera state:", camera_text_initial)
-        
-        # Кликаем, чтобы переключить состояние камеры
         ActionChains(driver).move_to_element(camera_button).click().perform()
         time.sleep(3)
-        
         camera_text_after = camera_button.find_element(By.XPATH, ".//span").text.strip()
         print("Camera state after toggle:", camera_text_after)
-        
         if camera_text_initial == "Pause Video" and camera_text_after == "Unpause Video":
             print("✅ Camera successfully toggled to disabled.")
         elif camera_text_initial == "Unpause Video" and camera_text_after == "Pause Video":
             print("✅ Camera successfully toggled to enabled.")
         else:
             print("❌ Camera state did not toggle as expected.")
-        
-        # Опционально: возвращаем исходное состояние
         ActionChains(driver).move_to_element(camera_button).click().perform()
         time.sleep(3)
         camera_text_revert = camera_button.find_element(By.XPATH, ".//span").text.strip()
@@ -1572,39 +1385,26 @@ def test_video_call_activation(driver):
     except Exception as e:
         print("Error toggling camera status:", e)
 
-
-    # --- Переключение звука ---
     try:
         sound_button = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, "//button[@aria-label='Mute volume']"))
         )
         sound_class_initial = sound_button.get_attribute("class")
         print("Initial sound button class:", sound_class_initial)
-        
-        # Кликаем, чтобы переключить состояние звука
         ActionChains(driver).move_to_element(sound_button).click().perform()
         time.sleep(3)
-        
         sound_class_after = sound_button.get_attribute("class")
         print("Sound button class after toggle:", sound_class_after)
-        
-        # Считаем, что если класс содержит "V_OoXHutaK1ot9aXxMLh", звук выключен
-        if ("V_OoXHutaK1ot9aXxMLh" in sound_class_initial and "V_OoXHutaK1ot9aXxMLh" not in sound_class_after) or \
-        ("V_OoXHutaK1ot9aXxMLh" not in sound_class_initial and "V_OoXHutaK1ot9aXxMLh" in sound_class_after):
+        if ("V_OoXHutaK1ot9aXxMLh" in sound_class_initial and "V_OoXHutaK1ot9aXxMLh" not in sound_class_after) or ("V_OoXHutaK1ot9aXxMLh" not in sound_class_initial and "V_OoXHutaK1ot9aXxMLh" in sound_class_after):
             print("✅ Sound toggled successfully.")
         else:
             print("❌ Sound state did not toggle as expected.")
-        
-        # Опционально: возвращаем исходное состояние
         ActionChains(driver).move_to_element(sound_button).click().perform()
         time.sleep(3)
         sound_class_revert = sound_button.get_attribute("class")
         print("Sound button class after revert:", sound_class_revert)
     except Exception as e:
         print("Error toggling sound status:", e)
-
-    
-
 
     time.sleep(200)
     try:
@@ -1629,8 +1429,6 @@ def test_video_call_activation(driver):
 
     time.sleep(60)
 
-
-
     try:
         driver.execute_cdp_cmd("Browser.setPermission", {
             "origin": "https://martti-agent.qa.cloudbreak.us",
@@ -1640,7 +1438,6 @@ def test_video_call_activation(driver):
         print("Microphone usage has been disabled for the driver.")
     except Exception as e:
         print("Error disabling microphone usage:", e)
-
 
     try:
         leave_call_button = WebDriverWait(driver, 10).until(
@@ -1656,11 +1453,9 @@ def test_video_call_activation(driver):
         WebDriverWait(driver, 900).until(
             EC.url_contains("https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error")
         )
-        print("URL успешно обновлен на https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error")
+        print("URL successfully updated to https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error")
     except Exception as e:
-        print("Ошибка: URL не изменился на ожидаемый: https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error", e)
-
-
+        print("Error: URL did not change to expected: https://cloudbreak-customer-ui.qa.cloudbreak.us/call-error", e)
 
     assert video_active, f"Failed to activate video after {max_attempts} attempts!"
     screenshot_path = f"video_test_screenshot_{int(time.time())}.png"
@@ -1668,7 +1463,6 @@ def test_video_call_activation(driver):
     print(f"\nScreenshot saved: {screenshot_path}")
     allure.step("Test completed: Video activated")
 
-    # В конце теста ждем завершения всех потоков
     agent_thread.join()
     agent_alt_thread.join()
     fourth_agent_thread.join()
@@ -1676,6 +1470,3 @@ def test_video_call_activation(driver):
     client_thread.join()
     
     agent_thread.join()
-
-
-    

@@ -14,17 +14,14 @@ jobs:
       - run:
           name: Trigger Jenkins Job
           command: |
-            # Get CRUMB
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
             
-            # Check Jenkins connection
             if ! curl -s --head "${JENKINS_URL}" > /dev/null; then
               echo "Error: Cannot connect to Jenkins at ${JENKINS_URL}"
               exit 1
             fi
             
-            # Get last build number before starting
             LAST_BUILD_RESPONSE=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/job/Pipe/lastBuild/api/json")
             
@@ -39,7 +36,6 @@ jobs:
             LAST_BUILD_NUMBER=$(echo "$LAST_BUILD_RESPONSE" | jq -r '.number')
             echo "Current last build: #$LAST_BUILD_NUMBER"
             
-            # Use curl to call Jenkins API
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/job/Pipe/build" \
@@ -54,30 +50,24 @@ jobs:
             
             echo "Jenkins job started successfully"
             
-            # Wait for new build
-            sleep 10  # Increased initialization wait time
+            sleep 10
             NEW_BUILD_NUMBER=$((LAST_BUILD_NUMBER + 1))
             echo "Expected new build number: #$NEW_BUILD_NUMBER"
             
-            # Save new build number to file
             echo $NEW_BUILD_NUMBER > /tmp/build_number
       
       - run:
           name: Wait for Jenkins Job
           command: |
-            # Get build number from previous step
             BUILD_NUMBER=$(cat /tmp/build_number)
             echo "Tracking build #$BUILD_NUMBER"
             
-            # Get CRUMB for status check
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
             
-            # Maximum wait time (30 minutes)
             MAX_ATTEMPTS=60
             ATTEMPT=0
             
-            # Wait for job completion and check status
             while true; do
               if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
                 echo "Timeout exceeded (30 minutes)"
@@ -98,7 +88,6 @@ jobs:
                 continue
               fi
               
-              # Check if response is valid JSON
               if ! echo "$RESPONSE" | jq empty; then
                 echo "Error: Invalid JSON received from Jenkins"
                 echo "Full response: $RESPONSE"
@@ -107,7 +96,6 @@ jobs:
                 continue
               fi
               
-              # Get build information
               BUILDING=$(echo "$RESPONSE" | jq -r '.building')
               STATUS=$(echo "$RESPONSE" | jq -r '.result')
               
@@ -163,17 +151,14 @@ workflows:
     jobs:
       - trigger-jenkins
   
-  # Scheduled workflow for daily tests
   scheduled-workflow:
     triggers:
       - schedule:
-          # Run at 11:01 AM EST (16:01 UTC)
-          # Note: CircleCI schedules are in UTC
           cron: "1 16 * * *"
           filters:
             branches:
               only:
-                - video_call_test_new    # Changed to match your current branch
+                - video_call_test_new
     jobs:
       - trigger-jenkins:
-          context: jenkins-context  # Add context if you have environment variables stored in CircleCI 
+          context: jenkins-context 
