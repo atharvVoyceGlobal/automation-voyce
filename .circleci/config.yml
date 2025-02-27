@@ -18,6 +18,11 @@ jobs:
               exit 1
             fi
             
+            # Получаем номер последнего билда перед запуском
+            LAST_BUILD_NUMBER=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/job/Pipe/lastBuild/api/json" | jq -r '.number')
+            echo "Текущий последний билд: #$LAST_BUILD_NUMBER"
+            
             # Используем curl для вызова Jenkins API
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
@@ -33,22 +38,24 @@ jobs:
             
             echo "Jenkins job успешно запущен"
             
-            # Получаем номер последней сборки
+            # Ждем появления нового билда
             sleep 5  # Даем время на инициализацию сборки
-            BUILD_NUMBER=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
-              "${JENKINS_URL}/job/Pipe/lastBuild/api/json" | jq -r '.number')
-            echo "Номер запущенной сборки: $BUILD_NUMBER"
+            NEW_BUILD_NUMBER=$((LAST_BUILD_NUMBER + 1))
+            echo "Ожидаемый номер нового билда: #$NEW_BUILD_NUMBER"
+            
+            # Сохраняем номер нового билда в файл
+            echo $NEW_BUILD_NUMBER > /tmp/build_number
       
       - run:
           name: Wait for Jenkins Job
           command: |
+            # Получаем номер билда из предыдущего шага
+            BUILD_NUMBER=$(cat /tmp/build_number)
+            echo "Отслеживаем билд #$BUILD_NUMBER"
+            
             # Получаем CRUMB для проверки статуса
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
-            
-            # Получаем номер сборки еще раз
-            BUILD_NUMBER=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
-              "${JENKINS_URL}/job/Pipe/lastBuild/api/json" | jq -r '.number')
             
             # Максимальное время ожидания (30 минут)
             MAX_ATTEMPTS=60
@@ -66,8 +73,10 @@ jobs:
                 "${JENKINS_URL}/job/Pipe/${BUILD_NUMBER}/api/json")
               
               if [ -z "$RESPONSE" ]; then
-                echo "Ошибка: Пустой ответ от Jenkins API"
-                exit 1
+                echo "Ожидание создания билда #${BUILD_NUMBER}..."
+                sleep 10
+                ATTEMPT=$((ATTEMPT + 1))
+                continue
               fi
               
               # Получаем больше информации о сборке
@@ -79,7 +88,7 @@ jobs:
               echo "Result: $STATUS"
               
               if [ "$BUILDING" = "true" ]; then
-                echo "Jenkins job все еще выполняется..."
+                echo "Jenkins job #${BUILD_NUMBER} все еще выполняется..."
                 sleep 30
                 ATTEMPT=$((ATTEMPT + 1))
                 continue
