@@ -25,28 +25,28 @@ pipeline {
                 script {
                    
                     sh '''
-                        # Проверяем наличие brew и устанавливаем если нет
+                    
                         if [ ! -f "/opt/homebrew/bin/brew" ] && [ ! -f "/usr/local/bin/brew" ]; then
                             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
                         fi
                         
-                        # Добавляем brew в PATH если его там нет
+                  
                         eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
                         
-                        # Устанавливаем Node.js и npm
+                      
                         brew list node || brew install node
                         
-                        # Проверяем установку Node.js, npm и npx
+                    
                         echo "Node.js version: $(node --version)"
                         echo "npm version: $(npm --version)"
                         echo "npx version: $(npx --version)"
                         
-                        # Устанавливаем Python и другие зависимости
+                  
                         brew list python@3.11 || brew install python@3.11
                         brew list ffmpeg || brew install ffmpeg
                         brew list wget || brew install wget
                         
-                        # Проверяем установку Python
+               
                         python3.11 --version || brew link --force python@3.11
                     '''
 
