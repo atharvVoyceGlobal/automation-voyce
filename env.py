@@ -5,7 +5,6 @@ class EV:
     AGENT_URL = 'https://martti-agent.qa.cloudbreak.us/signIn'
     CUSTOMER_URL = 'https://cloudbreak-customer-ui.qa.cloudbreak.us/'
 
-    # Логины и пароли для агентов
     AGENT_LOGIN = "nikita.barshchuk+qaterp3@equitihealth.com"
     AGENT_PASSWORD = "Gomynkyl165432_"
 
@@ -15,5 +14,4 @@ class EV:
     OPERATOR_LOGIN = "nikita.barshchuk+qaoper@equitihealth.com"
     OPERATOR_PASSWORD = "Gomynkyl165432_"
 
-    # Логин для клиента
     CUSTOMER_LOGIN = "8944PA00006"
