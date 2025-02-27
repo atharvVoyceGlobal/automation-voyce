@@ -5,15 +5,23 @@ pipeline {
         PYTHON_VERSION = '3.11'
         DISPLAY = ':0'
         HOME = "${env.WORKSPACE}"
-        CHROME_VERSION = '122.0.6261.69'  // Последняя стабильная версия Chrome
+        CHROME_VERSION = '122.0.6261.69'
         WORKSPACE_DIR = "${env.WORKSPACE}"
+        PATH = "${env.WORKSPACE}/Library/Python/3.9/bin:${env.PATH}"
+        PYTHONPATH = "${env.WORKSPACE}"
     }
     
     stages {
         stage('Проверка файлов') {
             steps {
                 echo "Проверка наличия необходимых файлов..."
-                sh 'ls -la'
+                sh '''
+                    ls -la
+                    echo "Python path: $PYTHONPATH"
+                    echo "PATH: $PATH"
+                    echo "Текущая директория:"
+                    pwd
+                '''
             }
         }
         
@@ -45,6 +53,29 @@ pipeline {
                         
                         # Делаем ChromeDriver исполняемым
                         chmod +x "chromedriver-mac-arm64/chromedriver"
+                        
+                        cd ..
+                        
+                        # Проверяем наличие requirements.txt
+                        if [ ! -f requirements.txt ]; then
+                            echo "Создаем requirements.txt"
+                            cat > requirements.txt << EOL
+selenium==4.18.1
+pytest==8.0.0
+pytest-html==4.1.1
+allure-pytest==2.13.2
+requests==2.31.0
+allure-python-commons==2.13.2
+pytest-xdist==3.5.0
+pytest-timeout==2.2.0
+pytest-rerunfailures==13.0
+opencv-python==4.9.0.80
+pillow==10.2.0
+psutil==5.9.8
+webdriver-manager==4.0.1
+pytest-selenium==4.1.0
+EOL
+                        fi
                     '''
                 }
             }
@@ -65,8 +96,17 @@ pipeline {
             steps {
                 echo "Запуск тестов..."
                 sh '''
+                    # Обновляем pip
+                    python3 -m pip install --upgrade pip
+                    
+                    # Устанавливаем зависимости
                     python3 -m pip install -r requirements.txt
-                    python3 -m pytest test_sqs_kafka_listener.py -v
+                    
+                    # Проверяем наличие файла с тестами
+                    ls -la sqs_kafka_listener.py
+                    
+                    # Запускаем тесты
+                    python3 -m pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
                 '''
             }
         }
