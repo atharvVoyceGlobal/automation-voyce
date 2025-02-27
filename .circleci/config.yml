@@ -28,7 +28,7 @@ jobs:
           command: |
             # Обновляем систему и устанавливаем базовые зависимости
             sudo apt-get update -y
-            sudo apt-get install -y ffmpeg xvfb wget
+            sudo apt-get install -y ffmpeg xvfb wget nodejs npm
 
             # Устанавливаем Python зависимости
             python -m pip install --upgrade pip
