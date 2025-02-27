@@ -14,32 +14,32 @@ jobs:
       - run:
           name: Trigger Jenkins Job
           command: |
-            # Получаем CRUMB
+            # Get CRUMB
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
             
-            # Проверяем подключение к Jenkins
+            # Check Jenkins connection
             if ! curl -s --head "${JENKINS_URL}" > /dev/null; then
-              echo "Ошибка: Не могу подключиться к Jenkins по адресу ${JENKINS_URL}"
+              echo "Error: Cannot connect to Jenkins at ${JENKINS_URL}"
               exit 1
             fi
             
-            # Получаем номер последнего билда перед запуском
+            # Get last build number before starting
             LAST_BUILD_RESPONSE=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/job/Pipe/lastBuild/api/json")
             
-            echo "Ответ от Jenkins для последнего билда:"
+            echo "Jenkins response for last build:"
             echo "$LAST_BUILD_RESPONSE"
             
             if ! echo "$LAST_BUILD_RESPONSE" | jq empty; then
-              echo "Ошибка: Невалидный JSON ответ от Jenkins"
+              echo "Error: Invalid JSON response from Jenkins"
               exit 1
             fi
             
             LAST_BUILD_NUMBER=$(echo "$LAST_BUILD_RESPONSE" | jq -r '.number')
-            echo "Текущий последний билд: #$LAST_BUILD_NUMBER"
+            echo "Current last build: #$LAST_BUILD_NUMBER"
             
-            # Используем curl для вызова Jenkins API
+            # Use curl to call Jenkins API
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/job/Pipe/build" \
@@ -47,40 +47,40 @@ jobs:
             
             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
             if [[ $HTTP_CODE != "201" ]]; then
-              echo "Ошибка при запуске Jenkins job. HTTP код: $HTTP_CODE"
-              echo "Полный ответ: $RESPONSE"
+              echo "Error starting Jenkins job. HTTP code: $HTTP_CODE"
+              echo "Full response: $RESPONSE"
               exit 1
             fi
             
-            echo "Jenkins job успешно запущен"
+            echo "Jenkins job started successfully"
             
-            # Ждем появления нового билда
-            sleep 10  # Увеличиваем время ожидания для инициализации
+            # Wait for new build
+            sleep 10  # Increased initialization wait time
             NEW_BUILD_NUMBER=$((LAST_BUILD_NUMBER + 1))
-            echo "Ожидаемый номер нового билда: #$NEW_BUILD_NUMBER"
+            echo "Expected new build number: #$NEW_BUILD_NUMBER"
             
-            # Сохраняем номер нового билда в файл
+            # Save new build number to file
             echo $NEW_BUILD_NUMBER > /tmp/build_number
       
       - run:
           name: Wait for Jenkins Job
           command: |
-            # Получаем номер билда из предыдущего шага
+            # Get build number from previous step
             BUILD_NUMBER=$(cat /tmp/build_number)
-            echo "Отслеживаем билд #$BUILD_NUMBER"
+            echo "Tracking build #$BUILD_NUMBER"
             
-            # Получаем CRUMB для проверки статуса
+            # Get CRUMB for status check
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
             
-            # Максимальное время ожидания (30 минут)
+            # Maximum wait time (30 minutes)
             MAX_ATTEMPTS=60
             ATTEMPT=0
             
-            # Ждем завершения job и проверяем статус
+            # Wait for job completion and check status
             while true; do
               if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
-                echo "Превышено время ожидания (30 минут)"
+                echo "Timeout exceeded (30 minutes)"
                 exit 1
               fi
               
@@ -88,35 +88,35 @@ jobs:
                 --header "$JENKINS_CRUMB" \
                 "${JENKINS_URL}/job/Pipe/${BUILD_NUMBER}/api/json")
               
-              echo "Сырой ответ от Jenkins:"
+              echo "Raw response from Jenkins:"
               echo "$RESPONSE"
               
               if [ -z "$RESPONSE" ]; then
-                echo "Ожидание создания билда #${BUILD_NUMBER}..."
+                echo "Waiting for build #${BUILD_NUMBER} creation..."
                 sleep 10
                 ATTEMPT=$((ATTEMPT + 1))
                 continue
               fi
               
-              # Проверяем, что ответ является валидным JSON
+              # Check if response is valid JSON
               if ! echo "$RESPONSE" | jq empty; then
-                echo "Ошибка: Получен невалидный JSON от Jenkins"
-                echo "Полный ответ: $RESPONSE"
+                echo "Error: Invalid JSON received from Jenkins"
+                echo "Full response: $RESPONSE"
                 sleep 10
                 ATTEMPT=$((ATTEMPT + 1))
                 continue
               fi
               
-              # Получаем больше информации о сборке
+              # Get build information
               BUILDING=$(echo "$RESPONSE" | jq -r '.building')
               STATUS=$(echo "$RESPONSE" | jq -r '.result')
               
-              echo "Статус сборки #${BUILD_NUMBER}:"
+              echo "Build status #${BUILD_NUMBER}:"
               echo "Building: $BUILDING"
               echo "Result: $STATUS"
               
               if [ "$BUILDING" = "true" ]; then
-                echo "Jenkins job #${BUILD_NUMBER} все еще выполняется..."
+                echo "Jenkins job #${BUILD_NUMBER} is still running..."
                 sleep 30
                 ATTEMPT=$((ATTEMPT + 1))
                 continue
@@ -129,18 +129,18 @@ jobs:
                   ;;
                 "FAILURE")
                   echo "Jenkins job #${BUILD_NUMBER} failed!"
-                  echo "Подробности: $RESPONSE"
+                  echo "Details: $RESPONSE"
                   exit 1
                   ;;
                 "ABORTED")
                   echo "Jenkins job #${BUILD_NUMBER} was aborted!"
-                  echo "Подробности: $RESPONSE"
+                  echo "Details: $RESPONSE"
                   exit 1
                   ;;
                 "null")
                   if [ "$BUILDING" = "false" ]; then
-                    echo "Странное состояние: building=false, но status=null"
-                    echo "Полный ответ: $RESPONSE"
+                    echo "Strange state: building=false, but status=null"
+                    echo "Full response: $RESPONSE"
                     sleep 30
                     ATTEMPT=$((ATTEMPT + 1))
                   else
@@ -163,14 +163,17 @@ workflows:
     jobs:
       - trigger-jenkins
   
-  # Добавляем новый workflow для запуска по расписанию
+  # Scheduled workflow for daily tests
   scheduled-workflow:
     triggers:
       - schedule:
-          cron: "50 15 * * *"  # 10:50 EST = 15:50 UTC
+          # Run at 11:01 AM EST (16:01 UTC)
+          # Note: CircleCI schedules are in UTC
+          cron: "1 16 * * *"
           filters:
             branches:
               only:
-                - main  # или master, в зависимости от вашей основной ветки
+                - video_call_test_new    # Changed to match your current branch
     jobs:
-      - trigger-jenkins 
+      - trigger-jenkins:
+          context: jenkins-context  # Add context if you have environment variables stored in CircleCI 
