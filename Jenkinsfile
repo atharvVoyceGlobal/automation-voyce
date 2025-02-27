@@ -5,16 +5,6 @@ pipeline {
         PYTHON_VERSION = '3.11'
         VENV_PATH = 'venv'
         PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
-        HOME = "${env.HOME}"
-        AGENT_URL = credentials('AGENT_URL')
-        CUSTOMER_URL = credentials('CUSTOMER_URL')
-        AGENT_LOGIN = credentials('AGENT_LOGIN')
-        AGENT_PASSWORD = credentials('AGENT_PASSWORD')
-        AGENT_ALT_LOGIN = credentials('AGENT_ALT_LOGIN')
-        OPERATOR_LOGIN = credentials('OPERATOR_LOGIN')
-        AGENT_ALT_PASSWORD = credentials('AGENT_ALT_PASSWORD')
-        OPERATOR_PASSWORD = credentials('OPERATOR_PASSWORD')
-        CUSTOMER_LOGIN = credentials('CUSTOMER_LOGIN')
     }
 
     stages {
