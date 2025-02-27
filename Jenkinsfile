@@ -42,6 +42,25 @@ EOL
         stage('Подготовка окружения') {
             steps {
                 sh '''
+                    # Проверяем наличие Homebrew
+                    if ! command -v brew &> /dev/null; then
+                        echo "Установка Homebrew..."
+                        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                    fi
+                    
+                    # Добавляем Homebrew в PATH
+                    export PATH="/opt/homebrew/bin:$PATH"
+                    
+                    # Установка Node.js если его нет
+                    if ! command -v node &> /dev/null; then
+                        echo "Установка Node.js..."
+                        brew install node
+                    fi
+                    
+                    # Проверяем установку Node.js и npm
+                    node --version
+                    npm --version
+                    
                     # Установка Python и создание виртуального окружения
                     python3 -m venv venv
                     . venv/bin/activate
