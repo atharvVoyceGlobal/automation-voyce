@@ -45,7 +45,9 @@ EOL
                     # Проверяем наличие Homebrew
                     if ! command -v brew &> /dev/null; then
                         echo "Установка Homebrew..."
-                        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                        CI=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+                        eval "$(/opt/homebrew/bin/brew shellenv)"
                     fi
                     
                     # Добавляем Homebrew в PATH
@@ -54,7 +56,7 @@ EOL
                     # Установка Node.js если его нет
                     if ! command -v node &> /dev/null; then
                         echo "Установка Node.js..."
-                        brew install node
+                        sudo brew install node
                     fi
                     
                     # Проверяем установку Node.js и npm
