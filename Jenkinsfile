@@ -6,6 +6,10 @@ pipeline {
         PYTHON_VERSION = '3.11'
         // Путь к виртуальному окружению
         VENV_PATH = 'venv'
+        // Пути для Homebrew
+        PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
+        // Домашняя директория
+        HOME = "${env.HOME}"
     }
 
     stages {
@@ -21,8 +25,13 @@ pipeline {
                 script {
                     // Устанавливаем зависимости через brew
                     sh '''
-                        # Проверяем и обновляем brew
-                        brew update || true
+                        # Проверяем наличие brew и устанавливаем если нет
+                        if [ ! -f "/opt/homebrew/bin/brew" ] && [ ! -f "/usr/local/bin/brew" ]; then
+                            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                        fi
+                        
+                        # Добавляем brew в PATH если его там нет
+                        eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
                         
                         # Устанавливаем Python и другие зависимости
                         brew list python@3.11 || brew install python@3.11
@@ -35,6 +44,7 @@ pipeline {
 
                     // Создаем и активируем виртуальное окружение
                     sh """
+                        export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
                         python3.11 -m venv ${VENV_PATH}
                         source ${VENV_PATH}/bin/activate
                         python -m pip install --upgrade pip
@@ -57,6 +67,7 @@ pipeline {
 
                         // Запускаем тесты
                         sh """
+                            export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
                             source ${VENV_PATH}/bin/activate
                             pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
                         """
