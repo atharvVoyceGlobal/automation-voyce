@@ -19,15 +19,25 @@ jobs:
             fi
             
             # Используем curl для вызова Jenkins API
-            RESPONSE=$(curl -s -w "%{http_code}" -X POST \
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/job/Pipe/build" \
               --header "$JENKINS_CRUMB")
             
-            if [[ $RESPONSE != *"201"* ]]; then
-              echo "Ошибка при запуске Jenkins job: $RESPONSE"
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            if [[ $HTTP_CODE != "201" ]]; then
+              echo "Ошибка при запуске Jenkins job. HTTP код: $HTTP_CODE"
+              echo "Полный ответ: $RESPONSE"
               exit 1
             fi
+            
+            echo "Jenkins job успешно запущен"
+            
+            # Получаем номер последней сборки
+            sleep 5  # Даем время на инициализацию сборки
+            BUILD_NUMBER=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/job/Pipe/lastBuild/api/json" | jq -r '.number')
+            echo "Номер запущенной сборки: $BUILD_NUMBER"
       
       - run:
           name: Wait for Jenkins Job
@@ -35,6 +45,10 @@ jobs:
             # Получаем CRUMB для проверки статуса
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
+            
+            # Получаем номер сборки еще раз
+            BUILD_NUMBER=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/job/Pipe/lastBuild/api/json" | jq -r '.number')
             
             # Максимальное время ожидания (30 минут)
             MAX_ATTEMPTS=60
@@ -49,32 +63,54 @@ jobs:
               
               RESPONSE=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
                 --header "$JENKINS_CRUMB" \
-                "${JENKINS_URL}/job/Pipe/lastBuild/api/json")
+                "${JENKINS_URL}/job/Pipe/${BUILD_NUMBER}/api/json")
               
               if [ -z "$RESPONSE" ]; then
                 echo "Ошибка: Пустой ответ от Jenkins API"
                 exit 1
               fi
               
+              # Получаем больше информации о сборке
+              BUILDING=$(echo "$RESPONSE" | jq -r '.building')
               STATUS=$(echo "$RESPONSE" | jq -r '.result')
+              
+              echo "Статус сборки #${BUILD_NUMBER}:"
+              echo "Building: $BUILDING"
+              echo "Result: $STATUS"
+              
+              if [ "$BUILDING" = "true" ]; then
+                echo "Jenkins job все еще выполняется..."
+                sleep 30
+                ATTEMPT=$((ATTEMPT + 1))
+                continue
+              fi
               
               case $STATUS in
                 "SUCCESS")
-                  echo "Jenkins job completed successfully!"
+                  echo "Jenkins job #${BUILD_NUMBER} completed successfully!"
                   exit 0
                   ;;
                 "FAILURE")
-                  echo "Jenkins job failed!"
+                  echo "Jenkins job #${BUILD_NUMBER} failed!"
+                  echo "Подробности: $RESPONSE"
                   exit 1
                   ;;
                 "ABORTED")
-                  echo "Jenkins job was aborted!"
+                  echo "Jenkins job #${BUILD_NUMBER} was aborted!"
+                  echo "Подробности: $RESPONSE"
                   exit 1
                   ;;
                 "null")
-                  echo "Jenkins job is still running..."
-                  sleep 30
-                  ATTEMPT=$((ATTEMPT + 1))
+                  if [ "$BUILDING" = "false" ]; then
+                    echo "Странное состояние: building=false, но status=null"
+                    echo "Полный ответ: $RESPONSE"
+                    sleep 30
+                    ATTEMPT=$((ATTEMPT + 1))
+                  else
+                    echo "Jenkins job is still running..."
+                    sleep 30
+                    ATTEMPT=$((ATTEMPT + 1))
+                  fi
                   ;;
                 *)
                   echo "Unknown status: $STATUS"
