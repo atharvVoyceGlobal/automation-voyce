@@ -6,6 +6,12 @@ jobs:
       - image: cimg/base:stable
     steps:
       - run:
+          name: Install jq
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y jq
+      
+      - run:
           name: Trigger Jenkins Job
           command: |
             # Получаем CRUMB
@@ -19,8 +25,18 @@ jobs:
             fi
             
             # Получаем номер последнего билда перед запуском
-            LAST_BUILD_NUMBER=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
-              "${JENKINS_URL}/job/Pipe/lastBuild/api/json" | jq -r '.number')
+            LAST_BUILD_RESPONSE=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/job/Pipe/lastBuild/api/json")
+            
+            echo "Ответ от Jenkins для последнего билда:"
+            echo "$LAST_BUILD_RESPONSE"
+            
+            if ! echo "$LAST_BUILD_RESPONSE" | jq empty; then
+              echo "Ошибка: Невалидный JSON ответ от Jenkins"
+              exit 1
+            fi
+            
+            LAST_BUILD_NUMBER=$(echo "$LAST_BUILD_RESPONSE" | jq -r '.number')
             echo "Текущий последний билд: #$LAST_BUILD_NUMBER"
             
             # Используем curl для вызова Jenkins API
@@ -39,7 +55,7 @@ jobs:
             echo "Jenkins job успешно запущен"
             
             # Ждем появления нового билда
-            sleep 5  # Даем время на инициализацию сборки
+            sleep 10  # Увеличиваем время ожидания для инициализации
             NEW_BUILD_NUMBER=$((LAST_BUILD_NUMBER + 1))
             echo "Ожидаемый номер нового билда: #$NEW_BUILD_NUMBER"
             
@@ -72,8 +88,20 @@ jobs:
                 --header "$JENKINS_CRUMB" \
                 "${JENKINS_URL}/job/Pipe/${BUILD_NUMBER}/api/json")
               
+              echo "Сырой ответ от Jenkins:"
+              echo "$RESPONSE"
+              
               if [ -z "$RESPONSE" ]; then
                 echo "Ожидание создания билда #${BUILD_NUMBER}..."
+                sleep 10
+                ATTEMPT=$((ATTEMPT + 1))
+                continue
+              fi
+              
+              # Проверяем, что ответ является валидным JSON
+              if ! echo "$RESPONSE" | jq empty; then
+                echo "Ошибка: Получен невалидный JSON от Jenkins"
+                echo "Полный ответ: $RESPONSE"
                 sleep 10
                 ATTEMPT=$((ATTEMPT + 1))
                 continue
