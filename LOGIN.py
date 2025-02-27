@@ -4,7 +4,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from env import EV
 
-
 class Login_page:
     def __init__(self, driver):
         self.driver = driver

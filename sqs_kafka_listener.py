@@ -1,35 +1,8 @@
-import time
-import pytest
-import subprocess
-import os
-import allure
-import threading
-import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from env import EV
-
 def ensure_dependencies():
     """
     Проверяет и устанавливает необходимые Python-зависимости.
     """
     try:
-        # Добавляем отладочную информацию
-        print("Current working directory:", os.getcwd())
-        print("Files in current directory:", os.listdir())
-        print("Environment variables:")
-        for key, value in os.environ.items():
-            if any(x in key.lower() for x in ['url', 'login', 'password']):
-                print(f"{key}: {'*' * len(value)}")  # Маскируем значения
-            else:
-                print(f"{key}: {value}")
-                
         import pkg_resources
         required = {'selenium', 'pytest', 'allure-pytest', 'requests'}
         installed = {pkg.key for pkg in pkg_resources.working_set}
@@ -946,7 +919,6 @@ def test_video_call_activation(driver):
         )
         ActionChains(fourth_agent_driver).move_to_element(green_icon).click().perform()
         print("Green circle element clicked in fourth agent!")
-        
         try:
             video_count = fourth_agent_driver.execute_script(
                 "return document.querySelectorAll('video.remote-videos_landscapeVideoElement__KIUeU').length;"

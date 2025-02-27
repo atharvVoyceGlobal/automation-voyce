@@ -1,57 +1,26 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'AGENT_URL', defaultValue: '', description: 'Agent URL')
-        string(name: 'CUSTOMER_URL', defaultValue: '', description: 'Customer URL')
-        string(name: 'AGENT_LOGIN', defaultValue: '', description: 'Agent Login')
-        string(name: 'AGENT_PASSWORD', defaultValue: '', description: 'Agent Password')
-        string(name: 'AGENT_ALT_LOGIN', defaultValue: '', description: 'Alternative Agent Login')
-        string(name: 'OPERATOR_LOGIN', defaultValue: '', description: 'Operator Login')
-        string(name: 'AGENT_ALT_PASSWORD', defaultValue: '', description: 'Alternative Agent Password')
-        string(name: 'OPERATOR_PASSWORD', defaultValue: '', description: 'Operator Password')
-        string(name: 'CUSTOMER_LOGIN', defaultValue: '', description: 'Customer Login')
-    }
-
     environment {
         PYTHON_VERSION = '3.11'
         VENV_PATH = 'venv'
         PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
         HOME = "${env.HOME}"
-        AGENT_URL = "${params.AGENT_URL}"
-        CUSTOMER_URL = "${params.CUSTOMER_URL}"
-        AGENT_LOGIN = "${params.AGENT_LOGIN}"
-        AGENT_PASSWORD = "${params.AGENT_PASSWORD}"
-        AGENT_ALT_LOGIN = "${params.AGENT_ALT_LOGIN}"
-        OPERATOR_LOGIN = "${params.OPERATOR_LOGIN}"
-        AGENT_ALT_PASSWORD = "${params.AGENT_ALT_PASSWORD}"
-        OPERATOR_PASSWORD = "${params.OPERATOR_PASSWORD}"
-        CUSTOMER_LOGIN = "${params.CUSTOMER_LOGIN}"
+        AGENT_URL = credentials('AGENT_URL')
+        CUSTOMER_URL = credentials('CUSTOMER_URL')
+        AGENT_LOGIN = credentials('AGENT_LOGIN')
+        AGENT_PASSWORD = credentials('AGENT_PASSWORD')
+        AGENT_ALT_LOGIN = credentials('AGENT_ALT_LOGIN')
+        OPERATOR_LOGIN = credentials('OPERATOR_LOGIN')
+        AGENT_ALT_PASSWORD = credentials('AGENT_ALT_PASSWORD')
+        OPERATOR_PASSWORD = credentials('OPERATOR_PASSWORD')
+        CUSTOMER_LOGIN = credentials('CUSTOMER_LOGIN')
     }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Create env.py') {
-            steps {
-                script {
-                    writeFile file: 'env.py', text: """import os
-
-class EV:
-    AGENT_URL = os.environ.get('AGENT_URL', '')
-    CUSTOMER_URL = os.environ.get('CUSTOMER_URL', '')
-    AGENT_LOGIN = os.environ.get('AGENT_LOGIN', '')
-    AGENT_PASSWORD = os.environ.get('AGENT_PASSWORD', '')
-    AGENT_ALT_LOGIN = os.environ.get('AGENT_ALT_LOGIN', '')
-    OPERATOR_LOGIN = os.environ.get('OPERATOR_LOGIN', '')
-    AGENT_ALT_PASSWORD = os.environ.get('AGENT_ALT_PASSWORD', '')
-    OPERATOR_PASSWORD = os.environ.get('OPERATOR_PASSWORD', '')
-    CUSTOMER_LOGIN = os.environ.get('CUSTOMER_LOGIN', '')"""
-                }
             }
         }
 
@@ -104,27 +73,9 @@ class EV:
                             export NODE_PATH="/opt/homebrew/lib/node_modules"
                             source ${VENV_PATH}/bin/activate
                             
-                            echo "Обновляем env.py с переменными окружения"
-                            python3 -c "
-import os
-from env import EV
-env_vars = {
-    'AGENT_URL': os.environ.get('AGENT_URL'),
-    'CUSTOMER_URL': os.environ.get('CUSTOMER_URL'),
-    'AGENT_LOGIN': os.environ.get('AGENT_LOGIN'),
-    'AGENT_PASSWORD': os.environ.get('AGENT_PASSWORD'),
-    'AGENT_ALT_LOGIN': os.environ.get('AGENT_ALT_LOGIN'),
-    'OPERATOR_LOGIN': os.environ.get('OPERATOR_LOGIN'),
-    'AGENT_ALT_PASSWORD': os.environ.get('AGENT_ALT_PASSWORD'),
-    'OPERATOR_PASSWORD': os.environ.get('OPERATOR_PASSWORD'),
-    'CUSTOMER_LOGIN': os.environ.get('CUSTOMER_LOGIN')
-}
-EV.update_from_env(env_vars)
-"
-                            
                             npm install -g @puppeteer/browsers
                             
-                            PYTHONPATH=\${WORKSPACE} pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
+                            pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
                         """
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'

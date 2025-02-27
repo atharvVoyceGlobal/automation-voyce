@@ -36,23 +36,9 @@ jobs:
             LAST_BUILD_NUMBER=$(echo "$LAST_BUILD_RESPONSE" | jq -r '.number')
             echo "Current last build: #$LAST_BUILD_NUMBER"
             
-            PARAMS="{"
-            PARAMS+="\"parameter\": ["
-            PARAMS+="  {\"name\": \"AGENT_URL\", \"value\": \"${AGENT_URL}\"},"
-            PARAMS+="  {\"name\": \"CUSTOMER_URL\", \"value\": \"${CUSTOMER_URL}\"},"
-            PARAMS+="  {\"name\": \"AGENT_LOGIN\", \"value\": \"${AGENT_LOGIN}\"},"
-            PARAMS+="  {\"name\": \"AGENT_PASSWORD\", \"value\": \"${AGENT_PASSWORD}\"},"
-            PARAMS+="  {\"name\": \"AGENT_ALT_LOGIN\", \"value\": \"${AGENT_ALT_LOGIN}\"},"
-            PARAMS+="  {\"name\": \"OPERATOR_LOGIN\", \"value\": \"${OPERATOR_LOGIN}\"},"
-            PARAMS+="  {\"name\": \"AGENT_ALT_PASSWORD\", \"value\": \"${AGENT_ALT_PASSWORD}\"},"
-            PARAMS+="  {\"name\": \"OPERATOR_PASSWORD\", \"value\": \"${OPERATOR_PASSWORD}\"},"
-            PARAMS+="  {\"name\": \"CUSTOMER_LOGIN\", \"value\": \"${CUSTOMER_LOGIN}\"}"
-            PARAMS+="]}"
-            
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
-              "${JENKINS_URL}/job/Pipe/buildWithParameters" \
-              --data-urlencode json="$PARAMS" \
+              "${JENKINS_URL}/job/Pipe/build" \
               --header "$JENKINS_CRUMB")
             
             HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
