@@ -68,15 +68,14 @@ pipeline {
                             mkdir -p test_videos
                         '''
 
-                        sh """
-                            export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
-                            export NODE_PATH="/opt/homebrew/lib/node_modules"
-                            source ${VENV_PATH}/bin/activate
-                            
+                        sh '''
+                            export PATH=/opt/homebrew/bin:/usr/local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+                            export NODE_PATH=/opt/homebrew/lib/node_modules
+                            export PYTHONPATH=$PYTHONPATH:${WORKSPACE}
+                            source venv/bin/activate
                             npm install -g @puppeteer/browsers
-                            
                             pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
-                        """
+                        '''
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
                         error("Test execution failed: ${e.message}")
