@@ -1616,7 +1616,7 @@ def test_video_call_activation(driver, screen_recorder):
         agent_thread.start()
         
         # Ждём, пока первый агент начнет работу
-        time.sleep(15)
+        time.sleep(14)
 
         # Основная логика для клиента
         from LOGIN import Login_page
