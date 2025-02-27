@@ -1468,5 +1468,4 @@ def test_video_call_activation(driver):
     fourth_agent_thread.join()
     fifth_agent_thread.join()
     client_thread.join()
-    
     agent_thread.join()
