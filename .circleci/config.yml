@@ -12,11 +12,22 @@ jobs:
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
             
+            # Проверяем подключение к Jenkins
+            if ! curl -s --head "${JENKINS_URL}" > /dev/null; then
+              echo "Ошибка: Не могу подключиться к Jenkins по адресу ${JENKINS_URL}"
+              exit 1
+            fi
+            
             # Используем curl для вызова Jenkins API
-            curl -X POST \
+            RESPONSE=$(curl -s -w "%{http_code}" -X POST \
               --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/job/Pipe/build" \
-              --header "$JENKINS_CRUMB"
+              --header "$JENKINS_CRUMB")
+            
+            if [[ $RESPONSE != *"201"* ]]; then
+              echo "Ошибка при запуске Jenkins job: $RESPONSE"
+              exit 1
+            fi
       
       - run:
           name: Wait for Jenkins Job
@@ -25,26 +36,52 @@ jobs:
             JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
               "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
             
+            # Максимальное время ожидания (30 минут)
+            MAX_ATTEMPTS=60
+            ATTEMPT=0
+            
             # Ждем завершения job и проверяем статус
             while true; do
-              STATUS=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
-                --header "$JENKINS_CRUMB" \
-                "${JENKINS_URL}/job/Pipe/lastBuild/api/json" \
-                | jq -r '.result')
-              
-              if [ "$STATUS" = "SUCCESS" ]; then
-                echo "Jenkins job completed successfully!"
-                exit 0
-              elif [ "$STATUS" = "FAILURE" ]; then
-                echo "Jenkins job failed!"
-                exit 1
-              elif [ "$STATUS" = "null" ]; then
-                echo "Jenkins job is still running..."
-                sleep 30
-              else
-                echo "Unknown status: $STATUS"
+              if [ $ATTEMPT -ge $MAX_ATTEMPTS ]; then
+                echo "Превышено время ожидания (30 минут)"
                 exit 1
               fi
+              
+              RESPONSE=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+                --header "$JENKINS_CRUMB" \
+                "${JENKINS_URL}/job/Pipe/lastBuild/api/json")
+              
+              if [ -z "$RESPONSE" ]; then
+                echo "Ошибка: Пустой ответ от Jenkins API"
+                exit 1
+              fi
+              
+              STATUS=$(echo "$RESPONSE" | jq -r '.result')
+              
+              case $STATUS in
+                "SUCCESS")
+                  echo "Jenkins job completed successfully!"
+                  exit 0
+                  ;;
+                "FAILURE")
+                  echo "Jenkins job failed!"
+                  exit 1
+                  ;;
+                "ABORTED")
+                  echo "Jenkins job was aborted!"
+                  exit 1
+                  ;;
+                "null")
+                  echo "Jenkins job is still running..."
+                  sleep 30
+                  ATTEMPT=$((ATTEMPT + 1))
+                  ;;
+                *)
+                  echo "Unknown status: $STATUS"
+                  echo "Full response: $RESPONSE"
+                  exit 1
+                  ;;
+              esac
             done
 
 workflows:
