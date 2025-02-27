@@ -200,8 +200,57 @@ jobs:
           path: allure-results
           destination: allure-results
 
+  trigger-jenkins:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Trigger Jenkins Job
+          command: |
+            # Получаем CRUMB
+            JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
+            
+            # Используем curl для вызова Jenkins API
+            curl -X POST \
+              --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/job/Pipe/build" \
+              --header "$JENKINS_CRUMB"
+      
+      - run:
+          name: Wait for Jenkins Job
+          command: |
+            # Получаем CRUMB для проверки статуса
+            JENKINS_CRUMB=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+              "${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)" || echo "Jenkins-Crumb:")
+            
+            # Ждем завершения job и проверяем статус
+            while true; do
+              STATUS=$(curl -s --user ${JENKINS_USER}:${JENKINS_API_TOKEN} \
+                --header "$JENKINS_CRUMB" \
+                "${JENKINS_URL}/job/Pipe/lastBuild/api/json" \
+                | jq -r '.result')
+              
+              if [ "$STATUS" = "SUCCESS" ]; then
+                echo "Jenkins job completed successfully!"
+                exit 0
+              elif [ "$STATUS" = "FAILURE" ]; then
+                echo "Jenkins job failed!"
+                exit 1
+              elif [ "$STATUS" = "null" ]; then
+                echo "Jenkins job is still running..."
+                sleep 30
+              else
+                echo "Unknown status: $STATUS"
+                exit 1
+              fi
+            done
+
 workflows:
   version: 2
+  build-test:
+    jobs:
+      - trigger-jenkins
   test:
     jobs:
       - test 
