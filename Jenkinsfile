@@ -4,6 +4,7 @@ pipeline {
     environment {
         PYTHON_VERSION = '3.11'
         DISPLAY = ':0'
+        HOME = "${env.WORKSPACE}"
     }
     
     stages {
@@ -47,15 +48,16 @@ EOL
                     
                     # Загружаем nvm
                     export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
                     
                     # Устанавливаем Node.js
-                    nvm install node
-                    nvm use node
+                    . "$NVM_DIR/nvm.sh" && nvm install node
+                    . "$NVM_DIR/nvm.sh" && nvm use node
                     
                     # Проверяем версии
-                    node --version
-                    npm --version
+                    node --version || true
+                    npm --version || true
                     
                     # Установка Python и создание виртуального окружения
                     python3 -m venv venv
