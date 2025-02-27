@@ -142,28 +142,35 @@ jobs:
             echo -e "\n=== Все компоненты установлены успешно ==="
 
       - run:
-          name: Setup Virtual Display
+          name: Setup Virtual Displays
           command: |
             # Убеждаемся, что нет других процессов Xvfb
             pkill Xvfb || true
             
-            # Запускаем Xvfb с расширенными параметрами
+            # Запускаем несколько экземпляров Xvfb для разных потоков
             Xvfb :99 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset >/dev/null 2>&1 &
+            Xvfb :98 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset >/dev/null 2>&1 &
+            Xvfb :97 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset >/dev/null 2>&1 &
+            Xvfb :96 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset >/dev/null 2>&1 &
+            Xvfb :95 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset >/dev/null 2>&1 &
             
-            # Ждем инициализации Xvfb
+            # Ждем инициализации всех Xvfb
             sleep 3
             
-            # Проверяем, что Xvfb запущен
-            if ! ps aux | grep -v grep | grep Xvfb > /dev/null; then
-                echo "Ошибка: Xvfb не запущен"
+            # Проверяем, что все Xvfb запущены
+            for display in 99 98 97 96 95; do
+              if ! ps aux | grep -v grep | grep "Xvfb :$display" > /dev/null; then
+                echo "Ошибка: Xvfb :$display не запущен"
                 exit 1
-            fi
+              fi
+              echo "Xvfb :$display успешно запущен"
+            done
             
-            # Устанавливаем переменную DISPLAY
+            # Экспортируем основной дисплей по умолчанию
             echo "export DISPLAY=:99" >> $BASH_ENV
             source $BASH_ENV
             
-            echo "Виртуальный дисплей настроен успешно"
+            echo "Все виртуальные дисплеи настроены успешно"
 
       - run:
           name: Run Tests with Screen Recording
