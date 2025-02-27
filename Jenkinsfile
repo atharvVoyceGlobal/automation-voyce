@@ -2,20 +2,20 @@ pipeline {
     agent any
 
     environment {
-
+      
         PYTHON_VERSION = '3.11'
-
+      
         VENV_PATH = 'venv'
-
+      
         PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
-
+      
         HOME = "${env.HOME}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-
+              
                 checkout scm
             }
         }
@@ -23,7 +23,7 @@ pipeline {
         stage('Setup Environment') {
             steps {
                 script {
-
+                   
                     sh '''
                         # Проверяем наличие brew и устанавливаем если нет
                         if [ ! -f "/opt/homebrew/bin/brew" ] && [ ! -f "/usr/local/bin/brew" ]; then
@@ -50,7 +50,7 @@ pipeline {
                         python3.11 --version || brew link --force python@3.11
                     '''
 
-
+                   
                     sh """
                         export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
                         python3.11 -m venv ${VENV_PATH}
@@ -66,20 +66,20 @@ pipeline {
             steps {
                 script {
                     try {
-       
+               
                         sh '''
                             mkdir -p allure-results
                             mkdir -p test_results
                             mkdir -p test_videos
                         '''
 
-                
+                        
                         sh """
                             export PATH="/opt/homebrew/bin:/usr/local/bin:\${PATH}"
                             export NODE_PATH="/opt/homebrew/lib/node_modules"
                             source ${VENV_PATH}/bin/activate
                             
-            
+                            # Устанавливаем @puppeteer/browsers глобально
                             npm install -g @puppeteer/browsers
                             
                             pytest sqs_kafka_listener.py -v -k test_video_call_activation --alluredir=./allure-results
@@ -96,7 +96,7 @@ pipeline {
     post {
         always {
             script {
-  
+      
                 allure([
                     includeProperties: false,
                     jdk: '',
@@ -105,7 +105,7 @@ pipeline {
                     results: [[path: 'allure-results']]
                 ])
 
-     
+          
                 archiveArtifacts artifacts: 'test_videos/**/*', allowEmptyArchive: true
                 archiveArtifacts artifacts: 'allure-results/**/*', allowEmptyArchive: true
             }
