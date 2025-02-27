@@ -32,8 +32,20 @@ jobs:
           name: Install Dependencies
           command: |
             # Обновляем систему и устанавливаем базовые зависимости
-            sudo apt-get update || true  # игнорируем ошибки обновления индексов
-            sudo apt-get install -y ffmpeg xvfb wget gnupg
+            sudo rm -rf /var/lib/apt/lists/*
+            sudo apt-get clean
+            sudo apt-get update -y
+            sudo apt-get install -y ffmpeg xvfb wget gnupg curl
+
+            # Добавляем актуальный ключ Google Chrome
+            curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+            
+            # Добавляем репозиторий Chrome с использованием нового формата
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            
+            # Обновляем индексы и устанавливаем Chrome
+            sudo apt-get update -y
+            sudo apt-get install -y google-chrome-stable
 
             # Устанавливаем Python зависимости
             python -m pip install --upgrade pip
@@ -42,17 +54,14 @@ jobs:
             # Устанавливаем Node.js зависимости
             npm install -g @puppeteer/browsers
 
-            # Очищаем кэш apt и обновляем ключи Google
-            sudo rm -rf /var/lib/apt/lists/*
-            sudo apt-get clean
-            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            # Проверяем установку Chrome
+            google-chrome --version || echo "Chrome не установлен"
             
-            # Добавляем репозиторий Chrome заново
-            sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
+            # Проверяем установку ffmpeg
+            ffmpeg -version || echo "ffmpeg не установлен"
             
-            # Обновляем и устанавливаем Chrome
-            sudo apt-get update
-            sudo apt-get install -y google-chrome-stable
+            # Проверяем установку Xvfb
+            which Xvfb || echo "Xvfb не установлен"
       
       # Сохраняем кэш зависимостей
       - save_cache:
@@ -89,15 +98,40 @@ jobs:
       - run:
           name: Verify Installations
           command: |
-            echo "Проверяем версию Chrome..."
-            google-chrome --version
+            echo "=== Проверка установленных компонентов ==="
             
-            echo "Проверяем версию ffmpeg..."
-            ffmpeg -version
+            echo -e "\n=== Chrome ==="
+            if google-chrome --version; then
+              echo "Chrome установлен успешно"
+            else
+              echo "ОШИБКА: Chrome не установлен"
+              exit 1
+            fi
             
-            echo "Проверяем Xvfb..."
-            which Xvfb || (echo "Xvfb не установлен" && exit 1)
+            echo -e "\n=== ffmpeg ==="
+            if ffmpeg -version; then
+              echo "ffmpeg установлен успешно"
+            else
+              echo "ОШИБКА: ffmpeg не установлен"
+              exit 1
+            fi
             
+            echo -e "\n=== Xvfb ==="
+            if which Xvfb; then
+              echo "Xvfb установлен успешно"
+              # Проверяем возможность запуска Xvfb
+              Xvfb -help >/dev/null 2>&1 && echo "Xvfb работает корректно"
+            else
+              echo "ОШИБКА: Xvfb не установлен"
+              exit 1
+            fi
+            
+            echo -e "\n=== Проверка переменных окружения ==="
+            echo "DISPLAY=$DISPLAY"
+            echo "PYTHONPATH=$PYTHONPATH"
+            
+            echo -e "\n=== Все компоненты установлены успешно ==="
+
       - run:
           name: Setup Virtual Display
           command: |
