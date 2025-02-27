@@ -42,24 +42,18 @@ EOL
         stage('Подготовка окружения') {
             steps {
                 sh '''
-                    # Проверяем наличие Homebrew
-                    if ! command -v brew &> /dev/null; then
-                        echo "Установка Homebrew..."
-                        CI=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-                        echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
-                        eval "$(/opt/homebrew/bin/brew shellenv)"
-                    fi
+                    # Установка nvm
+                    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
                     
-                    # Добавляем Homebrew в PATH
-                    export PATH="/opt/homebrew/bin:$PATH"
+                    # Загружаем nvm
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
                     
-                    # Установка Node.js если его нет
-                    if ! command -v node &> /dev/null; then
-                        echo "Установка Node.js..."
-                        sudo brew install node
-                    fi
+                    # Устанавливаем Node.js
+                    nvm install node
+                    nvm use node
                     
-                    # Проверяем установку Node.js и npm
+                    # Проверяем версии
                     node --version
                     npm --version
                     
