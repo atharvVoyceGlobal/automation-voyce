@@ -1,11 +1,32 @@
 pipeline {
     agent any
 
+    parameters {
+        string(name: 'AGENT_URL', defaultValue: '', description: 'Agent URL')
+        string(name: 'CUSTOMER_URL', defaultValue: '', description: 'Customer URL')
+        string(name: 'AGENT_LOGIN', defaultValue: '', description: 'Agent Login')
+        string(name: 'AGENT_PASSWORD', defaultValue: '', description: 'Agent Password')
+        string(name: 'AGENT_ALT_LOGIN', defaultValue: '', description: 'Alternative Agent Login')
+        string(name: 'OPERATOR_LOGIN', defaultValue: '', description: 'Operator Login')
+        string(name: 'AGENT_ALT_PASSWORD', defaultValue: '', description: 'Alternative Agent Password')
+        string(name: 'OPERATOR_PASSWORD', defaultValue: '', description: 'Operator Password')
+        string(name: 'CUSTOMER_LOGIN', defaultValue: '', description: 'Customer Login')
+    }
+
     environment {
         PYTHON_VERSION = '3.11'
         VENV_PATH = 'venv'
         PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
         HOME = "${env.HOME}"
+        AGENT_URL = "${params.AGENT_URL}"
+        CUSTOMER_URL = "${params.CUSTOMER_URL}"
+        AGENT_LOGIN = "${params.AGENT_LOGIN}"
+        AGENT_PASSWORD = "${params.AGENT_PASSWORD}"
+        AGENT_ALT_LOGIN = "${params.AGENT_ALT_LOGIN}"
+        OPERATOR_LOGIN = "${params.OPERATOR_LOGIN}"
+        AGENT_ALT_PASSWORD = "${params.AGENT_ALT_PASSWORD}"
+        OPERATOR_PASSWORD = "${params.OPERATOR_PASSWORD}"
+        CUSTOMER_LOGIN = "${params.CUSTOMER_LOGIN}"
     }
 
     stages {

@@ -3,6 +3,16 @@ def ensure_dependencies():
     Проверяет и устанавливает необходимые Python-зависимости.
     """
     try:
+        # Добавляем отладочную информацию
+        print("Current working directory:", os.getcwd())
+        print("Files in current directory:", os.listdir())
+        print("Environment variables:")
+        for key, value in os.environ.items():
+            if any(x in key.lower() for x in ['url', 'login', 'password']):
+                print(f"{key}: {'*' * len(value)}")  # Маскируем значения
+            else:
+                print(f"{key}: {value}")
+                
         import pkg_resources
         required = {'selenium', 'pytest', 'allure-pytest', 'requests'}
         installed = {pkg.key for pkg in pkg_resources.working_set}
