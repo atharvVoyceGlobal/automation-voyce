@@ -603,6 +603,25 @@ def test_video_call_activation(driver):
         agent_alt_driver = webdriver.Chrome(service=ChromeService(executable_path=chromedriver_path), options=options)
         agent_alt_driver.get(EV.AGENT_URL)
         print("Alt Agent browser opened login page")
+        
+        try:
+            access_restriction_message = WebDriverWait(agent_alt_driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, "//div[contains(text(), 'You are not allowed to access this app. To request access, contact an admin.')]"))
+            )
+            print("Access restriction message found")
+            
+            back_to_signin_link = WebDriverWait(agent_alt_driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//a[@data-se='go-back' and contains(text(), 'Back to sign in')]"))
+            )
+            back_to_signin_link.click()
+            print("Clicked on 'Back to sign in' link")
+        
+            WebDriverWait(agent_alt_driver, 10).until(
+                EC.presence_of_element_located((By.ID, "input28"))
+            )
+        except Exception as e:
+            print("No access restriction found, proceeding to login")
+        
         email_field = WebDriverWait(agent_alt_driver, 10).until(
             EC.presence_of_element_located((By.ID, "input28"))
         )
